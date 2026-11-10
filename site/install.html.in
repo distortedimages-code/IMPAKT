@@ -1,4 +1,5 @@
 <main class="narrow guide">
+  @PHOTO@
   <h1>Installer IMPAKT</h1>
   <p class="lede">IMPAKT existe en plugin VST3, en Audio Unit (Mac) et en application autonome. Choisissez votre système :
   la page s'ouvre sur le vôtre.</p>

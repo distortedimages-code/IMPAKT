@@ -1,0 +1,403 @@
+{
+ "BD·VA": {
+  "ref": "Roland TR-808 (1980) et TR-909 (1983)",
+  "text": "Chez Roland, l'équipe menée par Tadao Kikumoto a fixé deux façons de construire une grosse caisse analogique. Dans la TR-808 (1980), une impulsion brève fait sonner un réseau en T ponté, un filtre résonant qui s'éteint de lui-même ; sur les longues décroissances, la note baisse légèrement. La TR-909 (1983) le remplace par un oscillateur en dent de scie, arrondi presque en sinus par un formeur, dont la hauteur chute avec une enveloppe, et ajoute un clic de bruit filtré et d'impulsion. La première a marqué le hip-hop, la seconde la house et la techno. BD·VA reprend ce schéma : sinus ou triangle, balayage exponentiel, clic, saturation asymétrique.",
+  "sources": [
+   "https://www.soundonsound.com/techniques/practical-bass-drum-synthesis",
+   "https://en.wikipedia.org/wiki/Roland_TR-808",
+   "https://en.wikipedia.org/wiki/Roland_TR-909"
+  ]
+ },
+ "BD·FM": {
+  "ref": "Synthèse FM · John Chowning, Stanford (1967–1973) ; puces Yamaha OPL (1984–1985)",
+  "text": "John Chowning commence à explorer la modulation de fréquence à Stanford en 1967 et publie ses résultats en 1973 dans le Journal of the Audio Engineering Society ; la technique est concédée à Yamaha la même année. Sa forme la plus simple tient en deux opérateurs : un modulateur sinusoïdal fait varier la fréquence d'une porteuse. C'est ce que proposent les puces économiques de Yamaha, l'OPL (YM3526, 1984) puis l'OPL2 (YM3812, 1985) : deux opérateurs par voix, et une réinjection par laquelle le modulateur se module lui-même. L'OPL2 équipe la carte son AdLib (1987). BD·FM reprend ce couple et sa réinjection, puis passe le son dans un replieur d'onde.",
+  "sources": [
+   "https://en.wikipedia.org/wiki/Frequency_modulation_synthesis",
+   "https://en.wikipedia.org/wiki/Yamaha_OPL",
+   "https://en.wikipedia.org/wiki/Ad_Lib,_Inc."
+  ]
+ },
+ "SD·VA": {
+  "ref": "Roland TR-808 (1980) et TR-909 (1983)",
+  "text": "La caisse claire de la TR-808 (1980) assemble deux oscillateurs en T ponté, dont la hauteur et la décroissance sont fixées par les composants, et un bruit blanc passé dans un VCA et un passe-haut ; le réglage SNAPPY en dose la part. Dans la série Synth Secrets (Sound On Sound, 2002), Gordon Reid note que ce circuit ignore les partiels décalés d'une vraie caisse claire mais en saisit l'essentiel. La TR-909 (1983) garde deux oscillateurs, chacun avec son enveloppe, et partage le bruit en deux chemins mis en forme séparément. SD·VA suit ce modèle : deux oscillateurs accordés, un bruit filtré avec sa couleur, sa résonance, et un SNAP.",
+  "sources": [
+   "https://www.soundonsound.com/techniques/practical-snare-drum-synthesis",
+   "https://musicradar.com/how-to/how-to-recreate-classic-analogue-drum-sounds-in-your-daw-and-with-hardware",
+   "https://en.wikipedia.org/wiki/Roland_TR-808"
+  ]
+ },
+ "SD·FM": {
+  "ref": "Percussions FM · John Chowning (1973)",
+  "text": "Dans son article de 1973, John Chowning décrit déjà un son « drum-like » obtenu en FM : le rapport inharmonique de sa cloche, environ 1 pour 1,4, sur une durée bien plus courte. La caisse claire résiste davantage. En 2002, dans Sound On Sound, Gordon Reid note que son timbre se comporte plutôt comme un bruit à bande limitée, et ne trouve aucun couple porteuse-modulateur qui donne la bonne répartition des modes. SD·FM associe deux opérateurs en FM et un bruit filtré qui a sa propre décroissance, et va un pas plus loin : son bruit module aussi la porteuse.",
+  "sources": [
+   "https://web.eecs.umich.edu/%7Efessler/course/100/misc/chowning-73-tso.pdf",
+   "https://www.soundonsound.com/techniques/synthesizing-drums-snare-drum"
+  ]
+ },
+ "HH·MT": {
+  "ref": "Roland TR-808 (1980) · cymbale et charleston",
+  "text": "Les métaux de la TR-808 (1980) viennent d'un même banc de six oscillateurs carrés, bâtis sur une seule puce de six inverseurs à trigger de Schmitt (HD14584). Quatre sont fixes, vers 205, 304, 370 et 523 Hz, deux sont accordés en usine ; un réseau de résistances les additionne. Charleston ouvert et fermé, cymbale et cloche partagent ce banc. Deux passe-bandes, vers 3,4 et 7,1 kHz, gardent les aigus ; des VCA non linéaires puis des passe-hauts mettent chaque bande en forme. Kurt James Werner, Jonathan Abel et Julius Smith l'ont modélisé en 2014. HH·MT reprend les six carrés aux rapports de la 808, avec modulation en anneau, passe-bande et passe-haut.",
+  "sources": [
+   "https://speech.di.uoa.gr/ICMC-SMC-2014/images/VOL_2/1453.pdf",
+   "https://www.manualslib.com/manual/1294765/Roland-Tr-808.html?page=6",
+   "https://en.wikipedia.org/wiki/Roland_TR-808"
+  ]
+ },
+ "CP·NZ": {
+  "ref": "Roland TR-808 (1980) · le clap analogique",
+  "text": "Dans la TR-808 (1980), le clap est synthétisé. D'après les notes de service de Roland, un bruit blanc passe dans un filtre passe-bande puis dans deux VCA aux enveloppes différentes. La première, en dent de scie, est relancée plusieurs fois par un comparateur : le son monte par salves rapprochées avant de se poser. La seconde, plus longue, imite la réverbération. Un kit d'électronique décrit en 1984 dans Electronics & Music Maker suit le même principe : en général quatre pics d'enveloppe sur un bruit filtré, puis une traîne de bruit sombre. CP·NZ reprend ces salves, leur nombre, leur rythme et un décalage aléatoire, puis une queue diffuse et un bruit « dust ».",
+  "sources": [
+   "https://www.manualslib.com/manual/1294765/Roland-Tr-808.html?page=6",
+   "https://en.wikipedia.org/wiki/Roland_TR-808",
+   "https://www.muzines.co.uk/articles/amdek-hand-clapper-kit/7822?theme=1"
+  ]
+ },
+ "FM·X": {
+  "ref": "John Chowning (1967, publié en 1973) ; Yamaha DX7 (1983)",
+  "text": "En 1967, à l'université Stanford, John Chowning découvre la synthèse par modulation de fréquence : un oscillateur en module un autre à vitesse audio et fait naître des spectres complexes. Il la publie en 1973 dans le Journal of the Audio Engineering Society ; Stanford la brevète et la licencie à Yamaha. Le DX7 (1983), avec six opérateurs sinusoïdaux et 32 algorithmes, dépasse les 150 000 commandes en un an, et son piano électrique comme ses cloches s'entendent sur d'innombrables disques des années 1980. FM·X ramène la FM à trois opérateurs, quatre algorithmes et une réinjection croisée, poussés vers la percussion extrême.",
+  "sources": [
+   "https://en.wikipedia.org/wiki/John_Chowning",
+   "https://en.wikipedia.org/wiki/Yamaha_DX7"
+  ]
+ },
+ "NOISE": {
+  "ref": "Bruit LFSR des puces sonores (NES, Ricoh 2A03) · échantillonneur-bloqueur",
+  "text": "Un registre à décalage à rétroaction linéaire (LFSR) décale ses bits à chaque coup d'horloge et réinjecte en entrée un OU exclusif de certains d'entre eux : la suite paraît aléatoire mais finit par se répéter. Les puces sonores programmables s'en servent pour approcher un bruit blanc. Celle de la NES de Nintendo utilise un registre de 15 bits qui parcourt 32 767 pas ; un drapeau réduit la boucle à 93 ou 31 pas, assez courte pour prendre une hauteur. Dans les synthétiseurs, un échantillonneur-bloqueur qui relève un bruit donne de même une suite de valeurs au hasard. NOISE réunit bruits blanc, rose, LFSR et « dust », sample & hold et filtre balayé.",
+  "sources": [
+   "https://en.wikipedia.org/wiki/Linear-feedback_shift_register",
+   "https://www.nesdev.org/wiki/APU_Noise",
+   "https://en.wikipedia.org/wiki/Sample_and_hold"
+  ]
+ },
+ "IMPLS": {
+  "ref": "Karlheinz Stockhausen · Kontakte (1958–1960), studio de la WDR à Cologne",
+  "text": "Stockhausen réalise Kontakte entre 1958 et 1960 au studio de musique électronique de la WDR, à Cologne, avec l'aide de Gottfried Michael Koenig. Une partie du matériau vient d'un générateur d'impulsions : de brefs clics de bruit, de seize par seconde à un toutes les seize secondes, filtrés et montés en boucles de bande. Accélérée, une suite régulière d'impulsions devient une note ; rendue irrégulière, un bruit. Rythme, hauteur et timbre se placent sur un même continuum, que le passage central de l'œuvre fait entendre : une note aiguë descend jusqu'à se défaire en impulsions, qui ralentissent en battement. IMPLS joue sur ce seuil : impulsions qui accélèrent ou ralentissent, résonateur, peigne.",
+  "sources": [
+   "https://en.wikipedia.org/wiki/Kontakte",
+   "https://stockhausenspace.blogspot.com/2018/03/kontakte-electronic-music-techniques.html"
+  ]
+ },
+ "SY·RAW": {
+  "ref": "Analogique virtuel : Nord Lead (1995), supersaw du Roland JP-8000 (1997), hard sync",
+  "text": "Le synthétiseur analogique virtuel apparaît en 1995, chez Clavia avec le Nord Lead et chez Korg avec le Prophecy : des formes d'onde calculées par un processeur de signal. Roland présente en 1997 le JP-8000 et sa supersaw, qui imite plusieurs dents de scie désaccordées et devient une signature de la trance. La synchronisation forcée vient de l'analogique : le thème de « Let's Go » des Cars (1979), joué par Greg Hawkes sur le preset « Sync II » d'un Prophet-5, en est un exemple célèbre. SY·RAW réunit ces gestes bruts : dent de scie ou impulsion, désaccord, hard sync, nuée d'oscillateurs et sub.",
+  "sources": [
+   "https://www.musicradar.com/music-tech/the-history-of-virtual-analogue-synthesizers",
+   "https://en.wikipedia.org/wiki/Roland_JP-8000",
+   "https://en.wikipedia.org/wiki/Let%27s_Go_(The_Cars_song)"
+  ]
+ },
+ "BYTE": {
+  "ref": "Bytebeat · viznut, blog countercomplex (2011)",
+  "text": "Le 2 octobre 2011, le programmeur finlandais viznut publie sur son blog countercomplex un article sur des « symphonies algorithmiques » tenant en une ligne de code C. Chaque programme calcule un octet à partir d'un compteur de temps t, par des multiplications, des décalages et des opérations logiques, et l'envoie tel quel à la sortie audio, à 8 kHz. Une formule aussi courte que t&t>>8 a déjà une structure harmonique ; celle que l'article met en avant vient d'un canal IRC. L'idée circule en vidéos, dans un outil en JavaScript, sur Arduino, et prend le nom de bytebeat. BYTE joue huit formules entières de ce type, cadencées par TUNE.",
+  "sources": [
+   "https://countercomplex.blogspot.com/2011/10/algorithmic-symphonies-from-one-line-of.html",
+   "https://www.cs.ubc.ca/~udls/showTalk.php/2019-10-25",
+   "https://cdm.link/2011/10/entire-musical-compositions-made-from-just-one-line-of-code-are-glitchy-but-musical/"
+  ]
+ },
+ "µLOOP": {
+  "ref": "Le sillon fermé de Pierre Schaeffer (1948) ; E-mu SP-1200 (1987)",
+  "text": "En 1948, Pierre Schaeffer tire parti d'un disque dont le sillon se referme sur lui-même : le « sillon fermé » répète sans fin un fragment de son. Il l'emploie dans ses Cinq études de bruits, dont l'Étude aux chemins de fer, et la boucle de la musique électronique en découle. Près de quarante ans plus tard, l'E-mu SP-1200 (1987), échantillonneur de 12 bits à 26,04 kHz qui transpose en sautant ou en répétant des échantillons, donne au hip-hop de l'âge d'or un grain souvent dit sale. µLOOP rejoue un son en micro-boucles qui rétrécissent ou s'allongent, et lit ses sources à la manière de la SP-1200.",
+  "sources": [
+   "https://musiquecontemporaine.org/sites/mmc/files/2026-07/article3_miniencyclopedie_vdef.pdf",
+   "https://lareviewofbooks.org/article/sound-objects-pierre-schaeffers-in-search-of-a-concrete-music/",
+   "https://en.wikipedia.org/wiki/E-mu_SP-1200"
+  ]
+ },
+ "BUG": {
+  "ref": "Glitch : Oval, Yasunao Tone, « The Aesthetics of Failure » (2000)",
+  "text": "Au début des années 1990, le groupe allemand Oval peint le dessous de CD pour qu'ils sautent ; l'album Systemisch (1994, Mille Plateaux) tire sa matière de disques volontairement abîmés. Le compositeur japonais Yasunao Tone, venu de Fluxus, colle des bandes adhésives percées sous un CD des Préludes de Debussy et publie Solo for Wounded CD en 1997. En 2000, Kim Cascone nomme cette tendance dans « The Aesthetics of Failure » : les bugs, les plantages, l'écrêtage, le repliement et le bruit de quantification y deviennent une matière musicale. BUG fait passer un oscillateur dans un tampon volontairement défaillant, dont la graine rend le motif d'erreurs reproductible.",
+  "sources": [
+   "https://sonicfield.org/wiki/aesthetics-of-failure",
+   "https://en.wikipedia.org/wiki/Systemisch",
+   "https://ra.co/news/82922"
+  ]
+ },
+ "CHAOS": {
+  "ref": "Cartes chaotiques : Lorenz (1963), Hénon (1976), Ikeda (1979), carte logistique",
+  "text": "Les cartes de CHAOS viennent des mathématiques du chaos, où des équations simples et déterministes produisent un comportement imprévisible. Edward Lorenz publie en 1963 un modèle simplifié de la convection atmosphérique ; son extrême sensibilité aux conditions initiales donnera l'idée d'« effet papillon ». Michel Hénon en tire en 1976 une carte à deux dimensions dotée d'un attracteur étrange, qui bascule dans le chaos par doublements de période, comme la carte logistique. Kensuke Ikeda propose la sienne en 1979 pour décrire la lumière dans un résonateur optique non linéaire. CHAOS itère ces équations à vitesse audio : leurs trajectoires deviennent des ondes, entre hauteur et bruit, avec auto-modulation et repliement.",
+  "sources": [
+   "https://en.wikipedia.org/wiki/Lorenz_system",
+   "https://en.wikipedia.org/wiki/H%C3%A9non_map",
+   "https://en.wikipedia.org/wiki/Ikeda_map"
+  ]
+ },
+ "VOX": {
+  "ref": "Synthèse par formants : Voder (1939), synthétiseur de Klatt (1980)",
+  "text": "Le Voder, conçu par Homer Dudley aux Bell Labs et présenté à l'Exposition universelle de New York en 1939, est la première machine à produire de la parole sans voix humaine à l'entrée. Une opératrice y façonne au clavier des bourdonnements et des souffles, passe des sons voisés aux non voisés d'une barre au poignet et règle l'intonation au pied ; il fallait environ un an pour l'apprendre. En 1980, Dennis Klatt publie un synthétiseur logiciel dont les résonateurs de formants se branchent en série ou en parallèle. VOX fait de ce principe une percussion : une glotte et un souffle dans trois résonateurs, avec un balayage de voyelle.",
+  "sources": [
+   "https://www.atlasobscura.com/articles/the-voder-the-first-machine-to-create-human-speech",
+   "https://www.citedrive.com/en/discovery/software-for-a-cascadeparallel-formant-synthesizer",
+   "https://modeldb.science/citations/126597"
+  ]
+ },
+ "CZ·PD": {
+  "ref": "Casio CZ-101 (1984)",
+  "text": "Sorti en novembre 1984, le Casio CZ-101 est le premier et le plus vendu des synthétiseurs CZ, qui reposent sur la distorsion de phase, une méthode numérique défendue par l'ingénieur Mark Fukuda. Pas de filtre analogique : le DCW dose la distorsion, et l'onde redevient une sinusoïde à son minimum ; trois ondes « résonantes » imitent la résonance d'un filtre. Polyphonique à huit voix, entièrement programmable, alimentable par piles, il coûte moins de 500 dollars, près de deux fois moins que les DX21 et DX100 de Yamaha, et sort à environ 68 500 exemplaires jusqu'en 1988. CZ·PD reprend cette distorsion de phase, ses ondes résonantes et l'enveloppe du DCW.",
+  "sources": [
+   "https://en.wikipedia.org/wiki/Casio_CZ_synthesizers"
+  ]
+ },
+ "FRACT": {
+  "ref": "WMD Fracture (2018) ; PhISEM de Perry Cook (1997)",
+  "text": "Fracture, module eurorack du fabricant américain WMD sorti en 2018, est un synthétiseur de percussion « multi-particules » : il applique les idées des circuits de clap analogiques à la synthèse granulaire. Il joue dans un ordre pseudo-aléatoire des groupes de micro-échantillons enregistrés par WMD (claps, balles de ping-pong, canette qu'on ouvre), si bien que chaque coup diffère du précédent, jusqu'aux applaudissements d'une foule. FRACT s'en inspire, mais ces enregistrements ne sont pas libres : sa banque est synthétisée par des modèles physiques, dont le PhISEM que Perry Cook a décrit en 1997 pour les sons nés d'une multitude de petits chocs, comme les maracas ou les gouttes d'eau.",
+  "sources": [
+   "https://sonicstate.com/news/2018/04/23/fracture-multi-particle-percussion-synth-/",
+   "https://caml.music.mcgill.ca/~gary/618/week12/phism.html"
+  ]
+ },
+ "ITERA": {
+  "ref": "Noise Engineering · Basimilus Iteritas Alter (2016)",
+  "text": "La Basimilus Iteritas de Noise Engineering, firme fondée par Stephen McCaul et Kris Kaiser, est l'un des modules eurorack les plus célébrés. Conçue par McCaul, c'est un synthétiseur de percussion numérique paramétré : six oscillateurs et un bruit, chacun avec son enveloppe. Le mode SKIN additionne une fondamentale et ses multiples, METAL fait se moduler les oscillateurs pour des timbres inharmoniques. La version Alter, présentée au NAMM en janvier 2016, ajoute LIQUID, avec une enveloppe de hauteur ; arrêtée quand son processeur XMOS n'a plus été fabriqué, elle laisse place à la version Alia. ITERA s'en inspire : six partiels avec leurs enveloppes, un bruit, un replieur et ces trois modèles.",
+  "sources": [
+   "https://www.perfectcircuit.com/signal/noise-eng-iteritas-retrospective",
+   "https://www.matrixsynth.com/2016/01/namm2016-introducing-new-noise.html",
+   "https://www.noiseengineering.us/shop/basimilus-iteritas-alter"
+  ]
+ },
+ "TRIO": {
+  "ref": "Sequential Prophet-5 rev3 et Pro-One (1981) ; puces Curtis CEM3340 et CEM3320",
+  "text": "Conçu par Dave Smith et John Bowen chez Sequential Circuits et présenté au NAMM en janvier 1978, le Prophet-5 est le premier synthétiseur polyphonique dont tous les sons se mémorisent. Sa troisième révision remplace les puces SSM par celles de Curtis Electromusic, la société fondée par Doug Curtis en 1979 : le VCO CEM3340, compensé en température, et le filtre 24 dB/octave CEM3320. Le Pro-One (1981), monophonique bon marché présenté comme une voix de Prophet-5, repose sur les mêmes puces. TRIO modélise cette chaîne : trois VCO façon CEM3340, un mixeur qui sature, un filtre 4 pôles façon CEM3320, et le balayage de sync des leads Prophet.",
+  "sources": [
+   "https://en.wikipedia.org/wiki/Prophet-5",
+   "https://www.gearnews.com/curtis-chip-synth/",
+   "https://www.sequencer.de/syns/sequentialcircuits/ProOne_Pro1.html"
+  ]
+ },
+ "SINE": {
+  "ref": "Pan Sonic · Mika Vainio et Ilpo Väisänen, Turku (1993–2009)",
+  "text": "Pan Sonic naît à Turku, en Finlande, en 1993, sous le nom de Panasonic ; le groupe retire une lettre quand la firme japonaise menace de le poursuivre. Autour de Mika Vainio et Ilpo Väisänen, il enregistre de Vakio (1995) à Gravitoni (2010), sa séparation ayant été annoncée fin 2009. Joué sur du matériel plutôt que sur ordinateur, son minimalisme extrême mêle la dureté de l'industriel à la lourdeur du dub autour de sons de synthèse purs : des sinus perçants, parfois une seule note à 50 Hz. Vainio meurt en 2017. SINE travaille cette matière : sinus pur, sous-octave, chute de hauteur, modulation en anneau, porte carrée, salve de bruit aigu.",
+  "sources": [
+   "https://en.wikipedia.org/wiki/Pan_Sonic",
+   "https://cultureelpersbureau.nl/en/2017/04/memoriam-mika-vainio-1963-2017-electronic-music-lost-pioneer-soul-ultra-minimalsime"
+  ]
+ },
+ "DATA": {
+  "ref": "Ryoji Ikeda · +/- (1996), datamatics (depuis 2006), test pattern (2008)",
+  "text": "Né en 1966 à Gifu, au Japon, et installé à Paris, Ryoji Ikeda travaille le son à l'état brut, sinus et bruit, souvent aux limites de l'audition. Ses premiers disques paraissent chez Touch, dont +/- (1996) et matrix (2000), fait de sinus purs ; suit dataplex (raster-noton, 2005). Depuis 2006, son programme datamatics prend la donnée pour thème et pour matériau, et test pattern (2008) convertit n'importe quelle donnée en codes-barres et en motifs binaires de 0 et de 1. DATA lit de même un motif de 1 à 32 bits case par case : chaque 1 laisse passer un bruit, une impulsion ou un sinus aux bords nets.",
+  "sources": [
+   "https://en.wikipedia.org/wiki/Ryoji_Ikeda",
+   "https://special.ycam.jp/datamatics/dl/datamatics_release_en.pdf",
+   "https://thevinylfactory.com/features/data-as-spectacle-a-ryoji-ikeda-overview/"
+  ]
+ },
+ "FM·Z": {
+  "ref": "Le « wood-drum » de John Chowning · Stanford (1973)",
+  "text": "Dans son article de 1973 sur la synthèse par modulation de fréquence, John Chowning fait varier l'indice de modulation dans le temps et en tire des timbres de cuivres, de bois, de cloches et de tambours. Pour son « wood-drum », porteuse et modulateur sont dans un rapport d'environ 1,45 pour 1, vers 80 et 55 Hz ; l'indice part haut puis s'effondre, et une bouffée d'énergie à large bande se resserre très vite en un son proche d'un sinus résonant. FM·Z pousse ce geste à l'extrême : pic d'index qui retombe vite, chute de hauteur « zap » sur les deux opérateurs, modulation croisée chaotique pendant l'attaque seulement, sub sinus propre une octave en dessous.",
+  "sources": [
+   "https://web.eecs.umich.edu/%7Efessler/course/100/misc/chowning-73-tso.pdf"
+  ]
+ },
+ "HARD": {
+  "ref": "Micropoint · Neurophonie (1999)",
+  "text": "Micropoint est un duo français formé par Daniel Técoult (Radium) et Denis Cohen-Scali (Al Core). Le projet prend ce nom en 1994 et ses premiers vinyles sortent en 1995 sur les labels B.E.A.S.T. et Epiteth. Neurophonie (1999), leur premier album, sombre, rapide et brutal, compte parmi les premiers albums de la frenchcore, un hardcore français autour de 200 BPM ; Anesthesie International suit en 2000. Leur musique tire vers l'industriel. HARD s'en inspire : un sinus qui chute très vite et un grain de bruit passent dans un formeur (SOFT, HARD, FOLD, STEP), puis un sub sinus propre est ajouté après la distorsion.",
+  "sources": [
+   "https://www.nts.live/artists/57692-radium",
+   "https://sputnikmusic.com/album/165170/micropoint-Neurophine/",
+   "https://reidht.substack.com/p/the-genre-project-january-5-frenchcore"
+  ]
+ },
+ "HEX·BD": {
+  "ref": "Simmons SDS-V (1981) · Dave Simmons et Richard James Burgess",
+  "text": "La SDS-V, commercialisée en 1981 par la firme britannique Simmons, est conçue par l'ingénieur Dave Simmons et le batteur et producteur Richard James Burgess. Burgess dessine ses pads hexagonaux, inspirés d'un nid d'abeilles, en plastique très dur ; les batteurs se plaignant de douleurs aux poignets et aux coudes, les modèles suivants passent au caoutchouc. Chaque fût du kit est un module réglable en niveau du ton et du bruit, bend, décroissance, couleur du bruit et clic. HEX·BD s'inspire des voies de la SDS-V et de la SDS-8 qui lui succède : un triangle adouci, un bruit de transistor dans un passe-bas 4 pôles, un clic et un bend.",
+  "sources": [
+   "https://en.wikipedia.org/wiki/Simmons_SDS-V",
+   "https://en.wikipedia.org/wiki/Simmons_(electronic_drum_company)",
+   "https://reverb.com/news/simmons-hexagonal-kit-and-the-dawn-of-e-drums"
+  ]
+ },
+ "HEX·SD": {
+  "ref": "Simmons SDS-V (1981) · la caisse claire en couches",
+  "text": "Pour Richard James Burgess, qui conçoit la SDS-V avec Dave Simmons, un son de batterie se décompose en couches : le clic de la baguette, une bouffée d'air, la hauteur du fût, sa résonance et, pour la caisse claire, le claquement du timbre contre la peau de dessous. Les modules de la SDS-V mélangent un ton et un bruit, avec un filtre simple sur le bruit et un clic. En 1981, « Chant No. 1 » de Spandau Ballet fait entendre ses pads hexagonaux, joués par John Keeble. HEX·SD reprend la caisse de ce kit : un bruit plus présent, un passe-bas résonant et, sur les coups forts, un crack de rimshot en FM.",
+  "sources": [
+   "https://reverb.com/news/simmons-hexagonal-kit-and-the-dawn-of-e-drums",
+   "https://en.wikipedia.org/wiki/Simmons_SDS-V"
+  ]
+ },
+ "HEX·TM": {
+  "ref": "Simmons SDS-V (1981) · le tom qui plonge",
+  "text": "Le son typique des toms Simmons tient en un geste : après chaque coup, la hauteur descend. Richard James Burgess l'a calqué sur ses toms de concert Pearl à une seule peau, qu'il accordait avec une tige de tension desserrée : la peau plissait et la note tombait. Le kit standard de la SDS-V (1981) compte trois modules de toms, chacun avec son réglage de bend. Avant elle, la Syndrum de Pollard faisait déjà entendre un « bloop » descendant, sur « Ring My Bell ». HEX·TM reprend ces toms en trois tailles (HI, MID, LOW), avec le « pew » du bend, dont la durée suit la décroissance.",
+  "sources": [
+   "https://en.wikipedia.org/wiki/Simmons_(electronic_drum_company)",
+   "https://en.wikipedia.org/wiki/Simmons_SDS-V",
+   "https://reverb.com/news/simmons-hexagonal-kit-and-the-dawn-of-e-drums"
+  ]
+ },
+ "MACRO": {
+  "ref": "Mutable Instruments Plaits (2018 ; version 1.2, 2022)",
+  "text": "Plaits, oscillateur « macro » eurorack de Mutable Instruments, est annoncé en mars 2018 comme le successeur spirituel de Braids. Entièrement nouveau, il réunit seize modèles de synthèse, huit pour les sons accordés et huit pour le bruit et les percussions, avec une enveloppe interne et un low-pass gate virtuel. En décembre 2022, sa version 1.2 ajoute huit modèles, dont une FM à six opérateurs compatible DX7, au moment où Émilie Gillet prend sa retraite et ferme la marque. MACRO porte le code source ouvert de Plaits (licence MIT) et rassemble ses vingt-quatre modèles dans une seule machine.",
+  "sources": [
+   "https://synthanatomy.com/2018/03/mutable-instruments-released-plaits-spiritual-successor-braids-macro-oscillator.html",
+   "https://synthanatomy.com/2022/12/mutable-instruments-plaits-new-firmware-adds-8-models-incl-dx-7-fm-synthesis.html",
+   "https://www.synthtopia.com/content/2022/12/19/mutable-instruments-plaits-1-2-firmware-hands-on-demo/"
+  ]
+ },
+ "RAM": {
+  "ref": "Machines RAM de la Machinedrum (Elektron) ; Panharmonium (Rossum Electro-Music, 2019)",
+  "text": "La Machinedrum, boîte à rythmes numérique de l'entreprise suédoise Elektron sortie en 2001, gagne l'échantillonnage avec sa version UW et deux types de machines RAM : l'une enregistre en temps réel, l'autre rejoue la prise comme n'importe quel son de la machine, filtrée, retriggée, découpée ou inversée. Elles servent surtout à capturer des boucles en direct, au tempo. RAM réunit les deux rôles sur une seule piste, avec des trigs REC et des trigs PLAY. Sa resynthèse PRISM s'inspire du principe du Panharmonium, module eurorack de Rossum Electro-Music annoncé en 2019, qui analyse le spectre d'un son et le fait rejouer par un banc de 1 à 33 oscillateurs.",
+  "sources": [
+   "https://www.soundonsound.com/reviews/elektron-machinedrum-sps1-uw",
+   "https://en.wikipedia.org/wiki/Elektron_(company)",
+   "https://synthanatomy.com/2019/03/rossum-electro-panharmonium-eurorack.html"
+  ]
+ },
+ "HALO": {
+  "ref": "Tintinnabuli d'Arvo Pärt (1976) · la folia",
+  "text": "Le tintinnabuli est la technique que le compositeur estonien Arvo Pärt a trouvée après huit années de recherche, avec Für Alina, une courte pièce pour piano écrite en février 1976, puis Spiegel im Spiegel en 1978. Une voix ne joue que les notes de l'accord parfait de tonique, comme des cloches (le mot vient du latin tintinnabulum, une sorte de cloche) ; l'autre avance dans la gamme, surtout par degrés conjoints. HALO en tire trois progressions, TIN↓, TIN↑ et MIRR, à côté de basses bien plus anciennes, comme la folia, l'un des plus vieux thèmes musicaux européens dont on garde la mémoire, que Corelli a varié en 1700.",
+  "sources": [
+   "https://www.arvopart.ee/en/arvo-parts-tintinnabuli-style-at-50/",
+   "https://en.wikipedia.org/wiki/Tintinnabuli",
+   "https://en.wikipedia.org/wiki/Folia"
+  ]
+ },
+ "BREAK": {
+  "ref": "The Winstons, « Amen, Brother » (1969) ; jungle et drum'n'bass",
+  "text": "L'Amen break dure environ sept secondes : quatre mesures jouées vers 136 BPM par Gregory Coleman dans « Amen, Brother », face B d'un single de 1969 des Winstons, groupe soul de Washington. Salt-N-Pepa est parmi les premiers à l'échantillonner, en 1986 ; au début des années 1990, il devient un pilier de la jungle puis de la drum'n'bass, où les producteurs changent sa vitesse et sa hauteur et réarrangent ses coups. IMPAKT n'embarque aucun break, faute de droits : BREAK découpe les boucles que l'on charge en doubles croches, et ses presets reprennent des façons de les hacher, de la jungle au drill'n'bass de Warp et au hip-hop instrumental.",
+  "sources": [
+   "https://en.wikipedia.org/wiki/Amen_break"
+  ]
+ },
+ "VERB": {
+  "ref": "Erbe-Verb de Tom Erbe (Make Noise, ICMC 2015)",
+  "text": "Tom Erbe, de SoundHack et du département de musique de l'UC San Diego, a codé l'Erbe-Verb, la réverb eurorack de Make Noise, dont les espaces vont « du cercueil aux cieux ». Dans un article présenté à l'ICMC 2015, il en décrit la conception : un réseau de lignes à retard rebouclées, l'idée de Michael Gerzon (1971) et de Stautner et Puckette (1982), étendu à des espaces résonants abstraits et à la modulation rapide de tous les réglages ; sa modulation aléatoire vient de Stressed Space Palindromes de Gordon Mumma (2002). VERB s'en inspire avec son propre code, sur huit lignes en stéréo au lieu de quatre.",
+  "sources": [
+   "https://attachments.are.na/4733003/4bb9eea3aa3a462aaa0e0d0b0d45d98a.pdf?1564531595=",
+   "https://www.makenoisemusic.com/retired/retired-modules/erbe-verb/"
+  ]
+ },
+ "ECHO": {
+  "ref": "Écho à bande : EchoSonic, Echoplex (1959), Space Echo RE-201 (1974)",
+  "text": "Un écho à bande enregistre le son sur une bande et le relit plus loin : la vitesse de la bande et l'écart entre les têtes donnent le temps, et la sortie renvoyée à l'entrée fait les répétitions. Dans les années 1950, Ray Butts en loge un dans un ampli, l'EchoSonic, joué par Chet Atkins ou Scotty Moore. En 1959, l'Echoplex de Mike Battle le rend portable et fait varier le temps par une tête mobile. En 1974, le Space Echo RE-201 de Roland ajoute trois têtes de lecture et un ressort ; Lee « Scratch » Perry en use beaucoup dans les années 1970. ECHO en fait un délai stéréo en quatre zones.",
+  "sources": [
+   "https://en.wikipedia.org/wiki/Echoplex",
+   "https://en.wikipedia.org/wiki/Roland_Space_Echo"
+  ]
+ },
+ "BEND": {
+  "ref": "Circuit bending, Reed Ghazala (années 1960)",
+  "text": "Le circuit bending consiste à court-circuiter ou recâbler des appareils électroniques bon marché, jouets, claviers, boîtes à rythmes, pour en tirer des sons que leurs concepteurs n'avaient pas prévus. On en attribue la découverte à Reed Ghazala, de Cincinnati : dans les années 1960, le circuit à nu d'un petit ampli jouet rangé dans un tiroir touche un objet métallique et se met à produire d'étranges balayages oscillants. Ses recherches avancent avec le Speak & Spell, sorti en 1978, et il donne son nom à la pratique en 1992. BEND transpose ce geste dans un buffer stéréo calé sur une grille : répétitions, cassures, hauteur pliée, corruption.",
+  "sources": [
+   "https://en.wikipedia.org/wiki/Circuit_bending",
+   "https://en.wikipedia.org/wiki/Reed_Ghazala"
+  ]
+ },
+ "TAPE": {
+  "ref": "Usure de la bande : pleurage, scintillement, générations · The Disintegration Loops (2001)",
+  "text": "Une bande ne défile jamais tout à fait à la même vitesse : les lentes variations de hauteur, sous 4 Hz environ, sont le pleurage (wow), les plus rapides le scintillement (flutter), venus du cabestan ou de la bande qui vibre sur les têtes. Chaque génération de copie ajoute du bruit et perd de la bande passante. À l'été 2001, William Basinski transfère des boucles faites en 1982 à partir de Muzak diffusée sur CBS Radio : la couche magnétique se détache de son support pendant la lecture, et la musique se défait en jouant. Ce sont The Disintegration Loops (2002-2003). TAPE réunit ces usures, avec quatre machines et l'arrêt de bande.",
+  "sources": [
+   "https://en.wikipedia.org/wiki/Wow_and_flutter_measurement",
+   "https://en.wikipedia.org/wiki/Generation_loss",
+   "https://en.wikipedia.org/wiki/The_Disintegration_Loops"
+  ]
+ },
+ "CODEC": {
+  "ref": "Codage perceptif : MP3 (Fraunhofer, 1991-1993) · paquets perdus",
+  "text": "Un codec à bas débit garde ce que l'oreille entend et jette le reste : c'est le codage perceptif, fondé sur le masquage, un son qui en cache un autre. Le MP3, développé en Allemagne à l'institut Fraunhofer, en grande partie sous la direction de Karlheinz Brandenburg, est défini en 1991 comme couche III de l'audio MPEG-1 et publié en 1993. Brandenburg l'a affiné en écoutant Tom's Diner, chanté a cappella par Suzanne Vega. À trop bas débit, il laisse des pré-échos et étale les attaques. En voix sur IP, un paquet perdu est remplacé par du silence ou par le dernier reçu. CODEC en fait des réglages.",
+  "sources": [
+   "https://en.wikipedia.org/wiki/MP3",
+   "https://en.wikipedia.org/wiki/Packet_loss_concealment"
+  ]
+ },
+ "STRUM": {
+  "ref": "Synthèse Karplus-Strong (1983) et ses extensions par Jaffe et Smith",
+  "text": "Vers 1979, Kevin Karplus et Alex Strong trouvent une façon très économe de faire sonner une corde pincée : une rafale de bruit blanc tourne dans une ligne à retard, et la moyenne de deux échantillons voisins l'adoucit à chaque passage, si bien que le son s'éteint comme une corde ; la longueur de la ligne fixe la hauteur. L'article paraît en 1983 dans le Computer Music Journal, et dans le même numéro David Jaffe et Julius O. Smith l'étendent : un passe-tout pour l'accord fin, un autre pour la raideur, un filtre pour la position du pincement, un pour l'amortissement. STRUM en fait six cordes grattées l'une après l'autre.",
+  "sources": [
+   "https://users.soe.ucsc.edu/~karplus/digitar.html",
+   "https://en.wikipedia.org/wiki/Karplus%E2%80%93Strong_string_synthesis",
+   "https://ccrma.stanford.edu/~jos/pasp/Extended_Karplus_Strong_Algorithm.html"
+  ]
+ },
+ "CHOIR": {
+  "ref": "Ondes Martenot (1928) · synthétiseur de formants de Klatt (1980)",
+  "text": "Maurice Martenot, violoncelliste et ancien opérateur radio de la Première Guerre mondiale, voulait retrouver les sons nés du chevauchement des oscillateurs des postes militaires. Il présente ses ondes à l'Opéra de Paris le 20 avril 1928. On y glisse d'une note à l'autre avec une bague passée à l'index droit, tirée le long d'un fil : d'où les glissandos qu'on entend chez Honegger (Jeanne d'Arc au bûcher, 1935) ou Messiaen (Turangalîla-Symphonie, 1949). CHOIR se joue de même sur un ruban, et chante par une glotte et des formants en cascade, d'après le synthétiseur que Dennis Klatt a publié au MIT en 1980.",
+  "sources": [
+   "https://en.wikipedia.org/wiki/Ondes_Martenot",
+   "https://www.fon.hum.uva.nl/david/ba_shs/2009/klatt-1980.pdf"
+  ]
+ },
+ "ALLOY": {
+  "ref": "SOPHIE · « Bipp » (2013), Oil of Every Pearl's Un-Insides (2018)",
+  "text": "Sophie Xeon, dite SOPHIE, productrice britannique morte à Athènes en 2021, se fait connaître avec « Bipp » (2013), sur le label Numbers. Elle travaille surtout sur une Elektron Monomachine, en sculptant ses sons à partir de formes d'onde élémentaires, sans échantillons hormis les voix : des matières synthétiques qui évoquent le latex, les ballons, les bulles, le métal, le plastique. Son album Oil of Every Pearl's Un-Insides (2018) est nommé aux Grammy Awards. ALLOY est construite d'après ses méthodes et l'acoustique des objets frappés : un impact fait vibrer un objet modélisé par ses modes, avec une FM inharmonique, des sinus purs, un peigne résonant, une saturation et une réverb métallique.",
+  "sources": [
+   "https://en.wikipedia.org/wiki/Sophie_(musician)",
+   "https://www.musicradar.com/news/pioneers-sophie"
+  ]
+ },
+ "CHIMERA": {
+  "ref": "SOPHIE, de « Bipp » (2013) à Oil of Every Pearl's Un-Insides (2018)",
+  "text": "La productrice britannique SOPHIE (Sophie Xeon, morte en 2021) a marqué la pop électronique des années 2010, du single « Bipp » (2013) à l'album Oil of Every Pearl's Un-Insides (2018), nommé aux Grammy Awards. Elle construisait ses sons à partir de formes d'onde simples, sur une Monomachine d'Elektron et dans Ableton Live, sans échantillons ; leurs textures évoquent le latex, le plastique ou le métal. CHIMERA joue un kit d'usine qui s'inspire d'elle, sans ses propres sons, et y ajoute deux gestes de sampler : un voisin du son choisi à chaque coup, ou l'attaque d'un son greffée sur le corps d'un autre.",
+  "sources": [
+   "https://en.wikipedia.org/wiki/Sophie_(musician)"
+  ]
+ },
+ "FUZZ": {
+  "ref": "Fuzz Face (Arbiter, Londres, 1966) · Analog Heat d'Elektron (2016)",
+  "text": "La Fuzz Face sort à Londres en 1966, chez Ivor Arbiter, qui y tenait un magasin de batteries. Son circuit tient en deux transistors PNP au germanium, trois condensateurs et deux potentiomètres, dans un boîtier rond inspiré du pied d'un micro, dont les deux boutons et le logo dessinent un visage. Jimi Hendrix en est l'utilisateur le plus connu. Son entrée basse charge le micro de la guitare : elle réagit à ce qui l'attaque et sonne mieux en tête de chaîne. FUZZ résout ce circuit d'après son schéma publié et l'analyse d'Electrosmash, sur trois bandes ; ses huit circuits au choix reprennent l'idée de l'Analog Heat d'Elektron, annoncé en 2016.",
+  "sources": [
+   "https://en.wikipedia.org/wiki/Fuzz_Face",
+   "https://www.electrosmash.com/fuzz-face",
+   "https://www.musicradar.com/news/tech/elektrons-analog-heat-can-enhance-or-destroy-your-audio-642588"
+  ]
+ },
+ "CUBE": {
+  "ref": "Tables d'ondes : PPG Wave 2 (1981) ; Piston Honda Mk III (Industrial Music Electronics)",
+  "text": "La synthèse par tables d'ondes range des cycles d'onde uniques dans une table que l'on parcourt pour faire bouger le timbre. Wolfgang Palm la popularise avec le PPG Wave 2 (1981), qui marie oscillateurs numériques et filtres analogiques. Dans le modulaire, certains oscillateurs la portent en trois dimensions : le Piston Honda Mk III d'Industrial Music Electronics, double oscillateur eurorack, range 512 formes d'onde de 16 bits en 8 × 8 × 8, là où le Mk II en comptait 4 096 de 8 bits, et lit les tables faites avec WaveEdit. CUBE reprend ce cube de 512 ondes et ce format, avec une FM entre ses deux oscillateurs.",
+  "sources": [
+   "https://www.perfectcircuit.com/signal/wavetable-synthesizer-history",
+   "https://perfectcircuit.com/harvestman-piston-honda-mk3.html"
+  ]
+ },
+ "WEST": {
+  "ref": "Buchla Music Easel (début des années 1970) ; EaseLFO",
+  "text": "Né dans le sillage du San Francisco Tape Music Center, le Music Easel de Don Buchla est un instrument portable, alimenté par batterie et pensé pour la scène ; Buchla date l'original de 1973, année où seules quelques dizaines d'exemplaires sont fabriquées. Il réunit un oscillateur complexe dont le timbre se replie, un oscillateur de modulation, deux low pass gates, un pulser, un séquenceur de cinq pas, une enveloppe et un ressort. Plutôt que la synthèse soustractive, il privilégie le repli d'onde et la modulation à vitesse audio. WEST porte le patch d'EaseLFO, une émulation libre de l'Easel en Max, et lui ajoute un pulser calé au tempo.",
+  "sources": [
+   "https://www.soundonsound.com/reviews/buchla-music-easel",
+   "https://synthtopia.com/?p=136703",
+   "https://github.com/LFO-lab/EaseLFO"
+  ]
+ },
+ "WEFT": {
+  "ref": "Warps, Mutable Instruments (2015)",
+  "text": "Warps est le méta-modulateur eurorack conçu par Émilie Gillet pour Mutable Instruments, fabriqué de novembre 2015 à mars 2022. Il combine deux signaux par des algorithmes d'hybridation qu'on fait glisser de l'un à l'autre : fondu, repli croisé, modèle numérique d'un modulateur en anneau à diodes, anneau numérique, XOR bit à bit, comparateur, puis un vocodeur à 20 bandes. Un oscillateur interne peut remplacer la première entrée, et un mode caché en fait un décaleur de fréquence. Son code a été publié en source ouverte, sous licence MIT. WEFT en est le portage : la source module un oscillateur interne ou une autre piste.",
+  "sources": [
+   "https://pichenettes.github.io/mutable-instruments-documentation/modules/warps/",
+   "https://pichenettes.github.io/mutable-instruments-documentation/modules/warps/secrets/",
+   "https://github.com/pichenettes/eurorack"
+  ]
+ },
+ "HOWL": {
+  "ref": "Effet Larsen · larsen de guitare · archet magnétique (EBow, 1976)",
+  "text": "Le larsen porte le nom du physicien danois Søren Absalon Larsen (1871-1957) : un micro entend le haut-parleur qu'il alimente, et la boucle monte jusqu'au sifflement. Dans les années 1960, des guitaristes comme Jimi Hendrix en font un son, en approchant leurs micros de l'ampli et en le façonnant du corps et du levier de vibrato. En 1969, le guitariste américain Greg Heet invente l'EBow, présenté au NAMM en 1976 : un capteur et un circuit de réinjection magnétique font vibrer une corde sans la toucher, aussi longtemps qu'on veut. HOWL suit la topologie qu'a esquissée Nathaniel Virgo en SuperCollider en 2011 (six cordes, l'air, l'ampli) et y ajoute un tel archet.",
+  "sources": [
+   "https://fr.wikipedia.org/wiki/Effet_Larsen",
+   "https://en.wikipedia.org/wiki/EBow",
+   "https://sccode.org/1-U"
+  ]
+ },
+ "STENCIL": {
+  "ref": "Mimeophon, Make Noise (2019)",
+  "text": "Le Mimeophon est un délai stéréo eurorack de Make Noise, codé par Tom Erbe de SoundHack, montré au Superbooth de Berlin en 2019. Il range ses temps en huit zones, d'environ 1 ms à plus de 40 s : dans les plus courtes, un transitoire fait sonner le délai comme une corde pincée (Karplus-Strong). Halo étale les répétitions dans l'espace stéréo, µ les module en effet Doppler, Ping les fait passer d'un canal à l'autre, Hold les fige, Flip les joue à l'envers, et Repeats va au-delà de l'infini. STENCIL lui rend hommage d'après son mode d'emploi, avec ses propres huit zones, jusqu'à 5,4 s.",
+  "sources": [
+   "https://www.makenoisemusic.com/modules/mimeophon/",
+   "https://www.makenoisemusic.com/content/manuals/mimeophon-manual.pdf",
+   "https://reverb.com/news/make-noise-debuts-mimeophon-stereo-delay-at-superbooth"
+  ]
+ },
+ "MANTRA": {
+  "ref": "Lyra-8, Soma Laboratory (2016)",
+  "text": "Le Lyra-8 est le synthétiseur « organismique » de Soma Laboratory, conçu en Russie par Vlad Kreimer, musicien et ingénieur radio, et proposé en précommande en septembre 2016. Ses modules sont reliés par de nombreuses liaisons non linéaires et se modifient l'un l'autre, comme les organes d'un être vivant. Huit voix analogiques, accordées une à une à la façon d'un orgue, s'éveillent quand on touche des contacts métalliques ; elles vont par paires qui peuvent se moduler en FM, un « hyper LFO » mêle deux ondes carrées, et deux lignes de délai lo-fi précèdent une distorsion. MANTRA lui rend hommage d'après ce que l'instrument fait et son mode d'emploi, avec son propre code.",
+  "sources": [
+   "https://sonicstate.com/news/2016/09/21/organismic-synthesizers-launched/",
+   "https://www.soundonsound.com/reviews/soma-laboratory-lyra-8"
+  ]
+ },
+ "RADIO": {
+  "ref": "Cage, Imaginary Landscape No. 4 (1951) ; Stockhausen, Kurzwellen (1968) ; Holger Czukay",
+  "text": "En 1951, John Cage écrit Imaginary Landscape No. 4 pour douze radios et vingt-quatre interprètes, sur des durées, des fréquences et des nuances tirées au hasard. En 1968, Stockhausen crée à Brême Kurzwellen, pour six musiciens et récepteurs ondes courtes : la matière est puisée dans les émissions captées, puis transformée selon des signes plus, moins et égal. Holger Czukay, son élève de 1963 à 1966, fait des ondes courtes une signature, notamment sur Radio Wave Surfer (1991). RADIO capte de vraies stations, internet ou ondes courtes, et les rejoue en direct, en boucle ou plus loin en arrière ; ses presets évoquent aussi les stations de chiffres.",
+  "sources": [
+   "https://en.wikipedia.org/wiki/Imaginary_Landscape_No._4_(March_No._2)",
+   "https://en.wikipedia.org/wiki/Kurzwellen",
+   "https://en.wikipedia.org/wiki/Holger_Czukay"
+  ]
+ }
+}

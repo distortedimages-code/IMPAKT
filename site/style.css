@@ -156,3 +156,44 @@ h1 { font: 900 clamp(40px, 7vw, 64px)/0.95 var(--f-display); letter-spacing: .00
   .steps > li { padding-left: 46px; }
 }
 @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+
+/* the machines: a family a section, a card a machine (its screen playing its sound, its name, where it comes from) */
+.machines { max-width: 1240px; margin: 0 auto; padding-block: 28px 40px; }
+.mhead .lede { margin-bottom: 18px; }
+.fams { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.fams a { font: 700 15px/1 var(--f-ui); letter-spacing: .05em; text-transform: uppercase; color: var(--ink); text-decoration: none;
+  padding: 9px 11px 8px; border-radius: 6px; background: var(--key); box-shadow: var(--raise); }
+.family { padding-top: 26px; scroll-margin-top: 10px; }
+.family h2 { font: 900 38px/1 var(--f-display); margin: 0 0 6px; }
+.flede { color: var(--ink-2); max-width: 70ch; margin: 0 0 6px; font-size: 16px; }
+.mcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 14px; margin-top: 14px; }
+.mcard { display: flex; flex-direction: column; background: var(--key); border-radius: 8px; box-shadow: var(--raise); overflow: hidden; min-width: 0; scroll-margin-top: 12px; }
+.mcard:target { box-shadow: 0 0 0 3px var(--hot), var(--raise); }
+.scope { display: block; width: 100%; height: 96px; background: var(--lcd); border-bottom: 5px solid var(--bezel); cursor: pointer; }
+.mtext { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.mtext h3 { font: 900 30px/0.95 var(--f-display); margin: 0; letter-spacing: .01em; }
+.mlong { font: 400 9px/1.4 var(--f-px); color: var(--ink-2); letter-spacing: .03em; margin: 0; }
+.mref { font: 700 16px/1.25 var(--f-ui); letter-spacing: .02em; color: var(--ink); margin: 4px 0 0; padding-left: 9px; border-left: 3px solid var(--led); }
+.mtext > p:not(.mlong):not(.mref):not(.mlinks) { margin: 0; font-size: 15px; line-height: 1.55; color: var(--ink-2); }
+.mlinks { margin: 4px 0 0; font-size: 13px; display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; }
+.msrc { color: var(--ink-3); }
+.msrc a { color: var(--ink-3); margin-left: 6px; }
+.mgrid a { color: inherit; text-decoration: none; display: block; }
+@media (max-width: 560px) { .mcards { grid-template-columns: minmax(0, 1fr); } .family h2 { font-size: 32px; } }
+
+/* the workshop's photos */
+.photo { display: block; width: 100%; height: auto; border-radius: 8px; object-fit: cover; background: var(--key-down); }
+.band { max-width: 1240px; margin: 0 auto 6px; }
+.photo.wide { aspect-ratio: 21 / 8; }
+.photo.banner { aspect-ratio: 21 / 7; margin-bottom: 24px; }
+.rows .photo { aspect-ratio: 16 / 10; margin-bottom: 14px; }
+.open { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: clamp(20px, 4vw, 48px); align-items: center;
+  max-width: 1240px; margin: 0 auto; padding-block: 10px 60px; }
+.open .photo { aspect-ratio: 16 / 10; }
+.open h2 { font: 900 clamp(32px, 4vw, 46px)/1 var(--f-display); margin: 0 0 14px; }
+.open p { color: var(--ink-2); max-width: 54ch; }
+.open a { font-weight: 600; }
+@media (max-width: 900px) {
+  .open { grid-template-columns: minmax(0, 1fr); }
+  .photo.wide, .photo.banner { aspect-ratio: 16 / 8; }
+}

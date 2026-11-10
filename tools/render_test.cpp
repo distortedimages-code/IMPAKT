@@ -6916,8 +6916,123 @@ static int radiotest (const char* dir)
     return fails ? 1 : 0;
 }
 
+
+// site (v87): every machine's own sound, as the site's Machines page draws it (site/machines-data.json). Each one plays
+// once at its defaults (the page's TUNE, DEC and A-F, its side pages), dry (no reverb or delay sends); an FX machine
+// takes a snare from the track before it; RAM and BREAK play a short synthetic drum loop. Kept per machine: the
+// envelope (200 columns over the time it sounds, 2 s at most, 0-255) and 24 frames of the waveform (128 points each,
+// -127..127), base64.
+//   render_test site <decs.txt: "tune dec" a line, in the machines' order> <out.json>
+static std::string b64 (const std::vector<unsigned char>& v)
+{
+    static const char* T = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    std::string o;
+    for (size_t i = 0; i < v.size(); i += 3)
+    {
+        const unsigned n = (unsigned) v[i] << 16 | (i + 1 < v.size() ? (unsigned) v[i + 1] << 8 : 0u) | (i + 2 < v.size() ? v[i + 2] : 0u);
+        o += T[n >> 18 & 63]; o += T[n >> 12 & 63];
+        o += i + 1 < v.size() ? T[n >> 6 & 63] : '='; o += i + 2 < v.size() ? T[n & 63] : '=';
+    }
+    return o;
+}
+static std::vector<float> drumLoop (double sr, double secs)
+{
+    const int n = (int) (secs * sr); std::vector<float> x ((size_t) n, 0.0f);
+    const char* pat = "K.H.S.HKK.H.S.HH";
+    unsigned seed = 7; auto rnd = [&] { seed = seed * 1103515245u + 12345u; return (float) (seed >> 8) / 8388608.0f - 1.0f; };
+    for (int k = 0; k < 16; ++k)
+    {
+        const char c = pat[k]; if (c == '.') continue;
+        const int t0 = (int) ((double) k * n / 16); double ph = 0; float last = 0;
+        for (int i = 0; i < (int) (0.35 * sr) && t0 + i < n; ++i)
+        {
+            const double t = i / sr; const float nz = rnd(), hp = nz - last; last = nz;
+            float y = 0;
+            if (c == 'K') { ph += 6.283185307 * (50 + 120 * std::exp (-t / 0.03)) / sr; y = 0.9f * (float) (std::sin (ph) * std::exp (-t / 0.2)); }
+            if (c == 'S') y = (float) (0.5 * nz * std::exp (-t / 0.1) + 0.35 * std::sin (6.283185307 * 190 * t) * std::exp (-t / 0.06));
+            if (c == 'H') y = (float) (0.3 * hp * std::exp (-t / 0.03));
+            x[(size_t) (t0 + i)] += 0.6f * y;
+        }
+    }
+    return x;
+}
+static int sitedata (const char* decsPath, const char* outPath)
+{
+    loadBank();
+    REF = new Engine(); REF->init (48000.f);
+    Engine* e = new Engine(); e->init (48000.f);
+    FILE* dv = fopen (decsPath, "r"); if (! dv) { printf ("no %s\n", decsPath); return 1; }
+    float tune[NUM_MACHINES], dec[NUM_MACHINES];
+    for (int m = 0; m < NUM_MACHINES; ++m) if (fscanf (dv, "%f %f", &tune[m], &dec[m]) != 2) { tune[m] = 0.5f; dec[m] = 0.5f; }
+    fclose (dv);
+    FILE* f = fopen (outPath, "w");
+    fprintf (f, "{\n");
+    const int SR = 48000, N = 2 * SR, COLS = 200, FR = 24, PTS = 128, WIN = 1024;
+    const std::vector<float> loop48 = drumLoop (48000.0, 2.0), loop32 = drumLoop (32000.0, 2.0);
+    for (int m = 0; m < NUM_MACHINES; ++m)
+    {
+        softReset (e, 48000.f);
+        for (int t = 0; t < NUM_TRACKS; ++t) { e->setParam (t, P_VOL, 0.0f); e->setParam (t, P_REV, 0.0f); e->setParam (t, P_DLY, 0.0f); }
+        const bool fx = fxMachine (m);
+        const int t = fx ? 1 : 0;
+        auto setup = [&] (int tr, int mm)
+        {
+            e->setParam (tr, P_MACH, machineVal (mm)); e->setParam (tr, P_VOL, 0.8f);
+            e->setParam (tr, P_TUNE, tune[mm]); e->setParam (tr, P_DEC, dec[mm]);
+            float d[6]; const int k = machineAFDefaults (mm, d); for (int q = 0; q < k; ++q) e->setParam (tr, P_A + q, d[q]);
+            float sd[NUM_SIDES]; const int ks = machineSideDefaults (mm, sd); for (int q = 0; q < ks; ++q) e->setParam (tr, sideParam (q), sd[q]);
+        };
+        if (fx) setup (0, M_SD_VA);
+        setup (t, m);
+        if (m == M_RAM)
+        {
+            for (int i = 0; i < (int) RAM_LEN && i < (int) loop48.size(); ++i) e->ramMem[t][i] = (short) (std::max (-1.0f, std::min (1.0f, loop48[(size_t) i])) * 32000.0f);
+            e->ramLoaded (t, (int) loop48.size(), 48000.0f);
+        }
+        if (m == M_BREAK)
+        {
+            short* mem = e->brk.mem (0);
+            for (size_t i = 0; i < loop32.size(); ++i) mem[i] = (short) (std::max (-1.0f, std::min (1.0f, loop32[i])) * 32000.0f);
+            e->breakSet (0, (int) loop32.size(), 1);
+        }
+        if (m == M_BREAK) { for (int st = 0; st < 16; ++st) e->setTrig (t, st, 1); e->setGlobal (G_BPM, 120.0f); e->setPlay (1); }   // (a slice a step)
+        else e->audition (fx ? 0 : t, 1.0f);
+        std::vector<float> x; x.reserve (N);
+        std::vector<float> L (128), R (128);
+        for (int i = 0; i < N; i += 128) { e->process (L.data(), R.data(), 128, nullptr); for (int k = 0; k < 128; ++k) x.push_back (0.5f * (L[(size_t) k] + R[(size_t) k])); }
+        float peak = 1e-6f; for (float v : x) peak = std::max (peak, std::fabs (v));
+        // how long it sounds: to where it stays 40 dB under its peak (a quarter of a second at least, 2 s at most)
+        int last = 0; for (int i = 0; i < N; ++i) if (std::fabs (x[(size_t) i]) > 0.01f * peak) last = i;
+        const int D = std::max (SR / 4, std::min (N, (int) (last * 1.1) + SR / 50));
+        std::vector<unsigned char> env (COLS), sc ((size_t) FR * PTS);
+        for (int c = 0; c < COLS; ++c)
+        {
+            float p = 0; for (int i = c * D / COLS; i < (c + 1) * D / COLS; ++i) p = std::max (p, std::fabs (x[(size_t) i]));
+            env[(size_t) c] = (unsigned char) std::lround (255.0f * p / peak);
+        }
+        // the frames: a window of 1024 samples (21 ms: a cycle of a 47 Hz kick), its points the strongest sample of each bin
+        for (int fr = 0; fr < FR; ++fr)
+        {
+            const int at = (int) ((fr + 0.25) * D / FR);
+            for (int q = 0; q < PTS; ++q)
+            {
+                float a = 0; for (int j = 0; j < WIN / PTS; ++j) { const float v = x[(size_t) std::max (0, std::min (N - 1, at + q * (WIN / PTS) + j))]; if (std::fabs (v) > std::fabs (a)) a = v; }
+                sc[(size_t) (fr * PTS + q)] = (unsigned char) (signed char) std::lround (std::max (-127.0f, std::min (127.0f, 127.0f * a / peak)));
+            }
+        }
+        printf ("%-8s peak %.3f%s\n", MNAMES[m], peak, fx ? " (fx on a snare)" : "");
+        fprintf (f, "  \"%d\": {\"name\": \"%s\", \"peak\": %.4f, \"dur\": %.3f, \"fx\": %s, \"env\": \"%s\", \"scope\": \"%s\"}%s\n", m, MNAMES[m], peak,
+                 (double) D / SR, fx ? "true" : "false", b64 (env).c_str(), b64 (sc).c_str(), m + 1 < NUM_MACHINES ? "," : "");
+    }
+    fprintf (f, "}\n");
+    fclose (f);
+    delete e;
+    return 0;
+}
+
 int main (int argc, char** argv)
 {
+    if (argc >= 4 && ! strcmp (argv[1], "site")) return sitedata (argv[2], argv[3]);
     if (argc >= 2 && ! strcmp (argv[1], "master")) return mastertest();
     if (argc >= 2 && ! strcmp (argv[1], "org")) return orgtest();
     if (argc >= 2 && ! strcmp (argv[1], "stress")) return stress();
