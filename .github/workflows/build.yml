@@ -68,8 +68,11 @@ jobs:
         with: { arch: x64 }
       - name: Configure
         shell: pwsh
-        # (JUCE's own helper, juceaide, is built with MSVC: CC / CXX; the plugin with clang-cl)
-        env: { CC: cl, CXX: cl }
+        # (JUCE 9's WebP SSE4.1 code does not build with clang-cl: off, for the plugin and for JUCE's own helper,
+        # juceaide, which CMake configures apart and which only sees the flags of the environment)
+        env:
+          CFLAGS: -DJUCE_USE_WEBP=0
+          CXXFLAGS: -DJUCE_USE_WEBP=0
         run: |
           where.exe clang-cl
           cmake -S plugin -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl `

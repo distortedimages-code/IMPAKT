@@ -120,7 +120,7 @@ function testWav(bpm, bars, variant) {
       op.esc = await page.isHidden('#kpanel');
       op.seq = await page.evaluate(() => !document.querySelector('#seqmod #projbtn') && !document.querySelector('#seqmod .proj'));
       ok('v69 phone: OPTION in the bar (its menu on the screen, closed by a tap elsewhere; Kits opens the panel, Escape closes it), nothing left in the sequencer',
-        op.bar === 'Option' && op.menu === 'Copy track,Paste track,Move track,Clear track,Clear all,Kits,Init,Demo' && op.exp === 'true' && op.closed && op.kits.panel && op.kits.menu && op.kits.fit && op.esc && op.seq, JSON.stringify(op));
+        op.bar === 'Option' && op.menu === 'Copy track,Paste track,Move track,Clear track,Clear all,Kits,Init,Demo,Updates' && op.exp === 'true' && op.closed && op.kits.panel && op.kits.menu && op.kits.fit && op.esc && op.seq, JSON.stringify(op));
       await page.click('#ptabs [data-tab="fx"]');
       ph.fx = [await vis('#trkmod'), await vis('#km-BOX'), await vis('#km-SEND'), await vis('#km-REV'), await vis('#km-DLY'), await vis('#mstmod')];
       // v68: the returns one at a time, under their tabs
@@ -2506,7 +2506,7 @@ function testWav(bpm, bars, variant) {
     await pg.click('#projbtn'); await pg.click('#tmove'); await pg.keyboard.press('Escape'); await pg.waitForTimeout(40);
     cp.esc = await pg.evaluate(() => window.__impakt.ui.moveFrom == null && !document.getElementById('lockbar').classList.contains('mv'));
     ok('v80 plugin: OPTION · Copy / Paste / Move track: the bar while moving, the two tracks swap in every pattern (refs, mute, Rnd all, take, the quantiser follow), a paste copies a track (and a RAM take)',
-      cp.menu === 'Copy track,Paste track(off),Move track,Clear track,Clear all,Kits,Init,Demo' && cp.menuFit.out === 0
+      cp.menu === 'Copy track,Paste track(off),Move track,Clear track,Clear all,Kits,Init,Demo,Updates' && cp.menuFit.out === 0
       && cp.bar.mv && /^MOVE T2/.test(cp.bar.t) && cp.bar.pads && cp.bar.src === '01000000'
       && cp.mv.t === 5 && cp.mv.len === '12/16' && cp.mv.on === 1 && cp.mv.lk === 0.7 && cp.mv.mute === '10' && cp.mv.rx === '10' && cp.mv.xmOk
       && cp.mv.fx === 7 && cp.mv.fxL === 3 && cp.mv.ef === 6 && cp.mv.q === 6 && cp.mv.pLen === '7/16' && cp.mv.pFx === 3 && !cp.mv.bar
