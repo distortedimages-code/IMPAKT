@@ -14,7 +14,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: build-${{ github.ref }}
+  group: build-${{ github.ref }}-${{ github.sha }}
   cancel-in-progress: true
 
 env:
@@ -23,7 +23,7 @@ env:
 jobs:
   mac:
     name: macOS (universal)
-    runs-on: macos-14
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/cache@v4
@@ -68,6 +68,8 @@ jobs:
         with: { arch: x64 }
       - name: Configure
         shell: pwsh
+        # (JUCE's own helper, juceaide, is built with MSVC: CC / CXX; the plugin with clang-cl)
+        env: { CC: cl, CXX: cl }
         run: |
           where.exe clang-cl
           cmake -S plugin -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl `
