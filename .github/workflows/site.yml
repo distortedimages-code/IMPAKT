@@ -1,5 +1,5 @@
-# IMPAKT's site on GitHub Pages: the home page and the downloads, the install guide, the manual (docs/manuel.md), the
-# versions (CHANGELOG.md) and the web version (app/: tools/build_web.py, with its plain-JS engine made by wasm2js).
+# IMPAKT's site on GitHub Pages: the home page and the downloads, the install guide, the manual (docs/manuel.md) and the
+# reference (docs/reference.md), the versions (CHANGELOG.md) and the web version (app/: tools/build_web.py, with its plain-JS engine made by wasm2js).
 name: Site
 
 on:

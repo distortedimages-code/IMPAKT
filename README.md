@@ -27,7 +27,7 @@ plugin/      le plugin et l'application (JUCE 9) : CMakeLists.txt, Source/
 web/         l'interface (HTML, CSS, JS), commune au navigateur et au plugin ; web/*.wasm, le moteur compilé
 bank/        la banque d'usine de CHIMERA
 brand/       le logo et l'icône
-docs/        le manuel complet (manuel.md)
+docs/        le manuel (manuel.md, ses schémas : fig/, make_figs.py) et la référence complète (reference.md)
 site/        le site (GitHub Pages) : build_site.py
 packaging/   l'image disque Mac, l'installeur Windows, l'archive Linux
 tools/       compilations, tests

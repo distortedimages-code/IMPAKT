@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""IMPAKT's site (GitHub Pages): the home page with the downloads, the install guide, the manual (docs/manuel.md),
-the versions (CHANGELOG.md) and the web version (app/: dist/local, made by tools/build_web.py).
+"""IMPAKT's site (GitHub Pages): the home page with the downloads, the install guide, the manual (docs/manuel.md, its
+diagrams docs/fig/*.svg inline), the full reference (docs/reference.md), the versions (CHANGELOG.md) and the web version
+(app/: dist/local, made by tools/build_web.py).
 
   python3 site/build_site.py [out]        (default site/out; needs: python-markdown)
 
@@ -59,9 +60,10 @@ def photo(name, cls='photo', eager=False):
         cls, name, name, name, html.escape(PHOTOS[name]), '' if eager else ' loading="lazy" decoding="async"')
 
 
-def page(name, title, body, desc, cls='', extra=''):
+def page(name, title, body, desc, cls='', extra='', toc=False):
     nav = [('index.html', 'IMPAKT'), ('machines.html', 'Machines'), ('install.html', 'Installer'), ('manuel.html', 'Manuel'), ('versions.html', 'Versions')]
-    links = ''.join('<a href="%s"%s>%s</a>' % (h, ' aria-current="page"' if h == name else '', l) for h, l in nav[1:])
+    cur = 'manuel.html' if name == 'reference.html' else name
+    links = ''.join('<a href="%s"%s>%s</a>' % (h, ' aria-current="page"' if h == cur else '', l) for h, l in nav[1:])
     return '''<!doctype html>
 <html lang="fr">
 <head>
@@ -77,6 +79,7 @@ def page(name, title, body, desc, cls='', extra=''):
 <body class="%(cls)s">
 <header class="top">
   <a class="mark" href="index.html" aria-label="IMPAKT, accueil">%(mark)s</a>
+  %(tocbtn)s<a class="play solo" href="app/">Jouer</a>
   <nav class="nav" aria-label="Pages">%(links)s<a href="%(gh)s">Code</a><a class="play" href="app/">Jouer</a></nav>
 </header>
 %(body)s
@@ -88,39 +91,77 @@ def page(name, title, body, desc, cls='', extra=''):
 <script src="site.js"></script>%(extra)s
 </body>
 </html>
-''' % dict(title=html.escape(title), desc=html.escape(desc), cls=cls, links=links, gh=GH, body=body, ver=VERSION, mark=brand('wordmark', 'wm'), extra=extra)
+''' % dict(title=html.escape(title), desc=html.escape(desc), cls=cls, links=links, gh=GH, body=body, ver=VERSION, mark=brand('wordmark', 'wm'), extra=extra,
+           tocbtn='<button class="tocbtn" type="button" aria-controls="toc" aria-expanded="false">Sommaire</button>' if toc else '')
 
 
-# ------------------------------------------------------------------ the manual
+# ------------------------------------------------------------------ the manual, the reference
+SITE_URL = 'https://distortedimages-code.github.io/IMPAKT/'
+
+
+def figure(m):
+    """A diagram of the manual (docs/fig), inline so that the page's pixel font draws its labels, with its caption."""
+    svg = open(os.path.join(ROOT, 'docs', 'fig', m.group(2) + '.svg'), encoding='utf-8').read().strip()
+    svg = re.sub(r' width="\d+" height="\d+"', '', svg, count=1)
+    return '<figure class="fig">%s<figcaption>%s</figcaption></figure>' % (svg, m.group(3))
+
+
+def doc_html(text):
+    """A document of docs/ as a page of the site: its links to the site and to its neighbours made local, wide tables
+    scrolling on their own, the diagrams inline."""
+    text = re.sub(r'^# .*\n', '', text, count=1)
+    h = md(text)
+    h = h.replace('href="' + SITE_URL, 'href="').replace('href="reference.md', 'href="reference.html').replace('href="manuel.md', 'href="manuel.html')
+    h = h.replace('<table>', '<div class="tbl"><table>').replace('</table>', '</table></div>')
+    h = re.sub(r'<p><img alt="([^"]*)" src="fig/([\w-]+)\.svg" ?/?></p>\s*<p><em>(.*?)</em></p>', figure, h, flags=re.S)
+    return text, h
+
+
+def contents(text, deep):
+    """The contents: the sections (##), and in the manual their parts (###) under them."""
+    out, sub = [], []
+    for lvl, head in re.findall(r'^(##+) (.+)$', text, re.M):
+        a = '<a href="#%s">%s</a>' % (gh_slug(head), html.escape(re.sub(r'[*`]', '', head)))
+        if lvl == '##':
+            if sub:
+                out[-1] = out[-1][:-5] + '<ol>%s</ol></li>' % ''.join(sub)
+                sub = []
+            out.append('<li>%s</li>' % a)
+        elif lvl == '###' and deep:
+            sub.append('<li>%s</li>' % a)
+    if sub:
+        out[-1] = out[-1][:-5] + '<ol>%s</ol></li>' % ''.join(sub)
+    return '<aside class="toc" id="toc" aria-label="Sommaire"><p class="toch">Sommaire</p><ol>%s</ol></aside>' % ''.join(out)
+
+
 manual_md = open(os.path.join(ROOT, 'docs', 'manuel.md'), encoding='utf-8').read()
-# the machines, from its table (name, idea)
+manual_body, manual_html = doc_html(manual_md)
+manual_page = '''<main class="manual">
+  %s
+  <article class="doc">
+    <h1>Manuel</h1>
+    %s
+  </article>
+</main>''' % (contents(manual_body, True), manual_html)
+
+ref_md = open(os.path.join(ROOT, 'docs', 'reference.md'), encoding='utf-8').read()
+body_md, ref_html = doc_html(ref_md)
+ref_page = '''<main class="manual ref">
+  %s
+  <article class="doc">
+    <h1>Référence</h1>
+    %s
+  </article>
+</main>''' % (contents(body_md, False), ref_html)
+# the machines, from the reference's table (name, idea)
 machines = []
-m = re.search(r'^## Les \d+ machines\s*\n\s*\n\| Machine \|.*?\n\|[- |]+\|\n((?:\|.*\n)+)', manual_md, re.M)
+m = re.search(r'^## Les \d+ machines\s*\n\s*\n\| Machine \|.*?\n\|[- |]+\|\n((?:\|.*\n)+)', ref_md, re.M)
 for row in (m.group(1).splitlines() if m else []):
     cells = [c.strip() for c in row.strip().strip('|').split('|')]
     if len(cells) >= 2:
         idea = re.sub(r'\*\*|`', '', cells[1])
         idea = re.split(r' ?[(;:] ', idea)[0]
         machines.append((cells[0], idea[:90]))
-body_md = re.sub(r'^# IMPAKT\s*\n', '', manual_md, count=1)
-manual_html = md(body_md)
-# wide tables scroll on their own
-manual_html = manual_html.replace('<table>', '<div class="tbl"><table>').replace('</table>', '</table></div>')
-toc = ''.join('<li><a href="#%s">%s</a></li>' % (gh_slug(h), html.escape(re.sub(r'[*`]', '', h)))
-              for h in re.findall(r'^## (.+)$', body_md, re.M))
-
-manual_page = '''<main class="manual">
-  <aside class="toc" aria-label="Sommaire">
-    <details open><summary>Sommaire</summary><ol>%s</ol></details>
-  </aside>
-  <article class="doc">
-    %s
-    <h1>Manuel</h1>
-    <p class="lede">Tout ce qu'IMPAKT contient, machine par machine, réglage par réglage. L'interface est en anglais :
-    le manuel cite ses libellés tels qu'ils sont à l'écran.</p>
-    %s
-  </article>
-</main>''' % (toc, photo('patch-modulaire', 'photo banner', True), manual_html)
 
 # ------------------------------------------------------------------ the versions
 changes_md = open(os.path.join(ROOT, 'CHANGELOG.md'), encoding='utf-8').read()
@@ -158,7 +199,7 @@ def machine_card(i, mid, long):
     snd = sounds.get(str(i), {})
     r = refs.get(mid, {})
     sec = sections.get(gh_slug(mid))
-    more = '<a href="manuel.html#%s">Dans le manuel</a>' % (sec if sec else 'les-47-machines')
+    more = '<a href="reference.html#%s">Tout le détail</a>' % (sec if sec else 'les-47-machines')
     src = ''.join('<a href="%s" rel="noopener">%s</a>' % (html.escape(u), html.escape(re.sub(r'^https?://(www\.)?', '', u).split('/')[0])) for u in r.get('sources', []))
     return ('<article class="mcard" id="%s">'
             '<canvas class="scope" data-m="%d" width="320" height="96" aria-hidden="true"></canvas>'
@@ -217,16 +258,16 @@ home = '''<main>
   </section>
   <figure class="band">%(band)s</figure>
   <section class="rows">
-    <article>%(ph1)s<h2>Le pas qu'on lève</h2><p>Tous les réglages se verrouillent par pas : la machine, le filtre, les effets.
+    <article><h2>Le pas qu'on lève</h2><p>Tous les réglages se verrouillent par pas : la machine, le filtre, les effets.
     Jusqu'à 64 pas par piste, chacune avec sa longueur et sa vitesse, 128 patterns à enchaîner.</p>
-    <a href="manuel.html#p-lock--le-pas-quon-lève">P-lock</a></article>
-    <article>%(ph2)s<h2>Des machines qui ne se ressemblent pas</h2><p>Analogique virtuel, FM, tables d'ondes en cube, accords qui
+    <a href="manuel.html#p-lock">Le p-lock</a></article>
+    <article><h2>Des machines qui ne se ressemblent pas</h2><p>Analogique virtuel, FM, tables d'ondes en cube, accords qui
     respirent, une guitare devant un ampli qui hurle, un échantillonneur en direct, un sampler qui greffe une attaque sur
     un autre corps, quatre récepteurs radio.</p>
-    <a href="manuel.html#les-47-machines">Les machines</a></article>
-    <article>%(ph3)s<h2>Des effets qui jouent</h2><p>Les machines FX passent les pistes voisines dans une réverb, un délai à
+    <a href="machines.html">Les machines</a></article>
+    <article><h2>Des effets qui jouent</h2><p>Les machines FX passent les pistes voisines dans une réverb, un délai à
     bande, un buffer tordu ou un méta-modulateur, séquencés par leurs trigs. Au bout : EQ, compresseur, grain, OTT, glitch.</p>
-    <a href="manuel.html#les-machines-fx--des-effets-séquencés-façon-monomachine">Les machines FX</a></article>
+    <a href="manuel.html#les-machines-fx">Les machines FX</a></article>
   </section>
   <section class="open">
     %(ph4)s
@@ -239,8 +280,7 @@ home = '''<main>
     </div>
   </section>
 </main>''' % dict(n=len(machines), grid=grid, dl=DL, ver=VERSION, logo=brand('logo', 'biglogo', 'IMPAKT, music synthesiser'), gh=GH,
-          band=photo('etabli-vu-de-haut', 'photo wide'), ph1=photo('enveloppe-ecran'), ph2=photo('soudure-gros-plan'), ph3=photo('analyse-spectre'),
-          ph4=photo('table-equipe'), **ASSETS)
+          band=photo('etabli-vu-de-haut', 'photo wide'), ph4=photo('table-equipe'), **ASSETS)
 
 # ------------------------------------------------------------------ the install guide
 install = open(os.path.join(SITE, 'install.html.in'), encoding='utf-8').read()
@@ -255,11 +295,12 @@ os.makedirs(os.path.join(OUT, 'fonts'))
 pages = [('index.html', 'IMPAKT — boîte à rythme de synthèse', home, 'IMPAKT, une boîte à rythme de synthèse à 8 pistes et %d machines : VST3, Audio Unit, application et navigateur. Logiciel libre.' % len(machines), 'home'),
          ('machines.html', 'Les machines d’IMPAKT', machines_page, 'Les %d machines d’IMPAKT : leur son, et les instruments, les musiciens et les techniques auxquels elles font référence.' % len(MACHS), 'mach', '<script src="machines.js"></script>'),
          ('install.html', 'Installer IMPAKT', install, 'Installer IMPAKT sur Mac, Windows ou Linux, le mettre à jour, le retirer.', 'guide'),
-         ('manuel.html', 'Manuel d’IMPAKT', manual_page, 'Le manuel complet d’IMPAKT : les machines, le séquenceur, les effets, le master.', 'man'),
+         ('manuel.html', 'Manuel d’IMPAKT', manual_page, 'Le manuel d’IMPAKT, l’essentiel en vingt minutes : la prise en main, le séquenceur et ses p-locks, les machines, les effets, le master.', 'man', '', True),
+         ('reference.html', 'Référence d’IMPAKT', ref_page, 'La référence complète d’IMPAKT, réglage par réglage.', 'man', '', True),
          ('versions.html', 'Versions d’IMPAKT', versions_page, 'Les versions d’IMPAKT et leurs nouveautés.', 'vers')]
 for row in pages:
     name, title, body, desc, cls = row[:5]
-    open(os.path.join(OUT, name), 'w', encoding='utf-8').write(page(name, title, body, desc, cls, row[5] if len(row) > 5 else ''))
+    open(os.path.join(OUT, name), 'w', encoding='utf-8').write(page(name, title, body, desc, cls, row[5] if len(row) > 5 else '', len(row) > 6 and row[6]))
 shutil.copytree(os.path.join(SITE, 'img'), os.path.join(OUT, 'img'))
 for f in ('style.css', 'site.js', 'machines.js', 'favicon.svg'):
     shutil.copy(os.path.join(SITE, f), os.path.join(OUT, f))

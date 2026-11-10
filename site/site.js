@@ -1,5 +1,5 @@
 // IMPAKT's site: the visitor's system first (the downloads, the guide), the release really published, copy buttons,
-// the manual's contents following the reading.
+// the top bar always within reach, the manual's contents following the reading.
 (function () {
   const ua = navigator.userAgent || '', plat = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || '';
   const os = /Win/i.test(plat) || /Windows/i.test(ua) ? 'win' : /Linux/i.test(plat) && !/Android/i.test(ua) ? 'linux'
@@ -49,8 +49,24 @@
       rel.textContent = 'version ' + j.tag_name.replace(/^v/, '') + ' du ' + d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
     }).catch(() => {});
 
-  // the manual: the section being read lit in the contents
-  const toc = document.querySelector('.toc');
+  // the top bar stays at the top: its height, for the anchors and the contents under it
+  const bar = document.querySelector('.top');
+  if (bar) {
+    const setH = () => document.documentElement.style.setProperty('--hh', bar.offsetHeight + 'px');
+    setH();
+    if ('ResizeObserver' in window) new ResizeObserver(setH).observe(bar); else addEventListener('resize', setH);
+  }
+
+  // the manual: the part being read lit in the contents (kept in view in its column); on a phone, the contents open
+  // from the bar's Sommaire key and close on a choice, Escape or a tap elsewhere
+  const toc = document.querySelector('.toc'), btn = document.querySelector('.tocbtn');
+  if (toc && btn) {
+    const open = on => { toc.classList.toggle('open', on); btn.setAttribute('aria-expanded', String(on)); };
+    btn.addEventListener('click', e => { e.stopPropagation(); open(!toc.classList.contains('open')); });
+    toc.addEventListener('click', e => { if (e.target.closest('a')) open(false); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && toc.classList.contains('open')) { open(false); btn.focus(); } });
+    document.addEventListener('pointerdown', e => { if (toc.classList.contains('open') && !toc.contains(e.target) && e.target !== btn) open(false); });
+  }
   if (toc && 'IntersectionObserver' in window) {
     const links = new Map([...toc.querySelectorAll('a')].map(a => [decodeURIComponent(a.hash.slice(1)), a]));
     let cur = null;
@@ -58,8 +74,10 @@
       if (!e.isIntersecting) return;
       const a = links.get(e.target.id); if (!a || a === cur) return;
       if (cur) cur.classList.remove('here'); cur = a; a.classList.add('here');
-    }), { rootMargin: '0px 0px -75% 0px' });
-    document.querySelectorAll('.doc h2[id]').forEach(h => io.observe(h));
+      if (toc.scrollHeight > toc.clientHeight && (a.offsetTop < toc.scrollTop || a.offsetTop > toc.scrollTop + toc.clientHeight - 40))
+        toc.scrollTop = a.offsetTop - toc.clientHeight / 3;
+    }), { rootMargin: '-80px 0px -70% 0px' });
+    document.querySelectorAll('.doc h2[id], .doc h3[id]').forEach(h => { if (links.has(h.id)) io.observe(h); });
   }
 
   // the screen of machines: one lit at a time, slowly, like the picker (unless motion is unwelcome)
