@@ -7,7 +7,7 @@ Dans ce dossier, lancez :   ./install.sh
 Pour mettre à jour : relancez install.sh depuis la nouvelle archive. Pour retirer : ./uninstall.sh
 
 L'interface a besoin de WebKitGTK (libwebkit2gtk-4.1) et le réseau de libcurl : install.sh vous
-dit s'il en manque. Mode d'emploi : https://distortedimages-code.github.io/IMPAKT/
+dit s'il en manque. Le manuel : https://distortedimages-code.github.io/IMPAKT/manuel.html
 
 In this folder run ./install.sh (VST3 in ~/.vst3, the app in ~/.local/share/IMPAKT, no root needed).
 IMPAKT is free software (GNU GPL v3): https://github.com/distortedimages-code/IMPAKT

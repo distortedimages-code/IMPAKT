@@ -15,7 +15,8 @@ pour les trois) sur Application Support (macOS demande votre mot de passe). Les 
 ainsi portent la marque « téléchargé d'internet » : la procédure complète est sur le site.
 
 Mises à jour : OPTION > Updates, dans IMPAKT.
-Mode d'emploi et procédure détaillée : https://distortedimages-code.github.io/IMPAKT/
+Le manuel : https://distortedimages-code.github.io/IMPAKT/manuel.html
+L'installation en détail : https://distortedimages-code.github.io/IMPAKT/install.html
 
 -----------------------------------------------------------------------------------------
 IMPAKT on a Mac: quit your music software, double-click "Install IMPAKT". If macOS will not
