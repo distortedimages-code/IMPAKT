@@ -123,8 +123,10 @@ target_include_directories(IMPAKT PRIVATE ../core ../core/mi)
 # CHIMERA's bank (v66: bank/, made by tools/make_bank.py) where the processor reads it (PluginProcessor.cpp bankFolder):
 # on the Mac in each bundle (Contents/Resources/bank); on Windows and Linux in the VST3 bundle (Contents/Resources/bank,
 # beside Contents/<arch>) and beside the standalone app's executable; elsewhere the user's IMPAKT/bank folder or $IMPAKT_BANK
+# The installers (packaging/) put one copy in the system's shared data folder instead: their builds turn this off.
+option(IMPAKT_EMBED_BANK "Put CHIMERA's bank inside each plugin and the app" ON)
 set(IMPAKT_BANK_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../bank)
-if(EXISTS ${IMPAKT_BANK_DIR}/chimera.idx)
+if(IMPAKT_EMBED_BANK AND EXISTS ${IMPAKT_BANK_DIR}/chimera.idx)
     if(APPLE)
         foreach(fmt IN LISTS IMPAKT_FORMATS)
             if(TARGET IMPAKT_${fmt})

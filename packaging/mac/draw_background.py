@@ -9,11 +9,11 @@ from fontTools.ttLib import TTFont
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FONTS = os.path.join(HERE, '..', '..', 'web', 'fonts')
-W, H = 720, 480
+W, H = 720, 540
 PANEL, INK, INK2, INK3, LINE, HOT, RED = '#D9DCDA', '#141617', '#464D4B', '#737B78', '#ABB1AF', '#FFC21A', '#E85305'
 # the icons' centres (points), as in dmg_settings.py
-PKG = (150, 282)
-ROWS = [(410, 172, 600), (410, 282, 600), (410, 392, 600)]   # (file x, y, folder x)
+PKG = (150, 300)
+ROWS = [(410, 165, 600), (410, 255, 600), (410, 345, 600), (410, 435, 600)]   # (file x, y, folder x)
 
 
 def font(name, size):
@@ -48,12 +48,17 @@ def draw(scale):
         d.text((s(PKG[0]) - w / 2, s(PKG[1] + 54 + 15 * k)), line, font=small, fill=INK2)
     # right: or by hand, each one onto its folder
     t = 'OR DRAG EACH ONE ONTO ITS FOLDER'
-    d.text((s(330), s(118)), t, font=px, fill=INK2)
+    d.text((s(330), s(114)), t, font=px, fill=INK2)
+    # the last row: the folder IMPAKT holds CHIMERA's sounds
+    t2 = "CHIMERA'S SOUNDS"
+    d.text((s(410) - d.textlength(t2, font=px) / 2, s(435 + 58)), t2, font=px, fill=INK3)
     for (fx, y, gx) in ROWS:
         a, b = fx + 48, gx - 48
         d.line((s(a), s(y - 8), s(b), s(y - 8)), fill=INK3, width=max(1, s(2)))
         d.polygon([(s(b + 2), s(y - 8)), (s(b - 8), s(y - 14)), (s(b - 8), s(y - 2))], fill=INK3)
-    d.text((s(330), s(H - 34)), 'Quit your music software before installing.', font=small, fill=INK3)
+    for k, line in enumerate(['Quit your music software', 'before installing.']):
+        w = d.textlength(line, font=small)
+        d.text((s(PKG[0]) - w / 2, s(PKG[1] + 130 + 16 * k)), line, font=small, fill=INK3)
     return im
 
 

@@ -1,5 +1,5 @@
-; IMPAKT's Windows installer (Inno Setup 6): the VST3 plug-in (with CHIMERA's bank inside its bundle) and the
-; standalone app (its bank beside it). Built by the CI:
+; IMPAKT's Windows installer (Inno Setup 6): the VST3 plug-in, the standalone app and CHIMERA's sounds (one copy for
+; both, in ProgramData\IMPAKT\bank). Built by the CI:
 ;   iscc /DVersion=0.87.0 /DArt=<IMPAKT_artefacts\Release> /DRoot=<repository> /O<output> packaging\windows\impakt.iss
 ; -> IMPAKT-Windows-Setup.exe. Not signed: Windows SmartScreen asks once ("More info", "Run anyway").
 
@@ -54,7 +54,8 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 [Files]
 Source: "{#Art}\VST3\IMPAKT.vst3\*"; DestDir: "{commoncf64}\VST3\IMPAKT.vst3"; Components: vst3; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#Art}\Standalone\IMPAKT.exe"; DestDir: "{app}"; Components: app; Flags: ignoreversion
-Source: "{#Art}\Standalone\bank\*"; DestDir: "{app}\bank"; Components: app; Flags: ignoreversion recursesubdirs createallsubdirs
+; CHIMERA's sounds: one copy for the VST3 and the app (the plug-in looks in ProgramData\IMPAKT\bank)
+Source: "{#Root}\bank\chimera.*"; DestDir: "{commonappdata}\IMPAKT\bank"; Flags: ignoreversion
 Source: "{#Root}\LICENSE"; DestDir: "{app}"; DestName: "LICENSE.txt"; Flags: ignoreversion
 
 [Icons]
@@ -66,6 +67,7 @@ Filename: "{app}\IMPAKT.exe"; Description: "{cm:LaunchProgram,IMPAKT}"; Componen
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{commoncf64}\VST3\IMPAKT.vst3"
+Type: filesandordirs; Name: "{commonappdata}\IMPAKT\bank"
 
 [CustomMessages]
 fr.TypeFull=Installation complète (VST3 et application)

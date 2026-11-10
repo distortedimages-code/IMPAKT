@@ -18,7 +18,7 @@
         <p><a class="key hot inline" href="@DL@@MAC@"><b>IMPAKT-macOS.dmg</b></a></p></li>
       <li><h3>Ouvrez-la</h3>
         <p>Double-cliquez sur le fichier téléchargé. Une fenêtre montre l'installeur à gauche ; à droite, le plugin VST3,
-        l'Audio Unit et l'application, chacun à côté d'un raccourci vers son dossier.</p></li>
+        l'Audio Unit, l'application et le dossier des sons de CHIMERA, chacun à côté d'un raccourci vers son dossier.</p></li>
       <li><h3>Quittez votre logiciel de musique</h3>
         <p>Live, Logic, Bitwig… : un plugin chargé ne peut pas être remplacé proprement.</p></li>
       <li><h3>Lancez « Install IMPAKT »</h3>
@@ -35,15 +35,17 @@
       <li><h3>Suivez l'installeur</h3>
         <p><b>Personnaliser</b> permet de ne garder que le VST3, l'Audio Unit ou l'application. Le VST3 va dans
         <code>/Library/Audio/Plug-Ins/VST3</code>, l'Audio Unit dans <code>/Library/Audio/Plug-Ins/Components</code>,
-        l'application dans <code>Applications</code>.</p></li>
+        l'application dans <code>Applications</code>, et les sons de CHIMERA, un seul exemplaire pour les trois, dans
+        <code>/Library/Application Support/IMPAKT</code>.</p></li>
       <li><h3>Rouvrez votre logiciel de musique</h3>
         <p>IMPAKT est dans les instruments. Dans Live, si vous ne le voyez pas : Réglages › Plug-ins › Réanalyser.
         Logic le valide tout seul au démarrage.</p></li>
     </ol>
     <details class="alt">
       <summary>Installer à la main, en glissant les fichiers</summary>
-      <p>Glissez <code>IMPAKT.vst3</code> sur le raccourci <b>VST3</b>, <code>IMPAKT.component</code> sur <b>Components</b>
-      et <code>IMPAKT.app</code> sur <b>Applications</b> (macOS demande votre mot de passe). Les fichiers copiés ainsi
+      <p>Glissez <code>IMPAKT.vst3</code> sur le raccourci <b>VST3</b>, <code>IMPAKT.component</code> sur <b>Components</b>,
+      <code>IMPAKT.app</code> sur <b>Applications</b> et le dossier <code>IMPAKT</code> (les sons de CHIMERA) sur
+      <b>Application Support</b> (macOS demande votre mot de passe). Les fichiers copiés ainsi
       gardent la marque « téléchargé d'internet » et macOS bloque leur chargement : enlevez-la dans le Terminal
       (Applications › Utilitaires) avec cette commande, puis votre mot de passe :</p>
       <div class="cmd"><pre><code>sudo xattr -dr com.apple.quarantine /Library/Audio/Plug-Ins/VST3/IMPAKT.vst3 /Library/Audio/Plug-Ins/Components/IMPAKT.component /Applications/IMPAKT.app</code></pre><button type="button" class="copy">Copier</button></div>
@@ -63,7 +65,8 @@
         <b>Informations complémentaires</b>, puis <b>Exécuter quand même</b>, et acceptez la demande d'autorisation.</p></li>
       <li><h3>Choisissez ce que vous installez</h3>
         <p>Le VST3 va dans <code>C:\Program Files\Common Files\VST3</code>, là où tous les logiciels le cherchent ;
-        l'application dans <code>C:\Program Files\IMPAKT</code>, avec un raccourci dans le menu Démarrer.</p></li>
+        l'application dans <code>C:\Program Files\IMPAKT</code>, avec un raccourci dans le menu Démarrer ; les sons de
+        CHIMERA, un seul exemplaire pour les deux, dans <code>C:\ProgramData\IMPAKT</code>.</p></li>
       <li><h3>Rouvrez votre logiciel de musique</h3>
         <p>Relancez l'analyse des plugins s'il ne voit pas IMPAKT.</p></li>
     </ol>
@@ -81,7 +84,7 @@
         <p>Dans un terminal, depuis le dossier où elle est :</p>
         <div class="cmd"><pre><code>tar xzf IMPAKT-Linux.tar.gz && cd IMPAKT-*-Linux && ./install.sh</code></pre><button type="button" class="copy">Copier</button></div>
         <p>Le VST3 va dans <code>~/.vst3</code> (Bitwig, Reaper, Ardour le trouvent là), l'application dans
-        <code>~/.local/share/IMPAKT</code>, avec la commande <code>impakt</code> et une entrée de menu. Pas besoin des
+        <code>~/.local/share/IMPAKT</code> avec les sons de CHIMERA, la commande <code>impakt</code> et une entrée de menu. Pas besoin des
         droits d'administrateur.</p></li>
       <li><h3>Ajoutez ce qui manque, s'il le dit</h3>
         <p><code>install.sh</code> vérifie que l'interface et le réseau ont ce qu'il faut :</p>
@@ -114,7 +117,8 @@ sudo pacman -S webkit2gtk-4.1 curl                 # Arch</code></pre><button ty
   <h2 id="retirer">Retirer IMPAKT</h2>
   <ul>
     <li><b>Mac</b> : supprimez <code>/Library/Audio/Plug-Ins/VST3/IMPAKT.vst3</code>,
-    <code>/Library/Audio/Plug-Ins/Components/IMPAKT.component</code> et <code>/Applications/IMPAKT.app</code>.</li>
+    <code>/Library/Audio/Plug-Ins/Components/IMPAKT.component</code>, <code>/Applications/IMPAKT.app</code> et
+    <code>/Library/Application Support/IMPAKT</code>.</li>
     <li><b>Windows</b> : Paramètres › Applications › IMPAKT › Désinstaller.</li>
     <li><b>Linux</b> : <code>./uninstall.sh</code> dans le dossier de l'archive.</li>
   </ul>

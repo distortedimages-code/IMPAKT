@@ -9,9 +9,10 @@ IMPAKT — installation sur Mac
 3. Rouvrez votre logiciel de musique : IMPAKT est dans les instruments (VST3 et Audio Unit).
    L'application autonome est dans Applications.
 
-Ou à la main : glissez IMPAKT.vst3 sur le dossier VST3, IMPAKT.component sur Components et
-IMPAKT.app sur Applications (macOS demande votre mot de passe). Les plugins copiés ainsi
-portent la marque « téléchargé d'internet » : la procédure complète est sur le site.
+Ou à la main : glissez IMPAKT.vst3 sur le dossier VST3, IMPAKT.component sur Components,
+IMPAKT.app sur Applications et le dossier IMPAKT (les sons de CHIMERA, un seul exemplaire
+pour les trois) sur Application Support (macOS demande votre mot de passe). Les plugins copiés
+ainsi portent la marque « téléchargé d'internet » : la procédure complète est sur le site.
 
 Mises à jour : OPTION > Updates, dans IMPAKT.
 Mode d'emploi et procédure détaillée : https://distortedimages-code.github.io/IMPAKT/

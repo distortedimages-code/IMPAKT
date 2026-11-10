@@ -1,13 +1,13 @@
 #!/bin/sh
-# IMPAKT for Linux: installs for you alone (no root): the VST3 in ~/.vst3, the app in ~/.local/share/IMPAKT (with
-# CHIMERA's bank), a command (~/.local/bin/impakt) and a menu entry. Run it again to update.
+# IMPAKT for Linux: installs for you alone (no root): the VST3 in ~/.vst3, the app and CHIMERA's sounds (one copy for
+# both) in ~/.local/share/IMPAKT, a command (~/.local/bin/impakt) and a menu entry. Run it again to update.
 set -e
 cd "$(dirname "$0")"
 VST3="$HOME/.vst3"; SHARE="$HOME/.local/share/IMPAKT"; BIN="$HOME/.local/bin"; APPS="$HOME/.local/share/applications"
 mkdir -p "$VST3" "$SHARE" "$BIN" "$APPS"
 rm -rf "$VST3/IMPAKT.vst3" "$SHARE/IMPAKT" "$SHARE/bank"
 cp -a IMPAKT.vst3 "$VST3/IMPAKT.vst3"
-cp -a app/IMPAKT app/bank "$SHARE/"
+cp -a app/IMPAKT bank "$SHARE/"
 ln -sf "$SHARE/IMPAKT" "$BIN/impakt"
 ICONS="$HOME/.local/share/icons/hicolor/256x256/apps"; mkdir -p "$ICONS"; cp impakt.png "$ICONS/impakt.png"
 sed "s|@EXEC@|$SHARE/IMPAKT|" impakt.desktop > "$APPS/impakt.desktop"

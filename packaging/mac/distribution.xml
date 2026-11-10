@@ -9,6 +9,7 @@
         <line choice="vst3"/>
         <line choice="au"/>
         <line choice="app"/>
+        <line choice="bank"/>
     </choices-outline>
     <choice id="vst3" title="VST3 plug-in" description="IMPAKT for VST3 hosts (Live, Bitwig, Cubase, Studio One, Reaper…): /Library/Audio/Plug-Ins/VST3">
         <pkg-ref id="com.impaktaudio.impakt.vst3"/>
@@ -19,7 +20,11 @@
     <choice id="app" title="Standalone app" description="IMPAKT on its own, without a host: /Applications">
         <pkg-ref id="com.impaktaudio.impakt.app"/>
     </choice>
+    <choice id="bank" title="CHIMERA's sounds" description="The factory kit CHIMERA plays, one copy for the plug-ins and the app: /Library/Application Support/IMPAKT/bank" enabled="false" selected="true">
+        <pkg-ref id="com.impaktaudio.impakt.bank"/>
+    </choice>
     <pkg-ref id="com.impaktaudio.impakt.vst3" version="@VERSION@" onConclusion="none">vst3.pkg</pkg-ref>
     <pkg-ref id="com.impaktaudio.impakt.au" version="@VERSION@" onConclusion="none">au.pkg</pkg-ref>
     <pkg-ref id="com.impaktaudio.impakt.app" version="@VERSION@" onConclusion="none">app.pkg</pkg-ref>
+    <pkg-ref id="com.impaktaudio.impakt.bank" version="@VERSION@" onConclusion="none">bank.pkg</pkg-ref>
 </installer-gui-script>

@@ -4,14 +4,32 @@
 #include <mutex>
 #include <cstdlib>
 
+// CHIMERA's bank: one copy for the VST3, the AU and the app (v87.1: the installers put it in the system's shared data
+// folder), or one inside the plugin itself (a build that embeds it), or the folder $IMPAKT_BANK names
 juce::File ImpaktProcessor::bankFolder()
 {
     juce::Array<juce::File> dirs;
     if (const char* env = std::getenv ("IMPAKT_BANK")) dirs.add (juce::File (juce::String (env)));
     const auto exe = juce::File::getSpecialLocation (juce::File::currentExecutableFile);
-    dirs.add (exe.getParentDirectory().getParentDirectory().getChildFile ("Resources").getChildFile ("bank"));   // (a macOS bundle)
-    dirs.add (exe.getParentDirectory().getChildFile ("bank"));                                                   // (an iOS app, beside a binary)
-    dirs.add (juce::File::getSpecialLocation (juce::File::userApplicationDataDirectory).getChildFile ("IMPAKT").getChildFile ("bank"));
+    dirs.add (exe.getParentDirectory().getParentDirectory().getChildFile ("Resources").getChildFile ("bank"));   // (inside a bundle)
+    dirs.add (exe.getParentDirectory().getChildFile ("bank"));                                                   // (beside a binary)
+    const auto common = juce::File::getSpecialLocation (juce::File::commonApplicationDataDirectory);
+    const auto user   = juce::File::getSpecialLocation (juce::File::userApplicationDataDirectory);
+   #if JUCE_MAC || JUCE_IOS
+    // /Library/Application Support/IMPAKT/bank (the installer), ~/Library/Application Support/IMPAKT/bank
+    dirs.add (common.getChildFile ("Application Support/IMPAKT/bank"));
+    dirs.add (user.getChildFile ("Application Support/IMPAKT/bank"));
+   #elif JUCE_WINDOWS
+    // C:\ProgramData\IMPAKT\bank (the installer), %APPDATA%\IMPAKT\bank
+    dirs.add (common.getChildFile ("IMPAKT").getChildFile ("bank"));
+   #else
+    // ~/.local/share/IMPAKT/bank (install.sh), /usr/local/share, /usr/share
+    const char* xdg = std::getenv ("XDG_DATA_HOME");
+    dirs.add ((xdg != nullptr && *xdg ? juce::File (juce::String (xdg)) : juce::File ("~/.local/share")).getChildFile ("IMPAKT/bank"));
+    dirs.add (juce::File ("/usr/local/share/IMPAKT/bank"));
+    dirs.add (juce::File ("/usr/share/IMPAKT/bank"));
+   #endif
+    dirs.add (user.getChildFile ("IMPAKT").getChildFile ("bank"));
     for (const auto& d : dirs) if (d.getChildFile ("chimera.idx").existsAsFile()) return d;
     return {};
 }

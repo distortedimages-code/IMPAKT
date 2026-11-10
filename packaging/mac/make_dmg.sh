@@ -1,6 +1,7 @@
 #!/bin/bash
-# IMPAKT's Mac disk image: an installer (VST3, AU and the app, each one a choice) and, beside it, the three bundles with
-# shortcuts to their folders for those who drag them by hand.
+# IMPAKT's Mac disk image: an installer (VST3, AU and the app, each one a choice, and CHIMERA's sounds, one copy for
+# all three in /Library/Application Support/IMPAKT/bank) and, beside it, the same four things with shortcuts to their
+# folders for those who drag them by hand. The bundles are built without the bank (IMPAKT_EMBED_BANK=OFF).
 #   packaging/mac/make_dmg.sh <IMPAKT_artefacts/Release> <output folder>   ->  <output folder>/IMPAKT-macOS.dmg
 # Needs: macOS (pkgbuild, productbuild, hdiutil, tiffutil, codesign) and dmgbuild (pip install dmgbuild).
 # The bundles are signed ad hoc: without an Apple developer certificate macOS asks once to allow the installer (the
@@ -15,12 +16,14 @@ WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
 echo "IMPAKT $VER: disk image from $ART"
 
-mkdir -p "$WORK/root/vst3" "$WORK/root/au" "$WORK/root/app" "$WORK/pkgs" "$WORK/stage"
+mkdir -p "$WORK/root/vst3" "$WORK/root/au" "$WORK/root/app" "$WORK/root/bank/IMPAKT/bank" "$WORK/pkgs" "$WORK/stage"
 ditto "$ART/VST3/IMPAKT.vst3"       "$WORK/root/vst3/IMPAKT.vst3"
 ditto "$ART/AU/IMPAKT.component"    "$WORK/root/au/IMPAKT.component"
 ditto "$ART/Standalone/IMPAKT.app"  "$WORK/root/app/IMPAKT.app"
+cp "$ROOT"/bank/chimera.* "$WORK/root/bank/IMPAKT/bank/"
+[ -f "$WORK/root/bank/IMPAKT/bank/chimera.idx" ] || { echo "missing CHIMERA's bank (bank/)"; exit 1; }
 for b in "$WORK/root/vst3/IMPAKT.vst3" "$WORK/root/au/IMPAKT.component" "$WORK/root/app/IMPAKT.app"; do
-    [ -f "$b/Contents/Resources/bank/chimera.idx" ] || { echo "missing CHIMERA's bank in $b"; exit 1; }
+    [ -d "$b/Contents/Resources/bank" ] && { echo "$b holds its own bank: build with -DIMPAKT_EMBED_BANK=OFF"; exit 1; }
     lipo -archs "$b/Contents/MacOS/"* | tee /dev/stderr | grep -q "x86_64 arm64\|arm64 x86_64" || echo "warning: $b is not universal"
     codesign --force --deep --sign - "$b"
 done
@@ -38,6 +41,9 @@ plistlib.dump(d, open(p, "wb"))' "$WORK/$1.plist"
 pkg vst3 com.impaktaudio.impakt.vst3 "/Library/Audio/Plug-Ins/VST3"       "$HERE/scripts-plugin"
 pkg au   com.impaktaudio.impakt.au   "/Library/Audio/Plug-Ins/Components" "$HERE/scripts-au"
 pkg app  com.impaktaudio.impakt.app  "/Applications"
+# CHIMERA's sounds: no bundle in it, a plain folder
+pkgbuild --root "$WORK/root/bank" --identifier com.impaktaudio.impakt.bank --version "$VER" \
+    --install-location "/Library/Application Support" "$WORK/pkgs/bank.pkg"
 
 sed "s/@VERSION@/$VER/g" "$HERE/distribution.xml" > "$WORK/distribution.xml"
 mkdir -p "$WORK/res"; sed "s/@VERSION@/$VER/g" "$HERE/resources/welcome.html" > "$WORK/res/welcome.html"
@@ -47,6 +53,7 @@ productbuild --distribution "$WORK/distribution.xml" --resources "$WORK/res" --p
 ditto "$WORK/root/vst3/IMPAKT.vst3"      "$WORK/stage/IMPAKT.vst3"
 ditto "$WORK/root/au/IMPAKT.component"   "$WORK/stage/IMPAKT.component"
 ditto "$WORK/root/app/IMPAKT.app"        "$WORK/stage/IMPAKT.app"
+ditto "$WORK/root/bank/IMPAKT"           "$WORK/stage/IMPAKT"
 cp "$HERE/LISEZ-MOI.txt" "$WORK/stage/LISEZ-MOI.txt"
 tiffutil -cathidpicheck "$HERE/dmg-background.png" "$HERE/dmg-background@2x.png" -out "$WORK/background.tiff"
 rm -f "$OUT/IMPAKT-macOS.dmg"

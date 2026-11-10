@@ -1,5 +1,14 @@
 # Versions d'IMPAKT
 
+## 0.87.1
+
+- **Installeurs plus légers** : les sons de CHIMERA ne sont plus copiés dans chaque plugin. Un seul exemplaire sert au
+  VST3, à l'AU et à l'application : `/Library/Application Support/IMPAKT` sur Mac, `C:\ProgramData\IMPAKT` sous
+  Windows, `~/.local/share/IMPAKT` sous Linux.
+  L'image disque Mac pèse beaucoup moins lourd.
+- **Image disque Mac** : un quatrième raccourci, Application Support, pour y glisser le dossier des sons quand on
+  installe à la main.
+
 ## 0.87.0
 
 Première version publiée : IMPAKT s'installe sur Mac, Windows et Linux, et se met à jour tout seul.

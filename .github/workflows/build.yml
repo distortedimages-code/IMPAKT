@@ -39,7 +39,7 @@ jobs:
       - name: Configure
         run: >
           cmake -S plugin -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DJUCE_PATH="$PWD/JUCE"
-          -DIMPAKT_COPY_AFTER_BUILD=OFF -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+          -DIMPAKT_COPY_AFTER_BUILD=OFF -DIMPAKT_EMBED_BANK=OFF -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
       - name: Build
         run: cmake --build build --target IMPAKT_VST3 IMPAKT_AU IMPAKT_Standalone
       - name: Disk image
@@ -53,8 +53,8 @@ jobs:
           pkgutil --expand "$MNT/Install IMPAKT.pkg" "$RUNNER_TEMP/pkg" && ls "$RUNNER_TEMP/pkg"
           for b in IMPAKT.vst3 IMPAKT.component IMPAKT.app; do
             codesign -dv "$MNT/$b" 2>&1 | grep -E "Identifier|Signature|Format"
-            ls "$MNT/$b/Contents/Resources/bank"
           done
+          ls -la "$MNT/IMPAKT/bank"
           hdiutil detach "$MNT"
       - uses: actions/upload-artifact@v4
         with: { name: IMPAKT-macOS, path: out/IMPAKT-macOS.dmg, if-no-files-found: error }
@@ -88,7 +88,7 @@ jobs:
         run: |
           where.exe clang-cl
           cmake -S plugin -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl `
-            -DJUCE_PATH="$PWD/JUCE" -DIMPAKT_COPY_AFTER_BUILD=OFF -DIMPAKT_LTO=OFF `
+            -DJUCE_PATH="$PWD/JUCE" -DIMPAKT_COPY_AFTER_BUILD=OFF -DIMPAKT_EMBED_BANK=OFF -DIMPAKT_LTO=OFF `
             -DJUCE_WEBVIEW2_PACKAGE_LOCATION="$env:RUNNER_TEMP\webview2"
       - name: Build
         run: cmake --build build --target IMPAKT_VST3 IMPAKT_Standalone -- -k 0
@@ -119,7 +119,7 @@ jobs:
             libcurl4-openssl-dev libfreetype-dev libfontconfig1-dev libx11-dev libxcomposite-dev libxcursor-dev libxext-dev \
             libxinerama-dev libxrandr-dev libxrender-dev libwebkit2gtk-4.1-dev libglu1-mesa-dev mesa-common-dev
       - name: Configure
-        run: cmake -S plugin -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DJUCE_PATH="$PWD/JUCE" -DIMPAKT_COPY_AFTER_BUILD=OFF
+        run: cmake -S plugin -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DJUCE_PATH="$PWD/JUCE" -DIMPAKT_COPY_AFTER_BUILD=OFF -DIMPAKT_EMBED_BANK=OFF
       - name: Build
         run: cmake --build build --target IMPAKT_VST3 IMPAKT_Standalone
       - name: Archive
