@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=IMPAKT
+Comment=8-track drum synthesizer
+Exec=@EXEC@
+Icon=impakt
+Terminal=false
+Categories=AudioVideo;Audio;Midi;

@@ -1,0 +1,4 @@
+#pragma once
+#include <stddef.h>
+extern "C" { void* memset (void*, int, size_t); void* memcpy (void*, const void*, size_t); void* memmove (void*, const void*, size_t); }
+namespace std { using ::memset; using ::memcpy; using ::memmove; }

@@ -1,0 +1,17 @@
+# builds (made again by tools/*.sh, build_mac.command and the CI)
+build/
+build-*/
+dist/
+.tools/
+node_modules/
+tools/render_test
+tools/render_test_gcc
+site/out/
+packaging/out/
+
+# logs, system files
+*.log
+.DS_Store
+Thumbs.db
+__pycache__/
+*.pyc

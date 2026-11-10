@@ -1,0 +1,41 @@
+// IMPAKT: the few <algorithm> templates the Mutable Instruments code uses, for the freestanding
+// WebAssembly build (no C++ standard library there). Native builds use the real headers.
+#pragma once
+#include <stddef.h>
+namespace std {
+template <class T> inline const T& min (const T& a, const T& b) { return b < a ? b : a; }
+template <class T> inline const T& max (const T& a, const T& b) { return a < b ? b : a; }
+template <class I, class T> inline void fill (I first, I last, const T& v) { for (; first != last; ++first) *first = v; }
+template <class I, class O> inline O copy (I first, I last, O out) { for (; first != last; ++first, ++out) *out = *first; return out; }
+template <class T> inline void swap (T& a, T& b) { T t = a; a = b; b = t; }
+template <class I, class T> inline I upper_bound (I first, I last, const T& v)
+{
+    size_t n = (size_t) (last - first);
+    while (n > 0) { size_t h = n / 2; I m = first + h; if (! (v < *m)) { first = m + 1; n -= h + 1; } else n = h; }
+    return first;
+}
+template <class I> inline I rotate (I first, I middle, I last)
+{
+    if (first == middle) return last;
+    if (middle == last) return first;
+    I r = first + (last - middle);
+    for (I a = first, b = middle - 1; a < b; ++a, --b) swap (*a, *b);       // three reversals
+    for (I a = middle, b = last - 1; a < b; ++a, --b) swap (*a, *b);
+    for (I a = first, b = last - 1; a < b; ++a, --b) swap (*a, *b);
+    return r;
+}
+template <class I, class C> inline void partial_sort (I first, I middle, I last, C comp)
+{
+    for (I i = first; i < middle; ++i)      // selection: [first, middle) gets the smallest, in order
+    {
+        I m = i;
+        for (I j = i + 1; j < last; ++j) if (comp (*j, *m)) m = j;
+        if (m != i) swap (*i, *m);
+    }
+}
+template <class I> inline void sort (I first, I last)
+{
+    for (I i = first + 1; i < last; ++i)   // insertion sort: only used on a handful of values at init
+        for (I j = i; j > first && *j < *(j - 1); --j) { auto t = *j; *j = *(j - 1); *(j - 1) = t; }
+}
+}

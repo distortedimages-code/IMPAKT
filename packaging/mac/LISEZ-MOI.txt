@@ -1,0 +1,24 @@
+IMPAKT — installation sur Mac
+=============================
+
+1. Quittez votre logiciel de musique (Live, Logic, Bitwig…).
+2. Double-cliquez sur « Install IMPAKT » et suivez l'installeur.
+   Si macOS refuse de l'ouvrir (« Apple n'a pas pu vérifier… ») : ouvrez Réglages Système >
+   Confidentialité et sécurité, descendez jusqu'au message sur « Install IMPAKT » et cliquez
+   sur « Ouvrir quand même ». Il ne le demande qu'une fois.
+3. Rouvrez votre logiciel de musique : IMPAKT est dans les instruments (VST3 et Audio Unit).
+   L'application autonome est dans Applications.
+
+Ou à la main : glissez IMPAKT.vst3 sur le dossier VST3, IMPAKT.component sur Components et
+IMPAKT.app sur Applications (macOS demande votre mot de passe). Les plugins copiés ainsi
+portent la marque « téléchargé d'internet » : la procédure complète est sur le site.
+
+Mises à jour : OPTION > Updates, dans IMPAKT.
+Mode d'emploi et procédure détaillée : https://distortedimages-code.github.io/IMPAKT/
+
+-----------------------------------------------------------------------------------------
+IMPAKT on a Mac: quit your music software, double-click "Install IMPAKT". If macOS will not
+open it, go to System Settings > Privacy & Security and click "Open Anyway" (once).
+More: https://distortedimages-code.github.io/IMPAKT/install.html
+
+IMPAKT is free software (GNU GPL v3): https://github.com/distortedimages-code/IMPAKT

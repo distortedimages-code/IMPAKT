@@ -1,0 +1,51 @@
+# IMPAKT's site on GitHub Pages: the home page and the downloads, the install guide, the manual (docs/manuel.md), the
+# versions (CHANGELOG.md) and the web version (app/: tools/build_web.py, with its plain-JS engine made by wasm2js).
+name: Site
+
+on:
+  push:
+    branches: [main]
+    paths: ['docs/**', 'site/**', 'web/**', 'brand/**', 'bank/**', 'tools/build_web.py', 'CHANGELOG.md', 'VERSION', '.github/workflows/site.yml']
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - name: Tools
+        run: |
+          npm install --no-save --no-audit --no-fund binaryen@132.0.0
+          pip install markdown
+      - name: Web version
+        run: python3 tools/build_web.py
+      - name: Site
+        run: python3 site/build_site.py site/out
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: site/out }
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

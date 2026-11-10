@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<installer-gui-script minSpecVersion="2">
+    <title>IMPAKT @VERSION@</title>
+    <welcome file="welcome.html" mime-type="text/html"/>
+    <options customize="allow" require-scripts="false" hostArchitectures="arm64,x86_64"/>
+    <domains enable_localSystem="true" enable_currentUserHome="false" enable_anywhere="false"/>
+    <volume-check><allowed-os-versions><os-version min="11.0"/></allowed-os-versions></volume-check>
+    <choices-outline>
+        <line choice="vst3"/>
+        <line choice="au"/>
+        <line choice="app"/>
+    </choices-outline>
+    <choice id="vst3" title="VST3 plug-in" description="IMPAKT for VST3 hosts (Live, Bitwig, Cubase, Studio One, Reaper…): /Library/Audio/Plug-Ins/VST3">
+        <pkg-ref id="com.impaktaudio.impakt.vst3"/>
+    </choice>
+    <choice id="au" title="Audio Unit" description="IMPAKT for Audio Unit hosts (Logic, GarageBand, MainStage, Live…): /Library/Audio/Plug-Ins/Components">
+        <pkg-ref id="com.impaktaudio.impakt.au"/>
+    </choice>
+    <choice id="app" title="Standalone app" description="IMPAKT on its own, without a host: /Applications">
+        <pkg-ref id="com.impaktaudio.impakt.app"/>
+    </choice>
+    <pkg-ref id="com.impaktaudio.impakt.vst3" version="@VERSION@" onConclusion="none">vst3.pkg</pkg-ref>
+    <pkg-ref id="com.impaktaudio.impakt.au" version="@VERSION@" onConclusion="none">au.pkg</pkg-ref>
+    <pkg-ref id="com.impaktaudio.impakt.app" version="@VERSION@" onConclusion="none">app.pkg</pkg-ref>
+</installer-gui-script>

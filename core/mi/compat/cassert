@@ -1,0 +1,5 @@
+// IMPAKT compat (freestanding WebAssembly build): assert() is a no-op, as in a release build
+#pragma once
+#ifndef assert
+#define assert(x) ((void) 0)
+#endif

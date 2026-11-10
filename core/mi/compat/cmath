@@ -1,0 +1,21 @@
+// IMPAKT: <cmath> for the freestanding WebAssembly build (see algorithm). The Mutable Instruments DSP
+// mostly works from tables; these cover the calls it makes (initialisation and a few per-block ones).
+#pragma once
+#include "math.h"
+namespace std {
+inline float fabs (float x) { return __builtin_fabsf (x); }
+inline double fabs (double x) { return __builtin_fabs (x); }
+inline float floor (float x) { return __builtin_floorf (x); }
+inline double floor (double x) { return __builtin_floor (x); }
+inline float sqrt (float x) { return __builtin_sqrtf (x); }
+inline double sqrt (double x) { return __builtin_sqrt (x); }
+inline float sin (float x) { return ::sinf (x); }
+inline double sin (double x) { return ::sin (x); }
+inline float cos (float x) { return ::cosf (x); }
+inline double cos (double x) { return ::cos (x); }
+inline float tan (float x) { return ::tanf (x); }
+inline double tan (double x) { return ::tan (x); }
+inline float exp (float x) { return ::expf (x); }
+inline float log (float x) { return ::logf (x); }
+inline float pow (float a, float b) { return ::powf (a, b); }
+}

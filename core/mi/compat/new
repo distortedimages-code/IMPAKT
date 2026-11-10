@@ -1,0 +1,4 @@
+// IMPAKT: placement new for the freestanding WebAssembly build
+#pragma once
+#include <stddef.h>
+inline void* operator new (size_t, void* p) noexcept { return p; }
