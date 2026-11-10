@@ -44,6 +44,18 @@ jobs:
         run: cmake --build build --target IMPAKT_VST3 IMPAKT_AU IMPAKT_Standalone
       - name: Disk image
         run: packaging/mac/make_dmg.sh build/IMPAKT_artefacts/Release out
+      - name: Check the disk image
+        run: |
+          MNT=$(mktemp -d)
+          hdiutil attach -readonly -nobrowse -mountpoint "$MNT" out/IMPAKT-macOS.dmg
+          ls -la "$MNT"
+          for l in VST3 Components Applications; do echo "$l -> $(readlink "$MNT/$l")"; done
+          pkgutil --expand "$MNT/Install IMPAKT.pkg" "$RUNNER_TEMP/pkg" && ls "$RUNNER_TEMP/pkg"
+          for b in IMPAKT.vst3 IMPAKT.component IMPAKT.app; do
+            codesign -dv "$MNT/$b" 2>&1 | grep -E "Identifier|Signature|Format"
+            ls "$MNT/$b/Contents/Resources/bank"
+          done
+          hdiutil detach "$MNT"
       - uses: actions/upload-artifact@v4
         with: { name: IMPAKT-macOS, path: out/IMPAKT-macOS.dmg, if-no-files-found: error }
 
@@ -111,7 +123,9 @@ jobs:
       - name: Build
         run: cmake --build build --target IMPAKT_VST3 IMPAKT_Standalone
       - name: Archive
-        run: packaging/linux/make_tar.sh build/IMPAKT_artefacts/Release out
+        run: |
+          packaging/linux/make_tar.sh build/IMPAKT_artefacts/Release out
+          tar tzvf out/IMPAKT-Linux.tar.gz
       - uses: actions/upload-artifact@v4
         with: { name: IMPAKT-Linux, path: out/IMPAKT-Linux.tar.gz, if-no-files-found: error }
 
