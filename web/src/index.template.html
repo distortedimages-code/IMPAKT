@@ -815,16 +815,19 @@ canvas { min-width: 0; min-height: 0; }
   margin: 5px 5px 0; box-shadow: 0 0 0 5px var(--bezel), 0 16px 32px rgba(0,0,0,.4); }
 .rnd .btn { min-height: 34px; }
 /* LIVE: the temporary random, a small encoder at the end of the random tools (its arc lights red while it plays) */
-.live { display: flex; align-items: center; gap: 3px; margin-left: 6px; cursor: ns-resize; touch-action: none; border-radius: 6px; padding: 0 2px; }
+/* LIVE in a red rounded key, everything on it knocked out in white (it stands out from the random tools) */
+.live { display: flex; align-items: center; gap: 5px; margin-left: 8px; cursor: ns-resize; touch-action: none; border-radius: 9px; padding: 3px 10px 3px 4px;
+  background: var(--led-r); box-shadow: inset 0 1px 0 rgba(255,255,255,.28), inset 0 -1px 0 rgba(0,0,0,.18), 0 1px 2px rgba(16,18,18,.3); }
 .live svg { width: 36px; height: 36px; flex: none; display: block; overflow: visible; }
-.live .trk { fill: none; stroke: var(--line); stroke-width: 3; stroke-linecap: round; }
-.live .val { fill: none; stroke: var(--led-r); stroke-width: 4; stroke-linecap: round; }
-.live .cap { fill: var(--enc); }
-.live .ind { stroke: var(--enc-ind); stroke-width: 3; stroke-linecap: round; }
+.live .trk { fill: none; stroke: rgba(255,255,255,.38); stroke-width: 3; stroke-linecap: round; }
+.live .val { fill: none; stroke: #fff; stroke-width: 4; stroke-linecap: round; }
+.live .cap { fill: #141617; }
+.live .ind { stroke: #fff; stroke-width: 3; stroke-linecap: round; }
 .live .lvl { display: flex; flex-direction: column; align-items: flex-start; line-height: 1; gap: 3px; min-width: 32px; }
-.live small { font-size: 11px; letter-spacing: .14em; font-weight: 600; color: var(--ink-3); }
-.live b { font-family: var(--f-data); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--ink-3); }
-.live.on small { color: var(--ink); } .live.on b { color: var(--led-r); }
+.live small { font-size: 11px; letter-spacing: .14em; font-weight: 700; color: #fff; opacity: .9; }
+.live b { font-family: var(--f-data); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; color: #fff; opacity: .9; }
+.live.on { box-shadow: inset 0 1px 0 rgba(255,255,255,.28), inset 0 -1px 0 rgba(0,0,0,.18), 0 0 0 3px rgba(233,71,43,.28), 0 0 14px rgba(233,71,43,.45); }
+.live.on small, .live.on b { opacity: 1; }
 .live:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 .grp { display: flex; align-items: center; gap: 4px; }
 .grp .gl { font-size: 12px; letter-spacing: .14em; color: var(--ink-2); margin-right: 2px; font-weight: 500; }

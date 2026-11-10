@@ -19,6 +19,7 @@ AppUpdatesURL=https://github.com/distortedimages-code/IMPAKT/releases
 DefaultDirName={autopf}\IMPAKT
 DefaultGroupName=IMPAKT
 DisableProgramGroupPage=yes
+DisableWelcomePage=no
 OutputBaseFilename=IMPAKT-Windows-Setup
 Compression=lzma2/max
 SolidCompression=yes

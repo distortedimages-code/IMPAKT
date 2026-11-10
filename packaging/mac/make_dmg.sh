@@ -28,7 +28,10 @@ done
 # one package per bundle, none relocatable (an older copy elsewhere on the disk must not catch the install)
 pkg () {   # $1 root, $2 id, $3 install location, [$4 scripts]
     pkgbuild --analyze --root "$WORK/root/$1" "$WORK/$1.plist" >/dev/null
-    /usr/libexec/PlistBuddy -c "Set :0:BundleIsRelocatable false" "$WORK/$1.plist"
+    python3 -c 'import plistlib, sys
+p = sys.argv[1]; d = plistlib.load(open(p, "rb"))
+for e in d: e["BundleIsRelocatable"] = False
+plistlib.dump(d, open(p, "wb"))' "$WORK/$1.plist"
     pkgbuild --root "$WORK/root/$1" --component-plist "$WORK/$1.plist" --identifier "com.impaktaudio.impakt.$1" \
         --version "$VER" --install-location "$3" ${4:+--scripts "$4"} "$WORK/pkgs/$1.pkg"
 }
