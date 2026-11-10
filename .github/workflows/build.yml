@@ -27,7 +27,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/cache@v4
-        with: { path: JUCE, key: juce-${{ env.JUCE_TAG }} }
+        with:
+          path: JUCE
+          key: juce-${{ env.JUCE_TAG }}-${{ runner.os }}
       - name: JUCE
         run: '[ -d JUCE/modules ] || git clone --depth 1 --branch "$JUCE_TAG" https://github.com/juce-framework/JUCE.git JUCE'
       - name: Tools
@@ -51,7 +53,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/cache@v4
-        with: { path: JUCE, key: juce-${{ env.JUCE_TAG }} }
+        with:
+          path: JUCE
+          key: juce-${{ env.JUCE_TAG }}-${{ runner.os }}
       - name: JUCE
         shell: bash
         run: '[ -d JUCE/modules ] || git clone --depth 1 --branch "$JUCE_TAG" https://github.com/juce-framework/JUCE.git JUCE'
@@ -86,7 +90,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/cache@v4
-        with: { path: JUCE, key: juce-${{ env.JUCE_TAG }} }
+        with:
+          path: JUCE
+          key: juce-${{ env.JUCE_TAG }}-${{ runner.os }}
       - name: JUCE
         run: '[ -d JUCE/modules ] || git clone --depth 1 --branch "$JUCE_TAG" https://github.com/juce-framework/JUCE.git JUCE'
       - name: Packages
