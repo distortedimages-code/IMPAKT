@@ -151,7 +151,8 @@ target_compile_definitions(IMPAKT PUBLIC
     JUCE_USE_WIN_WEBVIEW2_WITH_STATIC_LINKING=1
     JUCE_VST3_CAN_REPLACE_VST2=0
     JUCE_DISPLAY_SPLASH_SCREEN=0
-    JUCE_USE_WEBP=0)                       # (no WebP images here; JUCE 9's WebP SSE4.1 code does not build with clang-cl)
+    JUCE_USE_WEBP=0                        # (no WebP images here; JUCE 9's WebP SSE4.1 code does not build with clang-cl)
+    $<$<PLATFORM_ID:Windows>:_USE_MATH_DEFINES>)            # (M_PI for the Mutable Instruments code)
 
 # link-time optimisation (off for clang-cl on Windows, whose objects the Microsoft linker cannot read)
 option(IMPAKT_LTO "Link-time optimisation" ON)

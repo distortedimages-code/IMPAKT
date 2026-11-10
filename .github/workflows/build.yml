@@ -79,7 +79,7 @@ jobs:
             -DJUCE_PATH="$PWD/JUCE" -DIMPAKT_COPY_AFTER_BUILD=OFF -DIMPAKT_LTO=OFF `
             -DJUCE_WEBVIEW2_PACKAGE_LOCATION="$env:RUNNER_TEMP\webview2"
       - name: Build
-        run: cmake --build build --target IMPAKT_VST3 IMPAKT_Standalone
+        run: cmake --build build --target IMPAKT_VST3 IMPAKT_Standalone -- -k 0
       - name: Installer
         shell: pwsh
         run: |
