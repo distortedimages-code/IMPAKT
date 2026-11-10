@@ -1,11 +1,11 @@
-# IMPAKT: builds the plugin and the app for macOS (universal), Windows and Linux on every push; on a v* tag (matching
-# VERSION) the three installers go into a GitHub release, where the plugin's updater and the site find them.
+# IMPAKT: builds the plugin and the app for macOS (universal), Windows and Linux on every push; when VERSION on main
+# names a version not released yet, the three installers go into a GitHub release (tag vX.Y.Z), where the plugin's
+# updater and the site find them.
 name: Build
 
 on:
   push:
     branches: [main]
-    tags: ['v*']
     paths-ignore: ['docs/**', 'site/**', '*.md', '.github/workflows/site.yml']
   pull_request:
   workflow_dispatch:
@@ -130,23 +130,33 @@ jobs:
         with: { name: IMPAKT-Linux, path: out/IMPAKT-Linux.tar.gz, if-no-files-found: error }
 
   release:
+    # a new VERSION on main (no release of that number yet): the three installers go into a GitHub release, tagged
+    # vX.Y.Z on this commit, with that version's section of CHANGELOG.md as its notes
     name: Release
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [mac, windows, linux]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
-        with: { path: dist, merge-multiple: true }
-      - name: Publish
+      - name: Is it a new version?
+        id: ver
         env: { GH_TOKEN: '${{ github.token }}' }
         run: |
           VER=$(head -n 1 VERSION | tr -d '[:space:]')
-          TAG="${GITHUB_REF_NAME}"
-          [ "$TAG" = "v$VER" ] || { echo "the tag $TAG does not match VERSION ($VER)"; exit 1; }
-          # the notes: this version's section of CHANGELOG.md
+          echo "ver=$VER" >> "$GITHUB_OUTPUT"
+          if gh release view "v$VER" >/dev/null 2>&1; then echo "new=no" >> "$GITHUB_OUTPUT"; echo "v$VER is out already"; else echo "new=yes" >> "$GITHUB_OUTPUT"; fi
+      - uses: actions/download-artifact@v4
+        if: steps.ver.outputs.new == 'yes'
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Publish
+        if: steps.ver.outputs.new == 'yes'
+        env: { GH_TOKEN: '${{ github.token }}' }
+        run: |
+          VER=${{ steps.ver.outputs.ver }}
           awk -v v="$VER" '$0 ~ "^## "v"( |$)" {on=1; next} /^## / {if (on) exit} on' CHANGELOG.md > notes.md
           [ -s notes.md ] || echo "IMPAKT $VER" > notes.md
           ls -l dist
-          gh release create "$TAG" dist/IMPAKT-macOS.dmg dist/IMPAKT-Windows-Setup.exe dist/IMPAKT-Linux.tar.gz \
-            --title "IMPAKT $VER" --notes-file notes.md --verify-tag
+          gh release create "v$VER" dist/IMPAKT-macOS.dmg dist/IMPAKT-Windows-Setup.exe dist/IMPAKT-Linux.tar.gz \
+            --target "$GITHUB_SHA" --title "IMPAKT $VER" --notes-file notes.md

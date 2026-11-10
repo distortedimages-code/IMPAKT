@@ -47,11 +47,10 @@ dans le [manuel](docs/manuel.md#compiler-le-plugin). L'interface se reconstruit 
 
 ## Publier une version
 
-1. Mettre la nouvelle version dans `VERSION` et ses nouveautés dans `CHANGELOG.md` (une section `## x.y.z`).
-2. `git tag vx.y.z && git push origin main vx.y.z`
-
-Le CI compile Mac (universel), Windows et Linux, fabrique les trois installeurs et publie la version sur GitHub ; le
-site se met à jour, et les plugins installés la proposent au prochain lancement.
+Mettre la nouvelle version dans `VERSION`, ses nouveautés dans `CHANGELOG.md` (une section `## x.y.z`), et pousser sur
+`main`. Le CI compile Mac (universel), Windows et Linux, fabrique les trois installeurs et, puisque cette version n'existe
+pas encore, la publie sur GitHub (étiquette `vx.y.z`) ; le site la propose, et les plugins installés l'annoncent au
+prochain lancement.
 
 ## Licence
 
