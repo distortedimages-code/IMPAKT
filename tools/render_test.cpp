@@ -350,7 +350,7 @@ static int modtest()
                 e->setParam (1, P_E1GN, 0.5f);                           // +12 dB
                 e->setParam (1, P_E1AT, 0.15f); e->setParam (1, P_E1DC, 0.45f);
                 e->setParam (1, P_E1DP, 0.0f);                           // -100 %
-                e->setParam (1, P_E1DS, 14.5f / NUM_LFO_DEST);          // VOL
+                e->setParam (1, P_E1DS, 14.5f / MOD_DEST_SLOTS);          // VOL
             }
             e->setPlay (1);
             std::vector<float> L (128), R (128), out;
@@ -371,16 +371,16 @@ static int modtest()
         e->setParam (0, P_MACH, machineVal (M_BD_VA)); e->setParam (0, P_DEC, 0.3f);
         for (int s = 0; s < 16; s += 4) e->setTrig (0, s, 1);
         e->setParam (0, P_E1TG, 0.6f); e->setParam (0, P_E1AT, 0.2f); e->setParam (0, P_E1DC, 0.5f);
-        e->setParam (0, P_E1DP, 1.0f); e->setParam (0, P_E1DS, 9.5f / NUM_LFO_DEST);   // FREQ
+        e->setParam (0, P_E1DP, 1.0f); e->setParam (0, P_E1DS, 9.5f / MOD_DEST_SLOTS);   // FREQ
         e->setSpecTrack (0);
         e->setPlay (1);
-        std::vector<float> L (128), R (128); float mi[64]; int fires = 0; float prev = 0;
+        std::vector<float> L (128), R (128); float mi[MOD_INFO * NUM_TRACKS]; int fires = 0; float prev = 0;
         for (int i = 0; i < 48000 * 2; i += 128)
         {
             e->process (L.data(), R.data(), 128, nullptr);
             e->modInfo (mi);
-            if (mi[4] > 0.3f && prev <= 0.1f) ++fires;
-            prev = mi[4];
+            if (mi[10] > 0.3f && prev <= 0.1f) ++fires;   // (v90: M3, the first follower: its peak)
+            prev = mi[10];
         }
         check (fires == 4, "EF1 TRG: one envelope per kick over 2 s at 120 BPM (fires)", fires);
     }
@@ -396,7 +396,7 @@ static int modtest()
             // a clean held sine: no sub, no drop, no ring, square gate, no noise
             e->setParam (0, P_A, 0.0f); e->setParam (0, P_B, 0.0f); e->setParam (0, P_C, 0.5f / 16.0f); e->setParam (0, P_E, 1.0f); e->setParam (0, P_F, 0.0f);
             for (auto& p : ps) e->setParam (0, p.first, p.second);
-            if (dest > 0) { e->setParam (0, P_LDST, (dest + 0.5f) / NUM_LFO_DEST); e->setParam (0, P_LDEP, 0.9f); e->setParam (0, P_LSPD, 15.5f / 16.0f); e->setParam (0, P_LWAV, 0.5f / NUM_LFO_WAVES); }
+            if (dest > 0) { e->setParam (0, P_LDST, (dest + 0.5f) / MOD_DEST_SLOTS); e->setParam (0, P_LDEP, 0.9f); e->setParam (0, P_LSPD, 15.5f / 16.0f); e->setParam (0, P_LWAV, 0.5f / NUM_LFO_WAVES); }
             e->setTrig (0, 0, 1);
             e->setPlay (1);
             std::vector<float> L (128), R (128), out;
@@ -1478,7 +1478,7 @@ static int followtest()
     for (int lfo = 0; lfo < 2; ++lfo)
     {
         base (); strum (0, 3, 0);
-        if (lfo) { e->setParam (0, P_LDST, 3.5f / NUM_LFO_DEST); e->setParam (0, P_LDEP, 0.5f + 1.0f / 12.0f); e->setParam (0, P_LWAV, (LFO_SHAPES + LW_EXP + 0.5f) / NUM_LFO_WAVES); e->setParam (0, P_LSPD, 0.5f / NUM_LFO_SPEEDS); }
+        if (lfo) { e->setParam (0, P_LDST, 3.5f / MOD_DEST_SLOTS); e->setParam (0, P_LDEP, 0.5f + 1.0f / 12.0f); e->setParam (0, P_LWAV, (LFO_SHAPES + LW_EXP + 0.5f) / NUM_LFO_WAVES); e->setParam (0, P_LSPD, 0.5f / NUM_LFO_SPEEDS); }
         for (int s = 0; s < 16; s += 4) e->setTrig (0, s, 1);
         e->setPlay (1);
         int lo = 99, hi = 0;
@@ -1489,7 +1489,7 @@ static int followtest()
     // 2. a free LFO (a sine, a bar a cycle) on CHRD: the strums one after the other play different chords
     {
         base (); strum (0, 5, 0);
-        e->setParam (0, P_LDST, 3.5f / NUM_LFO_DEST); e->setParam (0, P_LDEP, 0.5f + 0.2f); e->setParam (0, P_LWAV, 0.5f / NUM_LFO_WAVES); e->setParam (0, P_LSPD, 3.5f / NUM_LFO_SPEEDS);
+        e->setParam (0, P_LDST, 3.5f / MOD_DEST_SLOTS); e->setParam (0, P_LDEP, 0.5f + 0.2f); e->setParam (0, P_LWAV, 0.5f / NUM_LFO_WAVES); e->setParam (0, P_LSPD, 3.5f / NUM_LFO_SPEEDS);
         for (int s = 0; s < 16; s += 2) e->setTrig (0, s, 1);
         e->setPlay (1);
         std::vector<int> seen;
@@ -3808,6 +3808,104 @@ static int rtuntest()
     return fails ? 1 : 0;
 }
 
+// v90: the modulators M1..M4 (they were LFO 1, LFO 2, EF 1, EF 2; see modhash for the bit-for-bit of before): the
+// destinations; WAVE's phase and free clock; four routes, AMT; RANDOM's loop and VARI; ENV fired by a hit (its own track's
+// or another's), its stages; a modulator moving another's setting; FOLLOW on M1
+static int modstest()
+{
+    Engine* e = new Engine(); e->init (48000.f);
+    if (! REF) { REF = new Engine(); REF->init (48000.f); }
+    int fails = 0;
+    auto check = [&] (bool ok, const char* what, double v) { printf ("%s %-96s %.4f\n", ok ? "PASS" : "FAIL", what, v); if (! ok) ++fails; };
+    auto dslot = [&] (int p) { for (int i = 0; i < NUM_MOD_DEST; ++i) if (MOD_DEST[i] == p) return (i + 0.5f) / (float) MOD_DEST_SLOTS; return 0.5f / (float) MOD_DEST_SLOTS; };
+    auto typ = [&] (int t) { return (t + 0.5f) / (float) MOD_TYPES; };
+    // the destinations
+    {
+        bool legacy = true; for (int i = 0; i < 38; ++i) legacy = legacy && MOD_DEST[i] == (i == 0 ? -1 : MOD_DEST[i]);
+        bool has = false, mm = false, no = true;
+        for (int i = 0; i < NUM_MOD_DEST; ++i) { has = has || MOD_DEST[i] == P_S1; mm = mm || MOD_DEST[i] == P_LSPD || MOD_DEST[i] == P_M1AM; no = no && MOD_DEST[i] != P_MACH && MOD_DEST[i] != P_LDST && MOD_DEST[i] != P_M2TY && MOD_DEST[i] != P_NOTE; }
+        check (legacy && MOD_DEST[0] == -1 && MOD_DEST[1] == P_TUNE && MOD_DEST[37] == P_MIDF && has && mm && no && NUM_MOD_DEST > 200 && NUM_MOD_DEST <= MOD_DEST_SLOTS,
+               "destinations: OFF, the LFO's 38 first in their order, the side pages, the modulators' own; not the machine, the routes, the types, NOTE (count)", NUM_MOD_DEST);
+    }
+    auto scene = [&] (std::function<void()> f) {
+        softReset (e, 48000.f);
+        for (int t = 0; t < NUM_TRACKS; ++t) { e->tr[t].rN = 0; for (int m = 0; m < MOD_N; ++m) { e->tr[t].lfo[m] = Lfo {}; e->tr[t].ef[m] = EnvFol {}; e->tr[t].men[m] = ModEnv {}; e->tr[t].mrn[m] = ModRnd {}; } }
+        for (int t = 1; t < NUM_TRACKS; ++t) e->setParam (t, P_VOL, 0.0f);
+        e->setGlobal (G_BPM, 120.0f);
+        e->setParam (0, P_MACH, machineVal (M_SINUS)); e->setParam (0, P_DEC, 0.3f);
+        f();
+    };
+    std::vector<float> L (32), R (32);
+    auto run = [&] (int chunks, std::function<void(int)> each) { for (int c = 0; c < chunks; ++c) { e->process (L.data(), R.data(), 32, nullptr); if (each) each (c); } };
+    auto eff = [&] (int p) { float P[NUM_PARAMS]; float lk[NUM_PARAMS]; for (int i = 0; i < NUM_PARAMS; ++i) lk[i] = -1.0f; e->effParams (e->tr[0], lk, P); return P[p]; };
+    // WAVE: PHAS a quarter: a sine starts at its top; FREE at 1 Hz: a cycle a second whatever the tempo
+    scene ([&] { e->setParam (0, P_LWAV, 0.5f / 16.0f); e->setParam (0, P_M1X1, 0.25f); e->setParam (0, P_LDST, dslot (P_FREQ)); e->setParam (0, P_LDEP, 1.0f); e->setPlay (1); });
+    run (1, nullptr);
+    check (e->tr[0].lfo[0].val > 0.99f, "WAVE PHAS 25 %: the sine starts at its top", e->tr[0].lfo[0].val);
+    scene ([&] { e->setParam (0, P_LWAV, 0.5f / 16.0f); e->setParam (0, P_M1X2, 0.75f); e->setParam (0, P_LSPD, 0.5f); e->setGlobal (G_BPM, 77.0f); e->setPlay (1); });
+    run (1500, nullptr);
+    check (fabs (e->tr[0].lfo[0].ph - 0.0) < 0.02 || fabs (e->tr[0].lfo[0].ph - 1.0) < 0.02, "WAVE FREE at 1 Hz: one cycle a second at 77 BPM (phase after 1500 x 32 samples)", e->tr[0].lfo[0].ph);
+    // four routes of M1 and its AMT: FREQ up, DEC down, A up; AMT at half, half as far
+    auto routes = [&] (float amt) {
+        scene ([&] { e->setParam (0, P_LWAV, 3.5f / 16.0f); e->setParam (0, P_FREQ, 0.5f); e->setParam (0, P_DEC, 0.5f); e->setParam (0, P_A, 0.5f);
+                     e->setParam (0, P_LDST, dslot (P_FREQ)); e->setParam (0, P_LDEP, 0.75f); e->setParam (0, P_M1D2, dslot (P_DEC)); e->setParam (0, P_M1A2, 0.25f);
+                     e->setParam (0, P_M1D3, dslot (P_A)); e->setParam (0, P_M1A3, 1.0f); e->setParam (0, P_M1AM, amt); e->setPlay (1); });
+        run (2, nullptr);
+        const float v = e->tr[0].lfo[0].val;
+        return std::vector<float> { v, eff (P_FREQ) - 0.5f, eff (P_DEC) - 0.5f, eff (P_A) - 0.5f };
+    };
+    const auto r1 = routes (1.0f), r2 = routes (0.5f);
+    check (fabsf (r1[1] - 0.5f * r1[0]) < 1e-5f && fabsf (r1[2] + 0.5f * r1[0]) < 1e-5f && fabsf (r1[3] - std::min (0.5f, std::max (-0.5f, r1[0]))) < 1e-5f && fabsf (r1[0]) > 0.5f,
+           "M1, three routes: FREQ +50 %, DEC -50 %, A +100 % of the wave (value now)", r1[0]);
+    check (fabsf (r2[1] - 0.5f * r1[1]) < 1e-5f && fabsf (r2[2] - 0.5f * r1[2]) < 1e-5f, "AMT at 50 %: every route half as far", r2[1] / (r1[1] + 1e-9));
+    // RANDOM, LEN 4, no VARI: the same four values round and round; VARI at 100 %: never the same twice in a row of loops;
+    // FREE: no loop
+    auto rnd = [&] (float lenP, float vari, int cycles) {
+        scene ([&] { e->setParam (0, P_M1TY, typ (MT_RAND)); e->setParam (0, P_LSPD, 15.5f / 16.0f); e->setParam (0, P_LWAV, lenP);
+                     e->setParam (0, P_L1SL, vari); e->setParam (0, P_L1LN, 0.0f); e->setParam (0, P_L1SD, 0.123f); e->setPlay (1); });
+        std::vector<float> v; int last = -1;
+        run (cycles * 120, [&] (int) { const ModRnd& r = e->tr[0].mrn[0]; if (r.cnt != (unsigned) last) { last = (int) r.cnt; v.push_back (r.to); } });
+        return v;
+    };
+    const auto a = rnd (3.5f / 11.0f, 0.0f, 24), b = rnd (3.5f / 11.0f, 1.0f, 24), c = rnd (0.0f, 0.0f, 24);
+    double same = 0, diff = 0, free = 0; int n = 0;
+    for (size_t i = 4; i < a.size() && i < 20; ++i) { same = std::max (same, (double) fabsf (a[i] - a[i - 4])); ++n; }
+    for (size_t i = 4; i < b.size() && i < 20; ++i) diff += fabsf (b[i] - b[i - 4]) > 1e-6f;
+    for (size_t i = 4; i < c.size() && i < 20; ++i) free += fabsf (c[i] - c[i - 4]) > 1e-6f;
+    check (n >= 12 && same == 0.0 && diff >= 12 && free >= 12, "RANDOM: LEN 4 loops its four draws; VARI 100 % draws anew; FREE never loops (repeats, changes)", diff);
+    // ENV: track 1's hit fires it; attack to the top, decay to SUS, released after the hit's gate
+    scene ([&] { e->setParam (0, P_M1TY, typ (MT_ENV)); e->setParam (0, P_LSPD, 0.3f); e->setParam (0, P_LWAV, 0.35f); e->setParam (0, P_L1SL, 0.4f);
+                 e->setParam (0, P_L1LN, 0.3f); e->setParam (0, P_L1SD, 0.5f); e->setParam (0, P_M1X1, 0.0f); e->setParam (0, P_M1X2, 0.0f);
+                 e->setParam (0, P_GATE, 0.5f); e->setTrig (0, 0, 1); e->setPlay (1); });
+    float top = 0, at20 = 0, at300 = 0, at900 = 0; int topAt = -1;
+    run (1500, [&] (int k) { const float v = e->tr[0].men[0].val; if (v > top) { top = v; topAt = k; } if (k == 30) at20 = v; if (k == 450) at300 = v; if (k == 900) at900 = v; });
+    if (getenv ("MODS_DEBUG")) printf ("  env: top %.4f at chunk %d, chunk 30 %.4f, chunk 450 %.4f, chunk 900 %.4f, stage %d gate %.3f\n", top, topAt, at20, at300, at900, e->tr[0].men[0].stage, e->tr[0].men[0].gate);
+    check (top > 0.99f && topAt > 0 && topAt < 40 && fabsf (at300 - 0.4f) < 0.02f && at900 < 0.05f, "ENV: a hit, up in its attack (chunk of the top), SUS 40 % while its gate is open (0.3 s), released (0.6 s)", topAt);
+    scene ([&] { e->setParam (0, P_M1TY, typ (MT_ENV)); e->setParam (0, P_LSPD, 0.0f); e->setParam (0, P_LWAV, 0.3f); e->setParam (0, P_L1SL, 0.0f);
+                 e->setParam (0, P_M1X1, 2.5f / 9.0f); e->setParam (0, P_M1X2, 0.0f); e->setParam (0, P_L1SD, 0.5f); e->setTrig (1, 4, 1); e->setTrig (0, 0, 1); e->setPlay (1); });
+    float before = 0, after = 0;
+    run (1500, [&] (int k) { const float v = e->tr[0].men[0].val; if (k < 360) before = std::max (before, v); else after = std::max (after, v); });
+    if (getenv ("MODS_DEBUG")) printf ("  src: before %.4f after %.4f hits T2 %d\n", before, after, e->tr[1].hitCount);
+    check (before == 0.0f && after > 0.9f, "ENV SRC T2: track 1's own hit does not fire it, track 2's (step 5) does", after);
+    // M2 moves M1's RATE: M1's cycle faster as M2 rises
+    auto rate = [&] (bool route) {
+        scene ([&] { e->setParam (0, P_LWAV, 2.5f / 16.0f); e->setParam (0, P_LSPD, 3.5f / 16.0f); e->setParam (0, P_L2WV, 3.5f / 16.0f); e->setParam (0, P_L2SP, 0.0f);
+                     if (route) { e->setParam (0, P_L2DS, dslot (P_LSPD)); e->setParam (0, P_L2DP, 1.0f); } e->setPlay (1); });
+        run (800, nullptr);
+        return e->tr[0].lfo[0].k + e->tr[0].lfo[0].ph;
+    };
+    const double c0 = rate (false), c1 = rate (true);
+    check (c1 > 2.0 * c0, "M2 on M1's RATE: M1 runs faster (cycles, against alone)", c1 / (c0 + 1e-9));
+    // FOLLOW on M1: track 1 followed (its own sine), FREQ moved
+    scene ([&] { e->setParam (0, P_M1TY, typ (MT_FOLLOW)); e->setParam (0, P_LSPD, 0.5f / 11.0f); e->setParam (0, P_LWAV, 0.6f); e->setParam (0, P_LDST, dslot (P_FREQ)); e->setParam (0, P_LDEP, 0.9f);
+                 e->setTrig (0, 0, 1); e->setTrig (0, 4, 1); e->setPlay (1); });
+    float fol = 0; run (600, [&] (int) { fol = std::max (fol, e->tr[0].ef[0].val); });
+    check (fol > 0.05f, "FOLLOW on M1: it follows the track (its highest)", fol);
+    delete e;
+    printf ("%d failure(s)\n%s\n", fails, fails ? "MODS FAILED" : "MODS OK");
+    return fails ? 1 : 0;
+}
+
 // v89: WTF?! (LIVE's key, its modes). LIVE as it was (bit for bit: see the hashes of livehash); LOOMND to the left: each
 // step's draw comes back every LEN steps (to the right a new draw at each hit); LFO: the settings moved by a wave, on the
 // tempo (its phase from the song position), free, or from each hit (HIT, ONE)
@@ -4015,7 +4113,7 @@ static int rdectest()
         for (int t = 0; t < NUM_TRACKS; ++t) e->setParam (t, P_VOL, 0.0f);
         e->setGlobal (G_BPM, 120.0f);
         e->setParam (0, P_LSPD, 11.5f / NUM_LFO_SPEEDS); e->setParam (0, P_LWAV, (wave + 0.5f) / NUM_LFO_WAVES);
-        e->setParam (0, P_LDST, 1.5f / NUM_LFO_DEST); e->setParam (0, P_LDEP, 1.0f);
+        e->setParam (0, P_LDST, 1.5f / MOD_DEST_SLOTS); e->setParam (0, P_LDEP, 1.0f);
         e->setParam (0, P_L1SL, slw); e->setParam (0, P_L1LN, (len + 0.5f) / NUM_LFO_LENS); e->setParam (0, P_L1SD, seed);
         if (trigEvery > 0) for (int st = 0; st < 16; st += trigEvery) e->setTrig (0, st, 1);
         e->setPlay (1);
@@ -7274,6 +7372,7 @@ int main (int argc, char** argv)
     if (argc >= 2 && ! strcmp (argv[1], "rdec")) return rdectest();
     if (argc >= 2 && ! strcmp (argv[1], "rtun")) return rtuntest();
     if (argc >= 2 && ! strcmp (argv[1], "wtf")) return wtftest();
+    if (argc >= 2 && ! strcmp (argv[1], "mods")) return modstest();
     if (argc >= 2 && ! strcmp (argv[1], "chimera")) return chimtest();
     if (argc >= 2 && ! strcmp (argv[1], "v68")) return v68test();
     if (argc >= 2 && ! strcmp (argv[1], "v71")) return v71test();

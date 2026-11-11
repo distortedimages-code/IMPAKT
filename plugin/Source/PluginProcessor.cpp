@@ -866,11 +866,11 @@ void ImpaktProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::Midi
     for (int k = 0; k < sk::Engine::SPEC_BANDS; ++k) meters.spec[k].store (sp[k], std::memory_order_relaxed);
     // the TRACK screen's modulation view: LFO 1 / 2 (phase, value), EF 1 / 2 (value, input) of every track
     {
-        float mi[8 * sk::NUM_TRACKS];
+        float mi[sk::MOD_INFO * sk::NUM_TRACKS];
         engine->modInfo (mi);
-        // LFOs: the latest; followers: the highest until the editor reads them (it resets them)
-        for (int k = 0; k < 8 * sk::NUM_TRACKS; ++k)
-            if ((k & 7) < 4 || mi[k] > meters.mod[k].load (std::memory_order_relaxed)) meters.mod[k].store (mi[k], std::memory_order_relaxed);
+        // (v90) places and values: the latest; peaks and inputs: the highest until the editor reads them (it resets them)
+        for (int k = 0; k < sk::MOD_INFO * sk::NUM_TRACKS; ++k)
+            if ((k % sk::MOD_INFO) < 8 || mi[k] > meters.mod[k].load (std::memory_order_relaxed)) meters.mod[k].store (mi[k], std::memory_order_relaxed);
     }
     if (const int pt = meters.prismT.load (std::memory_order_relaxed); pt >= 0)
     {

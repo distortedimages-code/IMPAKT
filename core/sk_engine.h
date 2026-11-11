@@ -206,8 +206,45 @@ enum Param {
     // draw at each hit, to the left LOOP, a draw per step of the pattern that comes back with it) and the seed of LOOP's
     // draws (RTSD: a new one each time RTUN leaves its centre to the left)
     P_RTUN, P_RTSD,
+    // v90 (projects v28): the modulators M1..M4 (the MOD page; they were LFO 1, LFO 2 and the two envelope followers):
+    // each its TYPE, the settings its type has beyond those of the LFO (M1, M2: three) or of the follower (M3, M4: two),
+    // AMT (all of its routes at once) and three more routes (a destination, a depth); see MOD_SLOT
+    P_M1TY, P_M1X1, P_M1X2, P_M1X3, P_M1AM, P_M1D2, P_M1A2, P_M1D3, P_M1A3, P_M1D4, P_M1A4,
+    P_M2TY, P_M2X1, P_M2X2, P_M2X3, P_M2AM, P_M2D2, P_M2A2, P_M2D3, P_M2A3, P_M2D4, P_M2A4,
+    P_M3TY, P_M3X1, P_M3X2, P_M3AM, P_M3D2, P_M3A2, P_M3D3, P_M3A3, P_M3D4, P_M3A4,
+    P_M4TY, P_M4X1, P_M4X2, P_M4AM, P_M4D2, P_M4A2, P_M4D3, P_M4A3, P_M4D4, P_M4A4,
     NUM_PARAMS
 };
+// v90: the modulators. Four a track, each of a TYPE: WAVE (the LFO as it was, with a phase and a free clock), RANDOM (a
+// loop of draws that changes as it goes), ENV (an envelope a hit fires), FOLLOW (the envelope follower as it was); eight
+// settings whose meaning is the type's (MOD_SLOT: where the LFO's and the follower's settings were, a project made before
+// plays as it did), AMT, and four routes: any setting of the track (a modulator's own among them), a depth (bipolar)
+enum { MOD_N = 4, MOD_SLOTS = 8, MOD_ROUTES = 4, MOD_TYPES = 4, MOD_DEST_SLOTS = 256, MOD_INFO = 16, MOD_RLEN = 32 };
+enum { MT_WAVE = 0, MT_RAND, MT_ENV, MT_FOLLOW };
+static const int MOD_TY[MOD_N] = { P_M1TY, P_M2TY, P_M3TY, P_M4TY };
+static const int MOD_AM[MOD_N] = { P_M1AM, P_M2AM, P_M3AM, P_M4AM };
+static const int MOD_SLOT[MOD_N][MOD_SLOTS] = {
+    { P_LSPD, P_LWAV, P_L1SL, P_L1LN, P_L1SD, P_M1X1, P_M1X2, P_M1X3 },
+    { P_L2SP, P_L2WV, P_L2SL, P_L2LN, P_L2SD, P_M2X1, P_M2X2, P_M2X3 },
+    { P_E1SR, P_E1GN, P_E1BD, P_E1TG, P_E1AT, P_E1DC, P_M3X1, P_M3X2 },
+    { P_E2SR, P_E2GN, P_E2BD, P_E2TG, P_E2AT, P_E2DC, P_M4X1, P_M4X2 } };
+static const int MOD_DST[MOD_N][MOD_ROUTES] = {
+    { P_LDST, P_M1D2, P_M1D3, P_M1D4 }, { P_L2DS, P_M2D2, P_M2D3, P_M2D4 },
+    { P_E1DS, P_M3D2, P_M3D3, P_M3D4 }, { P_E2DS, P_M4D2, P_M4D3, P_M4D4 } };
+static const int MOD_DEP[MOD_N][MOD_ROUTES] = {
+    { P_LDEP, P_M1A2, P_M1A3, P_M1A4 }, { P_L2DP, P_M2A2, P_M2A3, P_M2A4 },
+    { P_E1DP, P_M3A2, P_M3A3, P_M3A4 }, { P_E2DP, P_M4A2, P_M4A3, P_M4A4 } };
+// the slots of each type (MOD_SLOT[m][slot]):
+//   WAVE    0 RATE  1 SHAP (the LFO's 16)  2 SLW  3 LEN  4 seed  5 PHAS  6 CLK (SYNC / FREE)
+//   RANDOM  0 RATE  1 LEN (FREE, 2 .. 32)  2 VARI  3 SMTH  4 seed  5 TRIG (FREE / HIT)  6 CLK
+//   ENV     0 ATK   1 DEC  2 SUS  3 REL  4 CURV  5 SRC (SELF, T1 .. T8)  6 VEL
+//   FOLLOW  0 SRC   1 GAIN  2 BAND  3 TRG  4 ATK  5 DEC (the follower's six)
+enum { MOD_RLENS = 11, MOD_ESRCS = 9 };
+// the destinations a route can take (MOD_DEST_SLOTS places, the first 38 the LFO's of before, in their order); -1: none
+extern int MOD_DEST[MOD_DEST_SLOTS];
+extern int NUM_MOD_DEST;
+void modDestInit();
+inline int modDest (float v) { const int i = idxOf (v, MOD_DEST_SLOTS); return i < NUM_MOD_DEST ? MOD_DEST[i] : -1; }
 // the side places: S1 .. S35 (v63), then S36 .. S70 (v78) after the params that came between
 enum { NUM_SIDES_A = P_S35 - P_S1 + 1, NUM_SIDES = NUM_SIDES_A + (P_S70 - P_S36 + 1) };
 inline int  sideParam (int q) { return q < NUM_SIDES_A ? P_S1 + q : P_S36 + (q - NUM_SIDES_A); }
@@ -493,6 +530,11 @@ inline float loopDraw (float seedP, unsigned salt, unsigned i)
     return (float) (h >> 8) * (2.0f / 16777216.0f) - 1.0f;
 }
 
+// v90: an ENV modulator (stage 0 at rest, 1 attack, 2 decay, 3 sustain while its gate is open, 4 release), how far
+// into its stage, its gate (seconds left), the hit's velocity; a RANDOM one: its loop of draws, where it is in it, the
+// draw it leaves and the one it goes to, the draws made so far (the next one's number)
+struct ModEnv { float val, pk, x, gate, vel, from; int stage; };
+struct ModRnd { float val, ph, from, to, lp; int i, k; unsigned cnt; float v[MOD_RLEN]; float seed; };
 // envelope follower sources: the track itself, a track (T1..T8), the host input, the master; bands
 enum { EF_SELF = 0, EF_IN = 9, EF_MAIN = 10, EF_SRCS = 11, EF_FULL = 0, EF_LOW, EF_MIDB, EF_HIGHB, EF_BANDS };
 // one envelope follower: its band filter, the follower, the fast follower that fires the triggered envelope and that
@@ -537,8 +579,15 @@ struct Track
     float  rtVel, rtCurve;
     int    rtRatchet;      // the running roll is a ratchet (its rate stays fixed)
 
-    Lfo   lfo[2];
-    EnvFol ef[2];
+    Lfo   lfo[MOD_N];      // v90: the modulators' state, by modulator (WAVE: lfo; FOLLOW: ef; ENV: men; RANDOM: mrn)
+    EnvFol ef[MOD_N];
+    ModEnv men[MOD_N];
+    ModRnd mrn[MOD_N];
+    // this chunk's routes (from the settings of the step the current voice plays): where, from which modulator, how far
+    int   rN;
+    short rDst[MOD_N * MOD_ROUTES];
+    signed char rSrc[MOD_N * MOD_ROUTES];
+    float rAmt[MOD_N * MOD_ROUTES];
     ToneEq tone;
     Rng   rng;
     TrackBox box;
@@ -580,6 +629,18 @@ struct Track
     int   chA, chB, chHits, chNc, chCand[CHIM_NEAR]; float chAlign, chSemis;
     TrackSpread spr;
 };
+// v90: a modulator's value now (WAVE, RANDOM: -1 .. 1; ENV, FOLLOW: 0 .. 1), by its type
+inline int modType (const Track& t, int m) { return idxOf (t.p[MOD_TY[m]], MOD_TYPES); }
+inline float modValue (const Track& t, int m)
+{
+    switch (modType (t, m))
+    {
+        case MT_WAVE:   return t.lfo[m].val;
+        case MT_RAND:   return t.mrn[m].val;
+        case MT_ENV:    return t.men[m].val;
+        default:        return t.ef[m].val;
+    }
+}
 
 template <int N> struct DLine
 {
@@ -976,7 +1037,11 @@ struct Engine
     void   haloInfo (int t, float* out) const;                  // HALO for its screen (HALO_INFO values, see sk_halo.cpp)
     void   breakInfo (int t, float* out) const;                 // BREAK for its screen (BRK_INFO values, see sk_break.cpp)
     void   chimInfo (int t, float* out) const;                  // CHIMERA for its screen (CHIM_INFO values, see sk_chimera.cpp)
-    void   modInfo (float* out);                                // the screen: per track LFO phase / value x 2, EF value / input x 2 (peaks since the last call)
+    void   modInfo (float* out);                                // the screen: per track (MOD_INFO) the modulators' place, value, peak, input (v90)
+    void   modPrep();                                           // v90: each track's routes for this chunk (before the followers)
+    void   modAdvance (Track& t, float steps, int n);            // v90: the track's WAVE, RANDOM and ENV modulators, once per chunk
+    float  modded (const Track& t, const float* lk, int p) const;   // a setting with the routes that land on it (a modulator's)
+    void   modHit (int ti, const float* lk, float vel, float holdSec);  // v90: a hit on track ti (WAVE in a trig mode, RANDOM's HIT, ENV)
     void   machineRender (Voice& v, const float* P, int n, float* out);
     void   machineTrigger (Voice& v, const float* P);
     int    pickVar (Voice& v);

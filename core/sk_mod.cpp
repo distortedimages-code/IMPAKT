@@ -150,14 +150,16 @@ void Engine::efAdvance (int n)
         Track& t = tr[ti];
         // like the LFOs: the settings of the step the current voice plays
         const float* lk = t.voice[t.cur].lk;
-        auto Q = [&] (int p) { return lk[p] >= 0.0f ? lk[p] : t.p[p]; };
-        for (int e = 0; e < 2; ++e)
+        // (v90: the modulators of type FOLLOW, M3 and M4 as the two followers were; their settings as the routes move them)
+        for (int e = 0; e < MOD_N; ++e)
         {
-            const int b = e ? P_E2SR : P_E1SR;
             EnvFol& f = t.ef[e];
-            const int dest = idxOf (Q (b + 7), NUM_LFO_DEST);           // 0: OFF
-            // nothing to drive and nobody looking: at rest
-            if (dest == 0 && ti != specTrack) { f.env = f.fast = f.ad = f.val = f.in = f.pkVal = f.pkIn = 0.0f; f.stage = f.held = 0; f.ic1 = f.ic2 = 0.0f; continue; }
+            auto Q = [&] (int k) { return modded (t, lk, MOD_SLOT[e][k]); };
+            bool routed = false;
+            for (int r = 0; r < MOD_ROUTES; ++r) routed = routed || modDest (lk[MOD_DST[e][r]] >= 0.0f ? lk[MOD_DST[e][r]] : t.p[MOD_DST[e][r]]) >= 0;
+            // another type, or nothing to drive and nobody looking: at rest
+            if (modType (t, e) != MT_FOLLOW || (! routed && ti != specTrack)) { f.env = f.fast = f.ad = f.val = f.in = f.pkVal = f.pkIn = 0.0f; f.stage = f.held = 0; f.ic1 = f.ic2 = 0.0f; continue; }
+            const int b = 0;
             const int src = idxOf (Q (b), EF_SRCS);
             const float* x; int m;
             if (src == EF_IN)        { x = inM; m = n; }
@@ -220,18 +222,25 @@ void Engine::glitchInfo (float* out) const
     out[20] = g[G_XANA] > 0.5f ? 1.0f : 0.0f; out[21] = glitch.lossCents;
 }
 
+// v90: per track (MOD_INFO = 16): each modulator's place in its cycle or loop (0..1; ENV, FOLLOW: their value), its value
+// now, its highest since the last call (ENV, FOLLOW: so that no hit falls between two frames; WAVE, RANDOM: its value),
+// the follower's input (FOLLOW)
 void Engine::modInfo (float* out)
 {
     for (int t = 0; t < NUM_TRACKS; ++t)
     {
         Track& k = tr[t];
-        float* o = out + 8 * t;
-        // (LOOP: where it is in its loop, the page draws the whole loop)
-        o[0] = k.lfo[0].lp >= 0.0f ? k.lfo[0].lp : minf (k.lfo[0].ph, 1.0f); o[1] = k.lfo[0].val;
-        o[2] = k.lfo[1].lp >= 0.0f ? k.lfo[1].lp : minf (k.lfo[1].ph, 1.0f); o[3] = k.lfo[1].val;
-        // the followers: the highest value and input since the last call, so that no hit falls between two frames
-        o[4] = k.ef[0].pkVal; o[5] = k.ef[0].pkIn; o[6] = k.ef[1].pkVal; o[7] = k.ef[1].pkIn;
-        for (int e = 0; e < 2; ++e) k.ef[e].pkVal = k.ef[e].pkIn = 0.0f;
+        float* o = out + MOD_INFO * t;
+        for (int m = 0; m < MOD_N; ++m)
+        {
+            const int ty = modType (k, m);
+            float pos = 0.0f, val = modValue (k, m), pk = val, in = 0.0f;
+            if (ty == MT_WAVE) pos = k.lfo[m].lp >= 0.0f ? k.lfo[m].lp : minf (k.lfo[m].ph, 1.0f);
+            else if (ty == MT_RAND) pos = k.mrn[m].lp;
+            else if (ty == MT_ENV) { pos = val; pk = k.men[m].pk; k.men[m].pk = 0.0f; }
+            else { pos = k.ef[m].val; pk = k.ef[m].pkVal; in = k.ef[m].pkIn; k.ef[m].pkVal = k.ef[m].pkIn = 0.0f; }
+            o[m] = pos; o[4 + m] = val; o[8 + m] = pk; o[12 + m] = in;
+        }
     }
 }
 
