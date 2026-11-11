@@ -1,5 +1,13 @@
 # Versions d'IMPAKT
 
+## 0.87.2
+
+- **Installation sur Mac** : glissez chaque élément sur le raccourci de son dossier, puis collez une commande dans le
+  Terminal (Cmd + Espace, « Terminal »). Elle lève le blocage de macOS sur les fichiers téléchargés, enlève les
+  anciennes copies d'IMPAKT de votre dossier personnel et fait valider l'Audio Unit, sans passer par les Réglages
+  Système. Elle est dans le LISEZ-MOI, désormais visible dans la fenêtre de l'image disque, et sur la page Installer.
+  L'installeur reste là pour qui le préfère.
+
 ## 0.87.1
 
 - **Installeurs plus légers** : les sons de CHIMERA ne sont plus copiés dans chaque plugin. Un seul exemplaire sert au
