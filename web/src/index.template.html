@@ -359,6 +359,74 @@ svg.lg { display: block; width: 100%; height: 100%; }
 .knobs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px 6px; }
 .knob { display: flex; flex-direction: column; align-items: center; gap: 1px; cursor: ns-resize; touch-action: pan-y; padding: 2px 0; border-radius: var(--r); min-width: 0; }
 /* the face: one box per control (dial or switch), so names and values sit on the same lines across a row */
+/* v90: the modulators. Their keys (on the track's screen; on SEQ on the machine's): a sign in each one's colour;
+   lit while it maps. Its banner at the top while one maps; the knobs that can take a route stay bright, the others dim */
+.mkeys { display: flex; gap: 5px; flex: none; align-items: center; }
+.mkeys.tk { margin-left: auto; }
+.mkey { display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 8px; border: 1px solid var(--lcd-dim); border-radius: 2px; background: none;
+  color: var(--lcd-ink); font-family: var(--f-px); font-size: 10px; line-height: 1; cursor: pointer; touch-action: none; user-select: none; -webkit-user-select: none; }
+.mkey i { font-style: normal; color: var(--mc); font-size: 11px; }
+.mkey.routed { border-color: var(--mc); }
+.mkey.on { background: var(--mc); border-color: var(--mc); color: #fff; box-shadow: 0 0 10px var(--mc); }
+.mkey.on i { color: #fff; }
+.mkey:focus-visible { outline: 2px solid var(--lcd-ink); outline-offset: 2px; }
+.mnav .mkeys.sk { margin-right: 6px; }
+.mnav .mkey { height: 30px; }
+/* (the page, on a phone or a computer: the machine's screen has no room beside its name: the keys with the track's length
+   and speed, under the steps (a line of their own on a phone); a tap keeps one on, the banner stays at the top) */
+.trackbar .mkeys.tbk { display: none; }
+:root:not(.plug) .mnav .mkeys.sk { display: none; }
+:root:not(.plug) .trackbar .mkeys.tbk { display: flex; }
+.trackbar .mkey { justify-content: center; height: 34px; border-radius: var(--r); border: 0; background: var(--key); color: var(--ink); box-shadow: var(--raise);
+  font-family: var(--f-data); font-weight: 700; font-size: 12px; }
+.trackbar .mkey.routed { box-shadow: var(--raise), inset 0 -3px 0 var(--mc); }
+.trackbar .mkey.on { background: var(--mc); color: #fff; box-shadow: 0 0 12px var(--mc); }
+@media (max-width: 640px) {
+  :root:not(.plug) .trackbar .mkeys.tbk { flex: 1 0 100%; order: 9; }
+  .trackbar .mkey { flex: 1 1 0; }
+}
+.mapbar { position: fixed; z-index: 60; left: 50%; bottom: max(12px, env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); display: flex; align-items: center; gap: 12px;
+  width: min(620px, calc(100vw - 24px)); box-sizing: border-box; padding: 7px 8px 7px 12px; border-radius: 6px; background: #0E1110; color: #E3EAE5; box-shadow: 0 0 0 2px var(--mc), 0 8px 24px rgba(0,0,0,.35); }
+.mapbar .mbt { font-family: var(--f-px); font-weight: 400; font-size: 12px; white-space: nowrap; display: flex; gap: 6px; align-items: center; }
+.mapbar .mbt i { font-style: normal; color: var(--mc); }
+.mapbar .mbs { font-family: var(--f-px); font-size: 8px; line-height: 1.4; color: #B9C2BE; min-width: 0; }
+.mapbar .mbok { flex: none; border: 0; border-radius: 2px; background: #E3EAE5; color: #0E1110; font-family: var(--f-px); font-size: 11px; padding: 7px 11px; cursor: pointer; }
+/* (the plugin: over the logo, the page keys and the transport free) */
+.plug .mapbar { left: 18px; top: 9px; bottom: auto; transform: none; width: 344px; padding: 6px 6px 6px 10px; gap: 10px; }
+.plug .mapbar .mbs { font-size: 7px; }
+.mapbar .mbs { flex: 1; }
+.app.mapping .knob:not(.mapok):not(.glob) { opacity: .35; }
+.app.mapping .knob.mapok .face { cursor: crosshair; }
+/* a knob's rings: one a route (inside the dial), its dot where the modulator takes it now; the modulators' signs by its name */
+.knob .mrg path { fill: none; stroke-width: 3.8; stroke-linecap: round; }
+.knob .mrg .mdot { fill: #fff; stroke-width: 1.6; }
+.knob .kl .mgl { display: inline-flex; gap: 1px; margin-left: 3px; font-size: 9px; line-height: 1; }
+.knob .kl .mgl i { font-style: normal; }
+/* MOD's screen: the lanes, the routes of the modulator chosen beside them */
+.tbrk { flex: 0 0 100%; height: 0; }
+.tstrip.modv .tspec, .gstrip.modv .tspec { flex: 1 1 56%; min-width: 300px; }
+.mroutes { flex: 1 1 38%; min-width: 0; align-self: stretch; display: flex; flex-direction: column; gap: 6px; padding: 2px 0 2px 12px; border-left: 1px solid var(--lcd-lo); }
+.mrh { display: flex; align-items: baseline; gap: 10px; }
+.mrh b { font-family: var(--f-px); font-weight: 400; font-size: 11px; color: var(--lcd-ink); }
+.mrh b i { font-style: normal; }
+.mrh small, .mrow small, .mhint { font-family: var(--f-px); font-size: 7px; color: var(--lcd-dim); }
+.mrow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(70px, 1.2fr) 46px 24px; align-items: center; gap: 10px; min-height: 28px; border-bottom: 1px solid var(--lcd-lo); }
+.mrn { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.mrn b { font-family: var(--f-px); font-weight: 400; font-size: 11px; color: var(--lcd-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mrn small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mbar { position: relative; height: 10px; border: 1px solid var(--lcd-dim); cursor: ew-resize; touch-action: none; }
+.mbar::before { content: ''; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: var(--lcd-dim); }
+.mbar i { position: absolute; top: 1px; bottom: 1px; }
+.mbar:focus-visible { outline: 2px solid var(--lcd-ink); outline-offset: 2px; }
+.mval { font-family: var(--f-px); font-weight: 400; font-size: 11px; color: var(--lcd-ink); white-space: nowrap; }
+.mlk { color: #FFB000; margin-left: 3px; }
+.mrow .mx { width: 22px; height: 22px; }
+.mhint { border: 1px dashed var(--lcd-lo); padding: 8px 10px; line-height: 1.4; }
+.mhint i { font-style: normal; }
+/* the modules' headers: the sign, the routes counted */
+.kmod .mglyph { font-style: normal; margin-right: 6px; }
+.kmod .mrc { margin-left: auto; font-family: var(--f-data); font-size: 10.5px; font-weight: 600; letter-spacing: .06em; color: var(--ink-2); }
+.kmod .mrc.on { color: var(--ink); }
 /* v88: the knobs' sizes, one scale for every page: M the unit (a machine's knobs, the trig row), L a step up (the
    effects: FX's returns and SEND, the master's pages, OUT), S a step down (TONE's and MOD's modules, eight to a
    module), XS for a row of eight and more (WEST's fine tuning). Each step about 1.2 times the next; a knob's face (its
@@ -1340,6 +1408,7 @@ canvas { min-width: 0; min-height: 0; }
 </style>
 <!--BODY-->
 <div class="app" id="app" data-tab="ms">
+  <div class="mapbar" id="mapbar" hidden role="status"></div>
   <header class="top">
     <div class="brand">
       <div class="lockup" role="img" aria-label="IMPAKT">
@@ -1401,7 +1470,7 @@ canvas { min-width: 0; min-height: 0; }
           <span class="mnum" id="mnum"></span>
         </div>
         <canvas class="ovw" id="ovw" aria-hidden="true"></canvas>
-        <div class="mnav"><button class="lb lw" id="mload" hidden aria-expanded="false" aria-controls="lpanel" title="The loops BREAK plays: ten slots">Load</button><button class="lb lw" id="mtune" hidden aria-expanded="false" aria-controls="rpanel" title="What the four receivers listen to: a station, or a shortwave receiver">Tune</button><button class="lb" id="mprev" aria-label="Previous machine">&lt;</button><button class="lb" id="mnext" aria-label="Next machine">&gt;</button></div>
+        <div class="mnav"><span class="mkeys sk" id="mkeysS"></span><button class="lb lw" id="mload" hidden aria-expanded="false" aria-controls="lpanel" title="The loops BREAK plays: ten slots">Load</button><button class="lb lw" id="mtune" hidden aria-expanded="false" aria-controls="rpanel" title="What the four receivers listen to: a station, or a shortwave receiver">Tune</button><button class="lb" id="mprev" aria-label="Previous machine">&lt;</button><button class="lb" id="mnext" aria-label="Next machine">&gt;</button></div>
         <div class="minfo"><span class="chip" id="mchip">T1</span><span class="mlong" id="mlong">ANALOG KICK</span></div>
         <div class="pread"><span class="pl" id="plabel">TUNE</span><span class="pv" id="pval">+0.0</span></div>
         <div class="pbar" id="pbar" aria-label="Presets">
@@ -1510,6 +1579,7 @@ canvas { min-width: 0; min-height: 0; }
         <div class="pages" id="pages" role="group" aria-label="Pages"></div>
         <div class="lenbar lcdw" id="lenbar" tabindex="0" role="slider" aria-label="Track length" aria-valuemin="1" aria-valuemax="64" title="Track length: touch or drag along the cells of the page shown"><small>LEN</small><span class="cells" id="lencells"></span><b id="lenv">16</b></div>
         <div class="readout spd" id="spd" tabindex="0" role="slider" aria-label="Track speed" title="Track speed: drag up or down, double-tap for 1×"><b id="spdv">1×</b><small>SPD</small></div>
+        <span class="mkeys tbk" id="mkeysB"></span>
         <div class="grp rnd"><span class="gl">RND</span><span class="gv rdep" id="rndd" tabindex="0" role="slider" aria-label="Random depth" title="Random depth: drag up or down">50%</span><button class="btn" id="rndt">Track</button><button class="btn" id="rnda">All</button><button class="btn sq" id="rndu" aria-label="Undo random" disabled>↶</button><div class="live" id="rlive" tabindex="0" role="slider" aria-label="WTF?! amount (Enter: its settings)" aria-controls="wtfbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" title="WTF?!: moves the sounds of the r tracks as they play, nothing is written. Turn it; double-tap: the sounds as written. Tap its name for its modes: LIVE (a new draw on every hit), LOOMND (left: a loop of draws, right: new draws), LFO (a wave on the sounds)"><svg viewBox="4 4 56 56" aria-hidden="true"><path class="trk"/><path class="val"/><circle class="cap" cx="32" cy="32" r="16"/><line class="ind" x1="32" y1="32" x2="32" y2="20"/></svg><span class="lvl"><small>WTF?!</small><b id="rlivev">0%</b></span></div></div>
       </div>
     </section>
@@ -1523,8 +1593,11 @@ canvas { min-width: 0; min-height: 0; }
         <span class="mlab"><b id="tnum">T1</b><span id="tname"></span></span>
         <span class="tdots" id="tdots" aria-hidden="true"></span>
         <span class="tlk" id="tlk" hidden>P-LOCK</span>
+        <span class="mkeys tk" id="mkeysT"></span>
         <button class="lb" data-d="1" aria-label="Next track">&gt;</button>
-        <canvas class="tspec" id="tspec" aria-label="The track: its spectrum, TONE's curve, its LFOs, a follower or its BOX"></canvas>
+        <i class="tbrk" aria-hidden="true"></i>
+        <canvas class="tspec" id="tspec" aria-label="The track: its spectrum, TONE's curve, its modulators or its BOX"></canvas>
+        <div class="mroutes" id="mroutes" hidden aria-label="The routes of the modulator chosen"></div>
       </div>
     </div>
   </section>

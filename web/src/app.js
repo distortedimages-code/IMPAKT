@@ -2,7 +2,7 @@
 'use strict';
 
 // ------------------------------------------------------------------ model constants (mirror core/sk_engine.h)
-const NT = 8, NS = 16, NSTEP = 64, NPAT = 128, NP = 242, NG = 190, NM = 47, MS = 64, MS32 = 32, NIR = 24, NORG = 36, RAT_MAX = 16;
+const NT = 8, NS = 16, NSTEP = 64, NPAT = 128, NP = 284, NG = 190, NM = 47, MS = 64, MS32 = 32, NIR = 24, NORG = 36, RAT_MAX = 16;
 // LFO destinations (core LFO_DEST): 24 until v4, then the retrig rate / count / velocity curve, then (v8) PRISM's,
 // then (v10) HP, LP and the mid frequency of TONE. The envelope followers use the same list
 const NDEST = 38, NDEST_V4 = 24, NDEST_V7 = 27, NDEST_V9 = 35;
@@ -64,7 +64,45 @@ const P = { MACH:0, TUNE:1, DEC:2, A:3, B:4, C:5, D:6, E:7, F:8, FTYP:9, FREQ:10
   // v81: DRONE (AMP): the track plays on its own while the transport runs; its trigs change it instead of striking it
   DRON:239,
   // v88: the trig's pitch drawn at each hit (RTUN, the TRIG row's MORE page, beside RDEC) and the seed of its LOOP's draws
-  RTUN:240, RTSD:241 };
+  RTUN:240, RTSD:241,
+  // v90: the modulators M1..M4 (MOD; they were LFO 1, LFO 2, EF 1, EF 2): each its TYPE, its type's settings beyond the
+  // LFO's (M1, M2: three) or the follower's (M3, M4: two), AMT, three more routes (a destination, a depth); MOD_SLOT
+  M1TY:242, M1X1:243, M1X2:244, M1X3:245, M1AM:246, M1D2:247, M1A2:248, M1D3:249, M1A3:250, M1D4:251, M1A4:252,
+  M2TY:253, M2X1:254, M2X2:255, M2X3:256, M2AM:257, M2D2:258, M2A2:259, M2D3:260, M2A3:261, M2D4:262, M2A4:263,
+  M3TY:264, M3X1:265, M3X2:266, M3AM:267, M3D2:268, M3A2:269, M3D3:270, M3A3:271, M3D4:272, M3A4:273,
+  M4TY:274, M4X1:275, M4X2:276, M4AM:277, M4D2:278, M4A2:279, M4D3:280, M4A3:281, M4D4:282, M4A4:283 };
+// v90: the modulators (core/sk_engine.h MOD_*): their types, where each one's TYPE, AMT, eight settings and four routes
+// are (the first settings where the LFO's and the follower's were), the destinations a route can take (on a grid of 256:
+// OFF and the LFO's 37 first, then every other setting of the track but those it makes no sense to move: modDestInit)
+const MOD_N = 4, MOD_ROUTES = 4, MOD_SLOTS = 8, MOD_DSLOTS = 256;
+const MT = { WAVE: 0, RAND: 1, ENV: 2, FOLLOW: 3 }, MT_NAMES = ['WAVE', 'RAND', 'ENV', 'FLLW'], MT_LONG = ['WAVE', 'RANDOM', 'ENV', 'FOLLOW'];
+const MOD_TY = [P.M1TY, P.M2TY, P.M3TY, P.M4TY], MOD_AM = [P.M1AM, P.M2AM, P.M3AM, P.M4AM];
+const MOD_SLOT = [[P.LSPD, P.LWAV, P.L1SL, P.L1LN, P.L1SD, P.M1X1, P.M1X2, P.M1X3], [P.L2SP, P.L2WV, P.L2SL, P.L2LN, P.L2SD, P.M2X1, P.M2X2, P.M2X3],
+  [P.E1SR, P.E1GN, P.E1BD, P.E1TG, P.E1AT, P.E1DC, P.M3X1, P.M3X2], [P.E2SR, P.E2GN, P.E2BD, P.E2TG, P.E2AT, P.E2DC, P.M4X1, P.M4X2]];
+const MOD_DST = [[P.LDST, P.M1D2, P.M1D3, P.M1D4], [P.L2DS, P.M2D2, P.M2D3, P.M2D4], [P.E1DS, P.M3D2, P.M3D3, P.M3D4], [P.E2DS, P.M4D2, P.M4D3, P.M4D4]];
+const MOD_DEP = [[P.LDEP, P.M1A2, P.M1A3, P.M1A4], [P.L2DP, P.M2A2, P.M2A3, P.M2A4], [P.E1DP, P.M3A2, P.M3A3, P.M3A4], [P.E2DP, P.M4A2, P.M4A3, P.M4A4]];
+// (p -> what it is to a modulator: { m, k: 'ty' | 'am' | slot number | 'd' + route | 'a' + route })
+const MODP = {};
+for (let m = 0; m < MOD_N; m++) {
+  MODP[MOD_TY[m]] = { m, k: 'ty' }; MODP[MOD_AM[m]] = { m, k: 'am' };
+  MOD_SLOT[m].forEach((q, i) => { MODP[q] = { m, k: i }; });
+  for (let r = 0; r < MOD_ROUTES; r++) { MODP[MOD_DST[m][r]] = { m, k: 'd', r }; MODP[MOD_DEP[m][r]] = { m, k: 'a', r }; }
+}
+const MOD_LFO_DEST = [-1, P.TUNE, P.DEC, P.A, P.B, P.C, P.D, P.E, P.F, P.FREQ, P.RES, P.DRV, P.BITS, P.SRR, P.VOL, P.PAN, P.DLY, P.REV,
+  P.FENV, P.IR, P.IMIX, P.IDCY, P.IPRE, P.ITON, P.RTRG, P.RCNT, P.RVEL, P.PMIX, P.PWAV, P.PWRP, P.PCTR, P.PWID, P.PSPD, P.PBLR, P.PTLT,
+  P.HPF, P.LPF, P.MIDF];
+const MOD_DEST = (() => {
+  const used = new Set(MOD_LFO_DEST.filter(p => p >= 0)), out = MOD_LFO_DEST.slice();
+  for (const p of [P.MACH, P.FTYP, P.NOTE, P.PROB, P.MICR, P.GATE, P.SPC, P.CHOK, P.JUMP, P.JRNG, P.HARM, P.DRON,
+    P.RSRC, P.RLEN, P.RLEV, P.RTHR, P.ROVD, P.RMON, P.RBUF, P.BSED, P.RDSD, P.L1SD, P.L2SD, P.RTSD, P.PQNT]) used.add(p);
+  for (let m = 0; m < MOD_N; m++) { used.add(MOD_TY[m]); for (let r = 0; r < MOD_ROUTES; r++) { used.add(MOD_DST[m][r]); used.add(MOD_DEP[m][r]); } }
+  for (let p = 0; p < 284 && out.length < MOD_DSLOTS; p++) if (!used.has(p)) out.push(p);
+  return out;
+})();
+const MOD_DEST_I = new Map(MOD_DEST.map((p, i) => [p, i]));
+const modTypeP = (p, m) => Math.min(3, Math.max(0, Math.floor(p[MOD_TY[m]] * 4)));
+const modDestOf = v => { const i = idx(v, MOD_DSLOTS); return i < MOD_DEST.length ? MOD_DEST[i] : -1; };
+const modDestVal = p => mid(p < 0 ? 0 : (MOD_DEST_I.get(p) ?? 0), MOD_DSLOTS);
 const G = { BPM:0, SWING:1, DTIM:2, DFB:3, DTON:4, DPNG:5, RSIZ:6, RDMP:7, MDRV:8, MVOL:9,
   STIM:10, SBLR:11, SWRP:12, SREF:13, SATM:14, SFRZ:15, SREV:16, SLVL:17,
   EQLF:18, EQLB:19, EQLA:20, EQHF:21, EQHB:22, EQBW:23, EQHA:24, EQHS:25,     // master: Pultec EQ
@@ -1079,11 +1117,12 @@ const PAGES = [
   // (v78: ECRV, the amplitude envelope's curve, after its attack)
   // (v81: DRONE, after them)
   { id: 'AMP', ps: [P.VOL, P.PAN, P.ATK, P.ECRV, P.PNCH, P.DUCK, P.CHOK, P.DRON] },
-  { id: 'LFO1', ps: [P.LSPD, P.LDEP, P.LDST, P.LWAV, P.L1SL, P.L1LN] },
-  { id: 'LFO2', ps: [P.L2SP, P.L2DP, P.L2DS, P.L2WV, P.L2SL, P.L2LN] },
+  // v90: the modulators M1..M4 (they were LFO 1, LFO 2 and the followers: the ids stay), their knobs by their type
+  { id: 'LFO1', get ps() { return modPs(0); } },
+  { id: 'LFO2', get ps() { return modPs(1); } },
   // the envelope followers (v10)
-  { id: 'EF1', ps: [P.E1SR, P.E1GN, P.E1BD, P.E1TG, P.E1AT, P.E1DC, P.E1DP, P.E1DS] },
-  { id: 'EF2', ps: [P.E2SR, P.E2GN, P.E2BD, P.E2TG, P.E2AT, P.E2DC, P.E2DP, P.E2DS] },
+  { id: 'EF1', get ps() { return modPs(2); } },
+  { id: 'EF2', get ps() { return modPs(3); } },
   // TRG: not a track page but a row of knobs under the trig keys (the per-trig settings, the ones p-locked most)
   { id: 'TRG', seq: true, ps: [P.NOTE, P.VEL, P.PROB, P.MICR, P.RTRG, P.RCNT, P.RVEL, P.GATE] },
   { id: 'BOX', ps: [P.IR, P.IMIX, P.IPRE, P.IDCY, P.IGAT, P.ITON, P.IFB, P.IREV] },
@@ -1113,7 +1152,7 @@ const PTABS = [['ms', 'Seq'], ['tn', 'Tone'], ['md', 'Mod'], ['fx', 'FX'], ['mt'
 const KMODS = {
   // (v70: the BOX on TONE, after AMP: it is the track's sound)
   tn: [['FLT', 'FILTER'], ['TONE', 'TONE'], ['AMP', 'AMP'], ['BOX', 'BOX']],
-  md: [['LFO1', 'LFO 1'], ['LFO2', 'LFO 2'], ['EF1', 'FOLLOWER 1'], ['EF2', 'FOLLOWER 2']],
+  md: [['LFO1', 'M1'], ['LFO2', 'M2'], ['EF1', 'M3'], ['EF2', 'M4']],
   fx: [['SEND', 'SEND'], ['REV', 'REVERB'], ['DLY', 'DELAY'], ['CHO', 'CHORUS'], ['PHS', 'PHASER']],
   mt: [['OUT', 'OUT']],
 };
@@ -1123,7 +1162,7 @@ const KMODS = {
 // when off), the modulator routed (a destination, a depth), the module changing the sound; a dot when its module
 // holds a p-lock
 const RET_IDS = ['REV', 'DLY', 'CHO', 'PHS'], MODT_IDS = ['LFO1', 'LFO2', 'EF1', 'EF2'], TONET_IDS = ['FLT', 'TONE', 'AMP', 'BOX'];
-const TG_NAME = { REV: 'REVERB', DLY: 'DELAY', CHO: 'CHORUS', PHS: 'PHASER', LFO1: 'LFO 1', LFO2: 'LFO 2', EF1: 'FOLLOWER 1', EF2: 'FOLLOWER 2',
+const TG_NAME = { REV: 'REVERB', DLY: 'DELAY', CHO: 'CHORUS', PHS: 'PHASER', LFO1: 'M1', LFO2: 'M2', EF1: 'M3', EF2: 'M4',
   FLT: 'FILTER', TONE: 'TONE', AMP: 'AMP', BOX: 'BOX' };
 // a TONE module changes the sound: the filter not wide open (or its drive, bits, rate), the EQ not flat (or SPRD), an
 // attack, a punch, ducking, a pan off the centre or a choke group, an IR
@@ -1134,8 +1173,9 @@ function toneActive(id) {
   if (id === 'AMP') return on(p[P.ATK]) || on(p[P.PNCH]) || on(p[P.DUCK]) || Math.abs(p[P.PAN] - 0.5) > 0.004 || idx(p[P.CHOK], 5) > 0 || p[P.ECRV] < 0.995 || p[P.DRON] >= 0.5;
   return idx(p[P.IR], NIR + 1) > 0;
 }
-const MOD_ROUTE = { LFO1: [P.LDST, P.LDEP], LFO2: [P.L2DS, P.L2DP], EF1: [P.E1DS, P.E1DP], EF2: [P.E2DS, P.E2DP] };
-const modRouted = id => { const [d, a] = MOD_ROUTE[id], p = state.tracks[ui.t].p; return idx(p[d], NDEST) > 0 && Math.abs(p[a] - 0.5) > 1e-3; };
+// (v90: a modulator with a route that moves something)
+const modRoutedM = (m, t = ui.t) => { const p = state.tracks[t].p; return MOD_DST[m].some((d, r) => modDestOf(p[d]) >= 0 && Math.abs(p[MOD_DEP[m][r]] - 0.5) > 1e-3); };
+const modRouted = id => modRoutedM(MODT_IDS.indexOf(id));
 const TGROUPS = [
   { key: 'ret', label: 'Returns', ids: RET_IDS, on: id => !pageBypassed(id), strike: true },
   { key: 'modt', label: 'Modulators', ids: MODT_IDS, on: id => modRouted(id), strike: false, web: true },
@@ -1788,6 +1828,7 @@ const DUCK_T1 = { l: 'DUCK', f: () => '—', off: true, frame: 'T1 LEADS' };
 // (v81: DRONE on a machine that cannot hold one)
 const DRON_NA = { l: 'DRONE', f: () => '—', off: true };
 function paramMeta(t, p) {
+  if (MODP[p]) return modMeta(t, MODP[p]);
   if (p === P.DUCK && t === 0 && !ui.all) return DUCK_T1;
   const m = trackMachine(t);
   if (p === P.DRON && !ui.all && !droneM(m, state.tracks[t].p)) return DRON_NA;
@@ -1832,14 +1873,14 @@ function defaultParams(m) {
   const p = new Array(NP).fill(0.5);
   p[P.MACH] = mv(m); p[P.FTYP] = mid(0, 4); p[P.FREQ] = 1; p[P.RES] = 0.1; p[P.FENV] = 0.5; p[P.FDEC] = 0.3;
   p[P.DRV] = 0; p[P.BITS] = 0; p[P.SRR] = 0; p[P.VOL] = 0.8; p[P.PAN] = 0.5; p[P.DLY] = 0; p[P.REV] = 0;
-  p[P.LSPD] = mid(7, 16); p[P.LDEP] = 0.5; p[P.LDST] = mid(0, NDEST); p[P.LWAV] = mid(0, NWAV);
+  p[P.LSPD] = mid(7, 16); p[P.LDEP] = 0.5; p[P.LDST] = mid(0, MOD_DSLOTS); p[P.LWAV] = mid(0, NWAV);
   p[P.NOTE] = 0.5; p[P.VEL] = 100 / 127; p[P.PROB] = 1; p[P.MICR] = 0.5; p[P.RTRG] = mid(0, 12);
   p[P.RCNT] = mid(3, 16); p[P.RVEL] = 0.5; p[P.GATE] = 0; p[P.RCRV] = 0.5; p[P.JUMP] = mid(12, NJUMP); p[P.JRNG] = mid(11, NJRNG);
   p[P.SPC] = 0.5; p[P.ATK] = 0; p[P.CHOK] = mid(0, 5); p[P.DUCK] = 0;
-  p[P.L2SP] = mid(5, 16); p[P.L2DP] = 0.5; p[P.L2DS] = mid(0, NDEST); p[P.L2WV] = mid(0, NWAV);
+  p[P.L2SP] = mid(5, 16); p[P.L2DP] = 0.5; p[P.L2DS] = mid(0, MOD_DSLOTS); p[P.L2WV] = mid(0, NWAV);
   p[P.IR] = mid(0, NIR + 1); p[P.IMIX] = 0.5; p[P.IPRE] = 0; p[P.IDCY] = 1; p[P.IGAT] = 1; p[P.ITON] = 0.5; p[P.IFB] = 0; p[P.IREV] = mid(0, 2);
   p[P.PNCH] = 0; p[P.ECRV] = 1; p[P.DRON] = 0;
-  Object.assign(p, RAM_PAD, V10_PAD, HALO_PAD, BRK_PAD, FX_PAD, V19_PAD, V20_PAD);
+  Object.assign(p, RAM_PAD, V10_PAD, HALO_PAD, BRK_PAD, FX_PAD, V19_PAD, V20_PAD, V90_PAD);
   p[P.HARM] = mid(1, 3); p[P.SAIR] = STRUM_AIR0;
   machineDefaults(p, m);
   return p;
@@ -1983,7 +2024,7 @@ function demoState() {
   set(1, { [P.MID]: 0.5 - 2 / 30, [P.MIDF]: Math.log(450 / 150) / Math.log(53.333) });   // the snare: 2 dB less box
   // an envelope follower: the hats tick the bass filter open (T3's highs, fast attack, short decay)
   set(7, { [P.E1SR]: mid(3, 11), [P.E1GN]: (6 + 12) / 48, [P.E1BD]: mid(3, 4), [P.E1AT]: 0.25, [P.E1DC]: Math.log(90 / 5) / Math.log(800),
-           [P.E1DP]: 0.6, [P.E1DS]: mid(9, NDEST) });
+           [P.E1DP]: 0.6, [P.E1DS]: mid(9, MOD_DSLOTS) });
   // the hats stay off the scale: their metal ratios are part of the sound
   s.tracks[2].q = 0;
   patFix(s);
@@ -2112,7 +2153,21 @@ function migrate(s) {
   if (r && !r.v78) toV78(r);
   if (r && !r.v82) toV82(r);
   if (r && !r.v83) toV83(r);
+  if (r && !r.v90) toV90(r);
   return r;
+}
+// v90: the LFOs' and the followers' destinations (now M1..M4's first routes) from the 38 of before onto the grid of 256
+// (the same destination, the same place in the list), on the tracks, their steps and every pattern
+const V90_DEST = [P.LDST, P.L2DS, P.E1DS, P.E2DS];
+const dest90 = v => mid(idx(v, NDEST), MOD_DSLOTS);
+function v90Track(t) {
+  for (const q of V90_DEST) if (t.p[q] != null) t.p[q] = dest90(t.p[q]);
+  for (const st of t.steps || []) if (st && st.l) for (const q of V90_DEST) if (q in st.l) st.l[q] = dest90(st.l[q]);
+}
+function toV90(s) {
+  for (const t of s.tracks) v90Track(t);
+  for (const pt of s.pats || []) if (pt && pt.tracks) for (const t of pt.tracks) v90Track(t);
+  s.v90 = 1;
 }
 function migrate26(s) {
   if (!s || !Array.isArray(s.tracks) || !Array.isArray(s.g)) return null;
@@ -2347,7 +2402,7 @@ const RAM_PAD = { [P.RSRC]: mid(1, RAM_SRC.length), [P.RLEN]: mid(7, RAM_TAKE.le
 // v10: TONE flat; the followers on the track itself, 0 dB, the whole band, following, 5 ms / 150 ms, no depth, no target
 const V10_PAD = { [P.HPF]: 0, [P.LPF]: 1, [P.LOW]: 0.5, [P.LOWF]: 0.5, [P.MID]: 0.5, [P.MIDF]: 0.5, [P.HIGH]: 0.5, [P.HIGF]: 0.5,
   ...Object.fromEntries([P.E1SR, P.E2SR].flatMap(b => [[b, mid(0, EF_SRC.length)], [b + 1, 0.25], [b + 2, mid(0, 4)], [b + 3, 0],
-    [b + 4, 0.4247], [b + 5, 0.5088], [b + 6, 0.5], [b + 7, mid(0, NDEST)]])) };
+    [b + 4, 0.4247], [b + 5, 0.5088], [b + 6, 0.5], [b + 7, mid(0, MOD_DSLOTS)]])) };
 // v13: HALO's VOICE side: a 0.3 s swell, no glide, KEY, root position, a little drift and air, half wide
 const HALO_PAD = { [P.HSWL]: 0.55, [P.HGLD]: 0, [P.HMOD]: mid(0, 12), [P.HINV]: 0, [P.HDRF]: 0.3, [P.HAIR]: 0.15, [P.HWID]: 0.5 };
 // v14: BREAK's CHOP side: no chops, free draws, no swap
@@ -2387,8 +2442,13 @@ const V20_PAD = { [P.GDTN]: 0, [P.GVAR]: 0, [P.GSHN]: 0, [P.GDRP]: 0, [P.SAIR]: 
   [P.CHO]: 0, [P.PHS]: 0,
   // v88: no pitch drawn (the seed: a new one when RTUN is first turned to LOOP)
   [P.RTUN]: 0.5, [P.RTSD]: 0 };
+// v90 (core/sk_engine.cpp defaultTrack): M1, M2 WAVE (the LFOs), M3, M4 FOLLOW (the followers), their new settings at rest
+// (WAVE: no phase, SYNC), AMT full, routes 2 .. 4 off
+const V90_PAD = Object.fromEntries([0, 1, 2, 3].flatMap(m => [[MOD_TY[m], mid(m < 2 ? MT.WAVE : MT.FOLLOW, 4)], [MOD_AM[m], 1],
+  ...MOD_SLOT[m].slice(m < 2 ? 5 : 6).map((q, i) => [q, m < 2 && i === 1 ? 0.25 : 0]),
+  ...[1, 2, 3].flatMap(r => [[MOD_DST[m][r], mid(0, MOD_DSLOTS)], [MOD_DEP[m][r], 0.5]])]));
 const STRUM_AIR0 = 0.3;
-const padVal = i => i === P.PNCH ? 0 : i === P.JRNG ? mid(11, NJRNG) : i in V20_PAD ? V20_PAD[i] : i in V19_PAD ? V19_PAD[i] : i in RAM_PAD ? RAM_PAD[i] : i in V10_PAD ? V10_PAD[i] : i in HALO_PAD ? HALO_PAD[i] : i in BRK_PAD ? BRK_PAD[i] : i in FX_PAD ? FX_PAD[i] : 0.5;
+const padVal = i => i === P.PNCH ? 0 : i === P.JRNG ? mid(11, NJRNG) : i in V90_PAD ? V90_PAD[i] : i in V20_PAD ? V20_PAD[i] : i in V19_PAD ? V19_PAD[i] : i in RAM_PAD ? RAM_PAD[i] : i in V10_PAD ? V10_PAD[i] : i in HALO_PAD ? HALO_PAD[i] : i in BRK_PAD ? BRK_PAD[i] : i in FX_PAD ? FX_PAD[i] : 0.5;
 // v78: a track's params padded, its machine known: the side places added (S36 ..) at its machine's own, ECRV at EXP
 const padValM = (i, m) => isSide(i) ? (MACH[m] && MACH[m].sd ? MACH[m].sd[sideIx(i)] || 0 : 0) : i === P.ECRV ? 1 : i === P.DRON ? 0 : padVal(i);
 function padTrackP(p) { const m = mof(p[P.MACH]); while (p.length < NP) p.push(padValM(p.length, m)); }
@@ -2597,7 +2657,7 @@ function patFix(s) {
   for (const t of s.tracks) { if (!Array.isArray(t.steps)) t.steps = []; while (t.steps.length < NSTEP) t.steps.push({ on: 0, l: {} }); }
 }
 // the project as it is saved (its patterns packed)
-const serialState = () => JSON.stringify(Object.assign({}, state, { wst: 1, v78: 1, v82: 1, v83: 1, pats: state.pats.map(patPack) }));
+const serialState = () => JSON.stringify(Object.assign({}, state, { wst: 1, v78: 1, v82: 1, v83: 1, v90: 1, pats: state.pats.map(patPack) }));
 
 // GLITCH's RAND moves the tracks marked r (rx = 0): their mask, for the engine
 const rMask = s => s.tracks.reduce((m, t, i) => m | (t.rx ? 0 : 1 << i), 0) / 255;
@@ -4263,11 +4323,12 @@ function onPos(d) {
   // LFO / EF of every track; the followers of the track shown, as a history for its screen
   if (d.mod) {
     ui.mod = d.mod;
-    if (ui.efT !== ui.t) { ui.efT = ui.t; ui.efHist = [[], []]; }
+    // (v90: the modulators of the track shown, their values over the last seconds, for its screen)
+    if (ui.modT !== ui.t) { ui.modT = ui.t; ui.modHist = [[], [], [], []]; }
     const now = performance.now();
-    for (let e = 0; e < 2; e++) {
-      const hst = ui.efHist[e]; hst.push([d.mod[ui.t * 8 + 4 + 2 * e], d.mod[ui.t * 8 + 5 + 2 * e], now]);
-      let old = 0; while (old < hst.length && now - hst[old][2] > EF_WIN + 500) old++;
+    for (let m = 0; m < MOD_N; m++) {
+      const hst = ui.modHist[m]; hst.push([modNow(ui.t, m), now]);
+      let old = 0; while (old < hst.length && now - hst[old][1] > MOD_WIN + 500) old++;
       if (old) hst.splice(0, old);
     }
   }
@@ -4305,6 +4366,13 @@ function reseed(t, p, was, v, lock) {
 function setTrackParam(p, v) {
   const tr = trk(), meta = paramMeta(ui.t, p);
   v = quant(meta, v);
+  // v90: a modulator's TYPE belongs to the track (never locked): its settings to the new type's own
+  if (MODP[p] && MODP[p].k === 'ty') {
+    const m = MODP[p].m, was = modTypeP(tr.p, m);
+    tr.p[p] = v; send(['p', ui.t, p, v]); ui.lastP = p; touched();
+    if (idx(v, 4) !== was) { modTypeDefaults(tr.p, m, idx(v, 4)); for (const q of MOD_SLOT[m]) send(['p', ui.t, q, tr.p[q]]); renderAll(); }
+    return;
+  }
   // HALO: its CHORD / VOICE switch belongs to the track (never locked): it changes the page; BREAK's PLAY / CHOP and the
   // FX machines' MAIN / MORE too
   if (p === P.F && (SIDE3.has(mof(tr.p[P.MACH])) || mof(tr.p[P.MACH]) === BREAK_M || fxM(mof(tr.p[P.MACH])))) {
@@ -4527,6 +4595,8 @@ const ALL_LOCKED = new Set([P.CHOK, P.LDST, P.L2DS, P.LWAV, P.L2WV, P.FTYP, P.IR
   P.E1SR, P.E1BD, P.E1DS, P.E2SR, P.E2BD, P.E2DS]);
 const allLocked = (t, p) => {
   if (ALL_LOCKED.has(p)) return true;
+  const mp = MODP[p];
+  if (mp) { if (!Number.isInteger(mp.k) && mp.k !== 'am') return true; if (modTypeP(state.tracks[t].p, mp.m) !== modTypeP(state.tracks[ui.t].p, mp.m)) return true; }
   if (p < P.A || p > P.F) return false;
   const m = paramMeta(t, p); return !!m && !!m.n && SEL_LABELS.has(m.l);
 };
@@ -4718,7 +4788,8 @@ const RND_RANGE = {
   [P.GDTN]: [0, 0.5], [P.GVAR]: [0, 0.6], [P.GSHN]: [0, 0.6], [P.GDRP]: [0, 0.3], [P.SAIR]: [0, 0.7],
 };
 const RND_KEEP = new Set([P.MACH, P.VOL, P.CHOK, P.DUCK, P.SPC, P.JUMP, P.JRNG, P.HARM, ...RAM_REC_PS, ...RAM_PRISM_PS,   // (RAM: its takes and PRISM stay; HARM)
-  ...Array.from({ length: 24 }, (_, i) => P.HPF + i), P.RPAN, P.SPRD, P.SMON, P.RDEC, P.RDSD, P.RTUN, P.RTSD, P.L1SD, P.L2SD]);                     // (TONE and the followers too, its MORE page; RPAN)
+  ...Array.from({ length: 24 }, (_, i) => P.HPF + i), P.RPAN, P.SPRD, P.SMON, P.RDEC, P.RDSD, P.RTUN, P.RTSD, P.L1SD, P.L2SD,
+  ...Array.from({ length: 42 }, (_, i) => P.M1TY + i)]);   // (v90: the modulators' types, AMT, their new settings and routes)                     // (TONE and the followers too, its MORE page; RPAN)
 // random walk inside [lo, hi]: each press moves a value by up to ±depth of its range and bounces off the
 // edges, so repeated presses keep exploring instead of drifting back to the middle; 100 % = a fresh value
 function walk(v, lo, hi, d) {
@@ -4733,8 +4804,9 @@ function randomParams(t) {
   const pick = meta => mid(Math.floor(R() * meta.n), meta.n);
   for (let i = 1; i < NP; i++) {
     if (RND_KEEP.has(i)) continue;
+    if (MODP[i] && Number.isInteger(MODP[i].k) && modTypeP(p, MODP[i].m) !== MT.WAVE) continue;   // (v90: only an LFO's)
     const v = p[i];
-    let meta = i >= P.A && i <= P.F ? MACH[m].p[i - P.A] : (i === P.LDST || i === P.L2DS ? { n: NDEST } : isSide(i) ? sideMeta(t, m, i) : TP[i] || null);
+    let meta = i >= P.A && i <= P.F ? MACH[m].p[i - P.A] : (i === P.LDST || i === P.L2DS ? { n: MOD_DSLOTS } : isSide(i) ? sideMeta(t, m, i) : TP[i] || null);
     let n = v;
     // FX: what it takes (SRC), its switch and what a trig does (ACT) stay; the MORE side means nothing elsewhere
     if (FX_XS.includes(i) && !fxM(m)) continue;
@@ -4758,7 +4830,7 @@ function randomParams(t) {
       case P.IR: if (chance(d * 0.4)) n = chance(0.3) ? mid(0, NIR + 1) : mid(1 + Math.floor(R() * NIR), NIR + 1); break;
       case P.IREV: n = chance(d * 0.1) ? mid(1, 2) : (chance(d) ? mid(0, 2) : v); break;
       // LFO targets: the sound destinations only (the retrig ones would start rolls out of nowhere)
-      case P.LDST: case P.L2DS: if (chance(d)) n = mid(Math.floor(R() * NDEST_V4), NDEST); break;
+      case P.LDST: case P.L2DS: if (chance(d)) n = mid(Math.floor(R() * NDEST_V4), MOD_DSLOTS); break;
       default: n = meta && meta.n ? (chance(d) ? pick(meta) : v) : walk(v, 0, 1, d);   // LFO speeds / waves / targets, RCNT
     }
     p[i] = quant(meta, clamp(n, 0, 1));
@@ -4813,6 +4885,11 @@ const destPreset = x => {
   if (x.m === HOWL_M && !x.h82) { const p = Object.assign({}, x.p); v82Places(p, false); x = Object.assign({}, x, { p, h82: 1 }); }
   // (v83: one of v82's: SIDE on six pages, CAB and BOW at their defaults)
   if (x.m === HOWL_M && !x.h83) { const p = Object.assign({}, x.p); v83Places(p, false); x = Object.assign({}, x, { p, h83: 1 }); }
+  // (v90: one saved before the modulators: its LFO destinations onto the grid of 256, after any older conversion below)
+  if (!x.m90) { const y = x.dv === SV ? x : destPreset0(x), p = Object.assign({}, y.p); for (const q of V90_DEST) if (q in p) p[q] = dest90(p[q]); return Object.assign({}, y, { p, m90: 1 }); }
+  return destPreset0(x);
+};
+const destPreset0 = x => {
   if (x.dv === SV) return x;
   const p = Object.assign({}, x.p), dv = x.dv || 4;
   if (dv < 10) {
@@ -4987,7 +5064,7 @@ function savePreset(name) {
   const p = {};
   for (const k of ownedParams(m)) p[k] = tr.p[k];
   const old = userPresets.findIndex(x => x.m === m && x.name === name);
-  const entry = { m, name, p, dv: SV, ...(m === WEST_M ? { wst: 1 } : {}), ...(m === HOWL_M ? { h82: 1, h83: 1 } : {}) };
+  const entry = { m, name, p, dv: SV, m90: 1, ...(m === WEST_M ? { wst: 1 } : {}), ...(m === HOWL_M ? { h82: 1, h83: 1 } : {}) };
   if (old >= 0) userPresets[old] = entry; else userPresets.unshift(entry);
   presetStore.save();
   tr.pre = { m, kind: 'u', name };
@@ -5020,7 +5097,7 @@ function renamePreset(ref, name) {
 function updatePreset(ref) {
   const tr = trk();
   for (const k of ownedParams(ref.m)) ref.p[k] = tr.p[k];
-  ref.dv = SV;
+  ref.dv = SV; ref.m90 = 1;
   tr.pre = { m: ref.m, kind: 'u', name: ref.name };
   presetStore.save(); touched();
 }
@@ -5047,7 +5124,7 @@ function startSound(m) {
 const kitRound = v => Math.round(v * 1e5) / 1e5;
 function kitSnapshot(withPattern) {
   // (the sounds and the master, with the pattern playing when asked: never the project's other patterns)
-  const s = JSON.parse(JSON.stringify(Object.assign({}, state, { wst: 1, v78: 1, v82: 1, v83: 1, pats: null, chain: null })));
+  const s = JSON.parse(JSON.stringify(Object.assign({}, state, { wst: 1, v78: 1, v82: 1, v83: 1, v90: 1, pats: null, chain: null })));
   delete s.pats; delete s.chain; delete s.pat; delete s.pmode; delete s.pchg;
   s.g = s.g.map(kitRound); s.g[G.LOOP] = 0;
   s.tracks.forEach(t => {
@@ -5547,9 +5624,11 @@ function buildModules() {
       const strip = ret ? `<div class="gstrip kstrip" id="ks-${id}"></div>` : '';
       // a module of a tab group: its name among the others', a tab each (the one shown reversed; its pixel)
       const head = tg ? `<div class="rtabs${tg.strike ? '' : ' nostrike'}" role="tablist" aria-label="${tg.label}">${tg.ids.map(r => `<button class="rtab${r === id ? ' cur' : ''}" role="tab" aria-selected="${r === id}" data-ret="${r}"><i></i>${TG_NAME[r]}</button>`).join('')}</div>`
-        : `<h2 class="silk">${name}</h2>`;
+        : `<h2 class="silk">${MODT_IDS.includes(id) ? `<i class="mglyph" style="color:${MOD_COL[MODT_IDS.indexOf(id)]}">${MOD_GLYPH[MODT_IDS.indexOf(id)]}</i>` : ''}${name}</h2>`;
       if (tg) sec.classList.add('kret');
-      sec.innerHTML = `<div class="mhd">${head}<span class="kdot" aria-hidden="true"></span>${more}</div>${strip}<div class="knobs kn${pg.ps.length}" id="k-${id}" data-vlab="${name}"></div>`;
+      const mrc = MODT_IDS.includes(id) ? `<span class="mrc" id="mrc-${id}"></span>` : '';
+      sec.innerHTML = `<div class="mhd">${head}<span class="kdot" aria-hidden="true"></span>${more}${mrc}</div>${strip}<div class="knobs kn${pg.ps.length}" id="k-${id}" data-vlab="${name}"></div>`;
+      if (mrc) sec.addEventListener('pointerdown', () => { const m = MODT_IDS.indexOf(id); if (ui.modSel !== m) { ui.modSel = m; renderModRoutes(); } });
       host.appendChild(sec);
       buildKnobs('P:' + id, 'k-' + id, pg.ps.length);
       if (more) $('kmore-' + id).addEventListener('click', () => setToneMore(!ui.tonemore));
@@ -5657,6 +5736,249 @@ const bankPage = bank => {
   if (bank === 'm' && stcSpace()) return STC_SPACE_PAGE;
   if (bank === 'm' && fxMore()) return curMachine() === FUZZ_M ? FUZZ_MORE_PAGE : curMachine() === WEFT_M ? WEFT_MORE_PAGE : curMachine() === STENCIL_M ? STC_MORE_PAGE : FX_MORE_PAGE;
   return pg.id === 'GRN' && ui.gmod ? GRN_MOD_PAGE : pg; };
+// ------------------------------------------------------------------ v90: the modulators
+// Four a track (MOD: M1..M4), each of a TYPE: WAVE (the LFO), RANDOM (a loop of draws that changes as it goes), ENV
+// (an envelope a hit fires), FOLLOW (the envelope follower). Its settings by its type (core/sk_engine.h MOD_SLOT), AMT,
+// and four routes: any setting of the track (a destination, a depth). A route is made by MAP: hold a modulator's key (or
+// tap it: it stays on) and turn any knob; the knob shows it as a ring in the modulator's colour
+const MOD_COL = ['#E9472B', '#F28A1E', '#E2B414', '#3FAE6A'], MOD_GLYPH = ['▲', '■', '⬢', '●'];
+const MOD_ESRC = ['SELF', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8'];
+const MOD_RLEN = ['FREE', '2', '3', '4', '5', '6', '7', '8', '12', '16', '32'];
+const MOD_TY_K = k('TYPE', fL(MT_NAMES), 4), MOD_AM_K = k('AMT', fPct), MOD_DEP_K = Object.assign(k('DPTH', fB), { bip: true });
+const modClk = (t, m) => state.tracks[t].p[MOD_SLOT[m][6]] >= 0.5;
+const modRateK = (t, m) => modClk(t, m) ? k('RATE', v => fHzLow(0.05 * Math.pow(400, v))) : k('RATE', fL(LFO_SPD), 16);
+const fEnvT = (a, b) => v => fSec(a * Math.pow(b, v));
+const MOD_ENV_K = [k('ATK', fEnvT(0.0005, 4000)), k('DEC', fEnvT(0.005, 1600)), k('SUS', fPct), k('REL', fEnvT(0.005, 1600)),
+  Object.assign(k('CURV', v => Math.abs(v - 0.5) < 0.02 ? 'LIN' : v > 0.5 ? 'EXP ' + Math.round((v - 0.5) * 200) : 'LOG ' + Math.round((0.5 - v) * 200)), { bip: true, sc: ['LOG', 'EXP'] }),
+  k('TRIG', fL(MOD_ESRC), 9), k('VEL', fPct), OFF_K];
+function modMeta(t, mp) {
+  const { m } = mp, ty = modTypeP(state.tracks[t].p, m);
+  if (mp.k === 'ty') return MOD_TY_K;
+  if (mp.k === 'am') return MOD_AM_K;
+  if (mp.k === 'd') return { l: 'DST', n: MOD_DSLOTS, f: v => modDestName(t, modDestOf(v)) };
+  if (mp.k === 'a') return MOD_DEP_K;
+  const i = mp.k;
+  if (ty === MT.WAVE) return [modRateK(t, m), k('SHAP', fL(LFO_WAV), NWAV), k('SLW', fSlw), k('LEN', fL(LFO_LEN), NLEN), k('SEED'),
+    k('PHAS', v => Math.round(v * 360) + '°'), k('CLK', fL(['SYNC', 'FREE']), 2), OFF_K][i];
+  if (ty === MT.RAND) return [modRateK(t, m), k('LEN', fL(MOD_RLEN), 11), k('VARI', fPct), k('SMTH', fPct), k('SEED'),
+    k('TRIG', fL(['FREE', 'HIT']), 2), k('CLK', fL(['SYNC', 'FREE']), 2), OFF_K][i];
+  if (ty === MT.ENV) return MOD_ENV_K[i];
+  return i < 6 ? TP[P.E1SR + i] : OFF_K;     // (FOLLOW: the follower's six)
+}
+// the knobs of each type (MOD's modules): TYPE, its settings (the seeds are drawn, not turned), AMT
+function modPs(m) {
+  const S = MOD_SLOT[m], tr = state && state.tracks && state.tracks[ui.t], ty = tr ? modTypeP(tr.p, m) : (m < 2 ? MT.WAVE : MT.FOLLOW);
+  const sl = ty === MT.WAVE ? [0, 1, 5, 6, 2, 3] : ty === MT.RAND ? [0, 1, 2, 3, 5, 6] : [0, 1, 2, 3, 4, 5];
+  return [MOD_TY[m], ...sl.map(i => S[i]), MOD_AM[m]];
+}
+// a new type: its settings as the type starts them (RANDOM: a new seed)
+function modTypeDefaults(p, m, ty) {
+  const S = MOD_SLOT[m];
+  const d = ty === MT.WAVE ? [mid(7, 16), mid(0, NWAV), 0.5, mid(6, NLEN), newSeed(), 0, 0.25, 0]
+    : ty === MT.RAND ? [mid(7, 16), mid(7, 11), 0, 0, newSeed(), 0.25, 0.25, 0]
+    : ty === MT.ENV ? [0.2, 0.4, 0, 0.3, 0.5, mid(0, 9), 0, 0]
+    : [mid(0, EF_SRC.length), 0.25, mid(0, 4), 0, 0.4247, 0.5088, 0, 0];
+  S.forEach((q, i) => { p[q] = d[i]; });
+}
+// a route's destination by its name on track t (a modulator's setting with its sign), and where it is
+const modDestName = (t, p) => {
+  if (p == null || p < 0) return 'OFF';
+  const mp = MODP[p], meta = paramMeta(t, p);
+  return (mp ? MOD_GLYPH[mp.m] + ' ' : '') + ((meta && meta.l) || '?');
+};
+function modDestWhere(t, p) {
+  if (p < 0) return '';
+  const m = trackMachine(t);
+  if ((p >= P.A && p <= P.F) || isSide(p) || p === P.TUNE || p === P.DEC) return MACH[m].id;
+  if (MODP[p]) return 'M' + (MODP[p].m + 1) + ' ' + MT_LONG[modTypeP(state.tracks[t].p, MODP[p].m)];
+  const pg = PAGES.find(g => !g.glob && g.id !== 'm' && g.ps.includes(p)) || (MORE_PAGES.TONE && MORE_PAGES.TONE.ps.includes(p) ? { id: 'TONE' } : null);
+  return pg ? (TG_NAME[pg.id] || PAGE_NAME[pg.id] || pg.id) : '';
+}
+// the routes of modulator m on track t (as the screen shows them: the step's locks in P-LOCK): { r, p, d } with p the
+// destination and d the depth (-1 .. 1)
+function modRoutes(t, m) {
+  const out = [], get = q => (t === ui.t ? shownValue(q).v : state.tracks[t].p[q]);
+  for (let r = 0; r < MOD_ROUTES; r++) { const p = modDestOf(get(MOD_DST[m][r])); if (p >= 0) out.push({ r, p, d: (get(MOD_DEP[m][r]) - 0.5) * 2 }); }
+  return out;
+}
+// what can take a route: a setting of the track in the list (not the mapping modulator's own)
+const mapTarget = p => p >= 0 && MOD_DEST_I.has(p) && !(MODP[p] && ui.map && MODP[p].m === ui.map.m);
+// the route of m onto p, or a free one (-1: four already)
+function modRouteFor(m, p) {
+  const v = q => shownValue(q).v;
+  for (let r = 0; r < MOD_ROUTES; r++) if (modDestOf(v(MOD_DST[m][r])) === p) return r;
+  for (let r = 0; r < MOD_ROUTES; r++) if (modDestOf(v(MOD_DST[m][r])) < 0) return r;
+  return -1;
+}
+const modDepthAt = (m, r, p) => (modDestOf(shownValue(MOD_DST[m][r]).v) === p ? (shownValue(MOD_DEP[m][r]).v - 0.5) * 2 : 0);
+// a route set (in P-LOCK: on the steps up), and cleared
+function setRoute(m, r, p, d) {
+  if (modDestOf(shownValue(MOD_DST[m][r]).v) !== p) setTrackParam(MOD_DST[m][r], modDestVal(p));
+  setTrackParam(MOD_DEP[m][r], clamp(0.5 + d / 2, 0, 1));
+  renderKnobs(); renderTabs(); renderModRoutes(); renderMapUI();
+}
+function clearRoute(m, r) {
+  setTrackParam(MOD_DST[m][r], modDestVal(-1)); setTrackParam(MOD_DEP[m][r], 0.5);
+  renderKnobs(); renderTabs(); renderModRoutes(); renderMapUI();
+}
+// a modulator's value now (WAVE, RANDOM: -1 .. 1; ENV, FOLLOW: their highest since the last frame, 0 .. 1)
+const MOD_WIN = 4000;
+function modNow(t, m) {
+  const d = ui.mod; if (!d) return 0;
+  const ty = modTypeP(state.tracks[t].p, m);
+  return d[t * 16 + (ty >= MT.ENV ? 8 : 4) + m] || 0;
+}
+// a knob's rings: one per route that lands on its setting (inside the dial, from the knob's value as far as the depth
+// goes each way, in the modulator's colour), a dot where the modulation takes it now; the modulators' signs by its name
+function modRings(K, p, v) {
+  const rts = [];
+  if (p >= 0 && MOD_DEST_I.has(p)) for (let m = 0; m < MOD_N; m++) for (const rt of modRoutes(ui.t, m)) if (rt.p === p) rts.push({ m, d: rt.d, amt: shownValue(MOD_AM[m]).v });
+  const key = rts.map(r => r.m + ':' + r.d.toFixed(3) + ':' + r.amt.toFixed(3)).join('|') + '|' + (rts.length ? v.toFixed(4) : '');
+  if (K.mrKey === key) return;
+  K.mrKey = key;
+  K.mr = rts.length ? { v, rts } : null;
+  let g = K.el.querySelector('.mrg');
+  if (!rts.length) { if (g) g.remove(); const gl = K.el.querySelector('.mgl'); if (gl) gl.remove(); return; }
+  const svg = K.el.querySelector('svg');
+  if (!g) { g = document.createElementNS('http://www.w3.org/2000/svg', 'g'); g.setAttribute('class', 'mrg'); svg.insertBefore(g, svg.querySelector('.knurl')); }
+  g.innerHTML = rts.map((rt, i) => {
+    const r = 19.6 - i * 4.4, a = clamp(v - Math.abs(rt.d * rt.amt), 0, 1), b = clamp(v + Math.abs(rt.d * rt.amt), 0, 1);
+    return (b - a > 0.004 ? `<path d="${arcPath(r, A0 + SWEEP * a, A0 + SWEEP * b)}" style="stroke:${MOD_COL[rt.m]}"/>` : '') + `<circle class="mdot" r="2.6" cx="32" cy="32" style="stroke:${MOD_COL[rt.m]}"/>`;
+  }).join('');
+  let gl = K.el.querySelector('.mgl');
+  if (!gl) { gl = document.createElement('b'); gl.className = 'mgl'; K.el.querySelector('.kl').appendChild(gl); }
+  gl.innerHTML = rts.map(rt => `<i style="color:${MOD_COL[rt.m]}">${MOD_GLYPH[rt.m]}</i>`).join('');
+}
+// each frame: the rings' dots where the modulators take their knobs now
+function modLive() {
+  for (const K of knobs) {
+    if (!K.mr || K.el.offsetParent === null) continue;
+    const dots = K.el.querySelectorAll('.mrg .mdot');
+    K.mr.rts.forEach((rt, i) => {
+      const x = clamp(K.mr.v + modNow(ui.t, rt.m) * rt.d * rt.amt, 0, 1), [cx, cy] = polar(19.6 - i * 4.4, A0 + SWEEP * x);
+      if (dots[i]) { dots[i].setAttribute('cx', cx.toFixed(2)); dots[i].setAttribute('cy', cy.toFixed(2)); }
+    });
+  }
+}
+// MOD's screen: the four modulators over the last seconds (each in its lane, the one chosen lit), its routes beside it
+function drawModView(c, col, w, h) {
+  const hist = ui.modHist || [[], [], [], []], tNow = performance.now(), LH = h / 4, sel = ui.modSel | 0;
+  for (let m = 0; m < MOD_N; m++) {
+    const y0 = Math.round(m * LH), H = Math.round(LH) - 2, ty = modTypeP(trk().p, m), uni = ty >= MT.ENV, routed = modRoutedM(m);
+    if (m === sel) { c.fillStyle = col.lo; c.globalAlpha = 0.5; c.fillRect(0, y0, w, H + 1); c.globalAlpha = 1; }
+    c.fillStyle = col.lo; c.fillRect(0, y0 + H + 1, w, 1);
+    const lx = Math.min(112, Math.round(w * 0.3)), W = w - lx - 4;
+    const Y = v => y0 + 3 + (uni ? 1 - clamp(v, 0, 1) : 0.5 - clamp(v, -1, 1) * 0.5) * (H - 6), X = t => lx + W - (tNow - t) / MOD_WIN * W;
+    c.setLineDash([2, 3]); c.strokeStyle = col.lo; c.lineWidth = 1; c.beginPath(); c.moveTo(lx, Math.round(Y(0)) + 0.5); c.lineTo(lx + W, Math.round(Y(0)) + 0.5); c.stroke(); c.setLineDash([]);
+    const pts = hist[m].filter(q => tNow - q[1] <= MOD_WIN + 100);
+    if (pts.length > 1) {
+      c.save(); c.beginPath(); c.rect(lx, y0, W, H + 1); c.clip();
+      c.beginPath(); pts.forEach((q, i) => { const x = X(q[1]), y = Y(q[0]); i ? c.lineTo(x, y) : c.moveTo(x, y); });
+      c.strokeStyle = MOD_COL[m]; c.globalAlpha = routed ? 1 : 0.45; c.lineWidth = 1.6; c.stroke(); c.globalAlpha = 1; c.restore();
+    }
+    lcdTag(c, col, MOD_GLYPH[m] + ' M' + (m + 1) + ' ' + MT_LONG[ty], 4, y0 + 3, m === sel ? 'inv' : 'box');
+    if (H > 28) { const n = modRoutes(ui.t, m); lcdTag(c, col, n.length ? '→ ' + n.map(rt => modDestName(ui.t, rt.p)).join(' ') : '→ OFF', 4, y0 + 17, 'txt', false, n.length ? col.ink : col.dim); }
+  }
+}
+// the routes of the modulator chosen (beside MOD's screen): its destination, where it is, its depth (drag across), ×
+function renderModRoutes() {
+  const el = $('mroutes'); if (!el) return;
+  const on = ui.ptab === 'md' && !ui.all;
+  el.hidden = !on;
+  $('tstrip').classList.toggle('modv', on);
+  if (!on) return;
+  const m = ui.modSel | 0, rts = modRoutes(ui.t, m), mc = MOD_COL[m];
+  const row = rt => {
+    const locked = ui.lock && [...ui.lock].some(s => MOD_DEP[m][rt.r] in trk().steps[s].l);
+    const hasLk = !ui.lock && trackHasLock(ui.t, MOD_DEP[m][rt.r]);
+    const pc = Math.round(rt.d * 64), w = Math.abs(rt.d) * 50;
+    return `<div class="mrow" data-r="${rt.r}"><div class="mrn"><b>${esc(modDestName(ui.t, rt.p))}</b><small>${esc(modDestWhere(ui.t, rt.p))}</small></div>`
+      + `<div class="mbar" data-r="${rt.r}" role="slider" tabindex="0" aria-label="Depth of M${m + 1} on ${esc(modDestName(ui.t, rt.p))}" aria-valuenow="${pc}"><i style="left:${rt.d < 0 ? 50 - w : 50}%;width:${w}%;background:${mc}"></i></div>`
+      + `<b class="mval">${(pc > 0 ? '+' : pc < 0 ? '−' : '') + Math.abs(pc)}${locked || hasLk ? '<span class="mlk">◆</span>' : ''}</b>`
+      + `<button class="lb mx" data-r="${rt.r}" aria-label="Remove the route of M${m + 1} on ${esc(modDestName(ui.t, rt.p))}">×</button></div>`;
+  };
+  el.innerHTML = `<div class="mrh"><b><i style="color:${mc}">${MOD_GLYPH[m]}</i> M${m + 1} ROUTES</b><small>${rts.length} / 4</small></div>`
+    + rts.map(row).join('')
+    + (rts.length < 4 ? `<div class="mhint">+ HOLD <i style="color:${mc}">${MOD_GLYPH[m]}</i> M${m + 1} (OR TAP IT) AND TURN ANY KNOB</div>` : '');
+}
+function buildModRoutes() {
+  const el = $('mroutes'); if (!el) return;
+  let d = null;
+  el.addEventListener('pointerdown', e => {
+    const m = ui.modSel | 0;
+    const x = e.target.closest('.mx');
+    if (x) { clearRoute(m, +x.dataset.r); return; }
+    const bar = e.target.closest('.mbar'); if (!bar) return;
+    e.preventDefault();
+    const r = +bar.dataset.r, p = modDestOf(shownValue(MOD_DST[m][r]).v);
+    try { bar.setPointerCapture(e.pointerId); } catch (err) {}
+    d = { bar, r, p, m, x0: e.clientX, d0: (shownValue(MOD_DEP[m][r]).v - 0.5) * 2, moved: false };
+  });
+  el.addEventListener('pointermove', e => {
+    if (!d) return;
+    if (!d.moved && Math.abs(e.clientX - d.x0) < 3) return;
+    d.moved = true;
+    const w = d.bar.getBoundingClientRect().width;
+    setRoute(d.m, d.r, d.p, clamp(d.d0 + (e.clientX - d.x0) / (w / 2), -1, 1));
+    // (the bar is drawn again: the drag keeps to the new one)
+    const nb = el.querySelector(`.mbar[data-r="${d.r}"]`); if (nb) d.bar = nb;
+  });
+  const up = () => { if (d && !d.moved) { const now = performance.now(); if (now - (ui.mbarTap || 0) < 320) { setRoute(d.m, d.r, d.p, 0); ui.mbarTap = 0; } else ui.mbarTap = now; } d = null; };
+  el.addEventListener('pointerup', up); el.addEventListener('pointercancel', () => { d = null; });
+  el.addEventListener('keydown', e => {
+    const bar = e.target.closest('.mbar'); if (!bar) return;
+    const s = e.key === 'ArrowRight' || e.key === 'ArrowUp' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowDown' ? -1 : 0;
+    if (!s) return; e.preventDefault();
+    const m = ui.modSel | 0, r = +bar.dataset.r, p = modDestOf(shownValue(MOD_DST[m][r]).v);
+    setRoute(m, r, p, clamp((shownValue(MOD_DEP[m][r]).v - 0.5) * 2 + s / 64, -1, 1));
+    const nb = el.querySelector(`.mbar[data-r="${r}"]`); if (nb) nb.focus();
+  });
+  // the screen: a lane chooses its modulator
+  $('tspec').addEventListener('pointerdown', e => {
+    if (trackView() !== 'MODS') return;
+    const r = $('tspec').getBoundingClientRect(), m = clamp(Math.floor((e.clientY - r.top) / r.height * 4), 0, 3);
+    ui.modSel = m; renderModRoutes(); renderMapUI();
+  });
+}
+// MAP: the four keys (on the track's screen; on SEQ on the machine's) and the banner while one is on. Held: on
+// while held (a finger on a knob sets its route); tapped: on until it is tapped again, or OK (a phone, a mouse)
+const modKeysHtml = (cls, id) => `<span class="mkeys ${cls || ''}"${id ? ` id="${id}"` : ''} role="group" aria-label="Modulators: hold one (or tap it) and turn a knob">`
+  + [0, 1, 2, 3].map(m => `<button class="mkey" data-m="${m}" style="--mc:${MOD_COL[m]}" aria-pressed="false" title="M${m + 1}: hold it, or tap it, then turn any knob to send it there"><i>${MOD_GLYPH[m]}</i>M${m + 1}</button>`).join('') + '</span>';
+function renderMapUI() {
+  const app = $('app'), mp = ui.map;
+  app.classList.toggle('mapping', !!mp);
+  document.querySelectorAll('.mkey').forEach(b => { const m = +b.dataset.m, on = !!mp && mp.m === m; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on));
+    b.classList.toggle('sel', (ui.modSel | 0) === m); b.classList.toggle('routed', modRoutedM(m)); });
+  const bar = $('mapbar');
+  bar.hidden = !mp;
+  if (!mp) return;
+  const m = mp.m, n = modRoutes(ui.t, m).length;
+  bar.style.setProperty('--mc', MOD_COL[m]);
+  bar.innerHTML = `<b class="mbt"><i>${MOD_GLYPH[m]}</i>MAP M${m + 1}</b><span class="mbs">${ui.mapMsg || `TURN ANY KNOB: ITS DEPTH · TAP IT: TURN IT OVER · TAP TWICE: REMOVE · ${n} / 4`}</span><button class="mbok" id="mapok">OK</button>`;
+  $('mapok').onclick = () => { ui.map = null; renderKnobs(); renderMapUI(); };
+}
+function flashMap(msg) { ui.mapMsg = msg; renderMapUI(); clearTimeout(ui.mapMsgT); ui.mapMsgT = setTimeout(() => { ui.mapMsg = ''; renderMapUI(); }, 1600); }
+function buildMapKeys() {
+  for (const [id, cls] of [['mkeysT', 'tk'], ['mkeysS', 'sk'], ['mkeysB', 'tbk']]) { const host = $(id); if (host) host.outerHTML = modKeysHtml(cls, id); }
+  document.addEventListener('pointerdown', e => {
+    const b = e.target.closest && e.target.closest('.mkey'); if (!b) return;
+    e.preventDefault(); backend.ensureAudio();
+    const m = +b.dataset.m, mp = ui.map;
+    ui.modSel = m;
+    if (mp && !mp.hold && mp.m === m) { ui.mapOff = true; return; }     // (on, tapped: off at the release)
+    ui.map = { m, hold: true, t0: performance.now(), used: false }; ui.mapOff = false;
+    renderKnobs(); renderModRoutes(); renderMapUI();
+  });
+  const up = e => {
+    const b = e.target.closest && e.target.closest('.mkey'); if (!b || !ui.map) return;
+    if (ui.mapOff) { ui.map = null; ui.mapOff = false; }
+    else if (ui.map.hold) { if (ui.map.used || performance.now() - ui.map.t0 > 450) ui.map = null; else ui.map.hold = false; }
+    renderKnobs(); renderMapUI();
+  };
+  document.addEventListener('pointerup', up); document.addEventListener('pointercancel', up);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && ui.map) { ui.map = null; renderKnobs(); renderMapUI(); } });
+}
+
 function buildKnobs(bank, hostId, n) {
   const host = $(hostId);
   const dots = '<circle r="2.6"/>'.repeat(NT);
@@ -5732,6 +6054,17 @@ function knobDown(K, e) {
   e.preventDefault();
   backend.ensureAudio();
   const tgt = knobTarget(K); if (!tgt || tgt.meta.off) return;
+  // v90: mapping a modulator: the knob takes (or changes) one of its routes
+  if (ui.map) {
+    if (tgt.glob || tgt.all || !mapTarget(tgt.p)) return;
+    const m = ui.map.m, r = modRouteFor(m, tgt.p);
+    if (r < 0) { flashMap('M' + (m + 1) + ': FOUR ROUTES ALREADY'); return; }
+    try { K.el.setPointerCapture(e.pointerId); } catch (err) {}
+    K.drag = { y: e.clientY, x: e.clientX, moved: false, tgt, map: { m, r, base: modDepthAt(m, r, tgt.p) } };
+    ui.map.used = true;
+    K.el.classList.add('active');
+    return;
+  }
   // v79: the key under a stage: its stage pulse on or off (SPLS, a bit a stage)
   if (K.spk && tgt.meta.stage != null && e.target.closest && e.target.closest('.spk')) {
     const q = SQ(49), m = idx(shownValue(q).v, 32) ^ (1 << tgt.meta.stage);
@@ -5752,6 +6085,14 @@ function knobDown(K, e) {
 }
 function knobMove(K, e) {
   if (!K.drag) return;
+  if (K.drag.map) {
+    const dy = K.drag.y - e.clientY + (e.clientX - K.drag.x) * 0.25;
+    if (!K.drag.moved && Math.abs(dy) < 3) return;
+    K.drag.moved = true;
+    const { m, r, base } = K.drag.map;
+    setRoute(m, r, K.drag.tgt.p, clamp(base + dy / (e.shiftKey ? 600 : 140), -1, 1));
+    return;
+  }
   const sw = isSwitch(K.drag.tgt.meta), fd = K.drag.fdH;
   const dy = (K.drag.y - e.clientY) * (sw ? -1 : 1) + (fd ? 0 : (e.clientX - K.drag.x) * 0.25);
   if (!K.drag.moved && Math.abs(dy) < 3) return;
@@ -5769,6 +6110,14 @@ function knobUp(K) {
   const d = K.drag; K.drag = null;
   K.el.classList.remove('active');
   ui.recHold = null;
+  if (d.map) {
+    if (d.moved) return;
+    const now = performance.now(), { m, r } = d.map, p = d.tgt.p;
+    if (now - K.lastTap < 320) { K.lastTap = 0; clearRoute(m, r); return; }    // (tapped twice: the route goes)
+    K.lastTap = now;
+    if (modDestOf(shownValue(MOD_DST[m][r]).v) === p) setRoute(m, r, p, -modDepthAt(m, r, p));   // (a tap: turned over)
+    return;
+  }
   if (d.moved) return;
   const tgt = d.tgt;
   const now = performance.now();
@@ -6026,6 +6375,8 @@ function renderTabs() {
     b.classList.toggle('cur', i === ui.gpage);
     b.classList.toggle('byp', pageBypassed(pg.id));
   });
+  // (v90: each modulator's routes, counted in its header)
+  MODT_IDS.forEach((id, m) => { const e = $('mrc-' + id); if (e) { const n = modRoutes(ui.t, m).length; e.textContent = n + ' / 4 ROUTES'; e.classList.toggle('on', n > 0); } });
   // the modules: a dot when they hold a lock, crossed out when their effect is off; TONE's MORE key
   for (const tab in KMODS) for (const [id] of KMODS[tab]) {
     const sec = $('km-' + id), pg = PAGE_BY_ID[id];
@@ -6112,6 +6463,8 @@ function renderKnobs() {
       }
       K.gLast = null;
     }
+    K.el.classList.toggle('mapok', !!ui.map && !pg.glob && !tgt.all && mapTarget(tgt.p));
+    modRings(K, sw || off || pg.glob || tgt.all ? -1 : tgt.p, v);
     if (sw || off) return;
     const bip = pg.glob ? gBip(tgt.p) : BIPOLAR.has(tgt.p) || !!tgt.meta.bip;
     renderScale(K, tgt.meta, bip);
@@ -6309,7 +6662,7 @@ function setToneMore(on) { ui.tonemore = !!on; ui.page = PAGES.indexOf(PAGE_BY_I
 function trackView() {
   if (ui.all) return 'SPEC';
   const fid = PAGES[ui.page] && PAGES[ui.page].id;
-  if (ui.ptab === 'md') { const g = tgOf('LFO1'), f = g ? tgCur(g) : fid; return f === 'EF1' || f === 'EF2' ? f : 'LFO'; }
+  if (ui.ptab === 'md') return 'MODS';
   // (v70: FX has no screen of its own, its returns carry theirs; TONE its visualiser)
   if (ui.ptab === 'fx') return 'NONE';
   return ui.ptab === 'tn' ? 'TVIZ' : 'SPEC';
@@ -6369,8 +6722,8 @@ function drawSpec(now) {
   // taller, the page showing one module under it)
   const pitch = w / SPEC_COLS, gap = Math.max(1, Math.round(pitch * 0.22));
   // (v88: the plugin's MOD page as tall as TONE's: its LFOs and followers drawn larger, its modules no taller than they need)
-  const tall = pid === 'TVIZ' || (inPlugin && ui.ptab === 'md');
-  const h = tall ? (inPlugin ? 214 : w < 500 ? 160 : 180) : Math.min(Math.round(SPEC_ROWS * pitch - gap), inPlugin ? 104 : 140);
+  const tall = pid === 'TVIZ' || ui.ptab === 'md';     // (v90: the four modulators' lanes, on the web too)
+  const h = tall ? (inPlugin ? 214 : pid === 'MODS' ? (w < 500 ? 150 : 132) : w < 500 ? 160 : 180) : Math.min(Math.round(SPEC_ROWS * pitch - gap), inPlugin ? 104 : 140);
   if (Math.abs(cv.clientHeight - h) > 0.5) cv.style.height = h + 'px';
   const dpr = DPR();
   if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
@@ -6378,8 +6731,7 @@ function drawSpec(now) {
   const col = ovwColors, c = cv.getContext('2d');
   c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, w, h);
   // the modulation modules have their own views, TONE its visualiser; CONTROL ALL the spectrum alone
-  if (pid === 'LFO') return drawLfoView(c, col, w, h);
-  if (pid === 'EF1' || pid === 'EF2') return drawEfView(c, col, w, h, pid === 'EF1' ? 0 : 1);
+  if (pid === 'MODS') return drawModView(c, col, w, h);
   if (pid === 'TVIZ') return drawToneViz(c, col, w, h, now);
   const LO = -54, HI = -6;
   const lv = ui.specLv || (ui.specLv = new Float32Array(SPEC_N)), pk = ui.specPk || (ui.specPk = new Float32Array(SPEC_N).fill(LO - 6));
@@ -7353,6 +7705,7 @@ function renderAll() {
     ui.bankAsked = true; if (backend.bankLoad) backend.bankLoad();
   }
   renderPTabs(); renderPads(); renderChips(); renderQuant(); renderWestPanel(); renderScreen(); renderPresets(); renderTabs(); renderKnobs(); renderLockbar(); renderTStrip(); renderGStrip(); renderFxStrips(); renderSteps(); renderFooter(); renderTransport(); renderKits(); renderLoops(); renderRadioPanel();
+  renderModRoutes(); renderMapUI();
 }
 
 // pattern overview (wide screens): 8 rows x 16 steps, per-track playheads
@@ -8645,6 +8998,7 @@ function frame(now) {
   if (inPlugin) renderTransport();
   drawOverview(now);
   westLive(now);
+  modLive();
   drawMeters(now);
   drawMix(now);
   drawMasterViz();
@@ -8834,10 +9188,11 @@ function pasteTrack() {
 // place in "Rnd all"); what names a track by its number follows it (an FX machine's source T1 .. T8, WEFT's carrier,
 // the followers' sources, RAM's source and BUF, the quantiser's chord track). NBR and SUM (an FX machine's neighbour,
 // the tracks before it) stay as they are: places, not tracks; DUCK follows track 1, whatever is there
-const trackRefs = m => [[P.RSRC, RAM_SRC.length, 2], [P.RBUF, RAM_BUF.length, 1], [P.E1SR, EF_SRC.length, 1], [P.E2SR, EF_SRC.length, 1],
+const trackRefs = (m, tp) => [[P.RSRC, RAM_SRC.length, 2], [P.RBUF, RAM_BUF.length, 1],
+  ...[0, 1, 2, 3].flatMap(k => { const ty = modTypeP(tp, k); return ty === MT.FOLLOW ? [[MOD_SLOT[k][0], EF_SRC.length, 1]] : ty === MT.ENV ? [[MOD_SLOT[k][5], 9, 1]] : []; }),
   ...(m === STENCIL_M ? [[P.A, STC_SRC.length, 3]] : fxM(m) ? [[P.A, FX_SRC.length, 2]] : []), ...(m === WEFT_M ? [[P.D, 11, 3]] : [])];
 function remapTrackRefs(t, map) {
-  const fix = (get, set, m) => { for (const [p, n, off] of trackRefs(m)) { const v = get(p); if (v == null) continue; const i = idx(v, n) - off; if (i >= 0 && i < NT && map[i] !== i) set(p, mid(map[i] + off, n)); } };
+  const fix = (get, set, m) => { for (const [p, n, off] of trackRefs(m, t.p)) { const v = get(p); if (v == null) continue; const i = idx(v, n) - off; if (i >= 0 && i < NT && map[i] !== i) set(p, mid(map[i] + off, n)); } };
   const m0 = mof(t.p[P.MACH]);
   fix(p => t.p[p], (p, v) => { t.p[p] = v; }, m0);
   for (const st of t.steps) { const m = P.MACH in st.l ? mof(st.l[P.MACH]) : m0; fix(p => (p in st.l ? st.l[p] : null), (p, v) => { st.l[p] = v; }, m); }
@@ -8897,7 +9252,7 @@ function wire() {
   $('mnext').addEventListener('click', () => { if (!ui.all) changeMachine(stepMachine(1)); });
   $('mid').addEventListener('click', () => { if (!ui.all) { ui.picker = !ui.picker; renderScreen(); } });
   $('mid').addEventListener('keydown', e => { if (e.key === 'Enter' && !ui.all) { ui.picker = !ui.picker; renderScreen(); } });
-  buildLenSpd(); buildLive(); buildPages();
+  buildLenSpd(); buildLive(); buildPages(); buildMapKeys(); buildModRoutes();
   $('projbtn').addEventListener('click', () => setProj(!ui.proj));
   $('tcopy').addEventListener('click', () => { copyTrack(); setProj(false); renderAll(); });
   armed($('tpaste'), 'Paste track', () => { pasteTrack(); setProj(false); renderAll(); });
@@ -9009,7 +9364,7 @@ function demoState22() {
   s.v = SV22;
   return s;
 }
-window.__impakt = { get state() { return state; }, ui, setAll, WS_PAGES, changeMachine, copyTrack, pasteTrack, moveTrack, cubeState, cubeMem, ORDER, selectTrack, stateOps, demoState, demoState20, demoState21, demoState22, demoState24, migrate, setToneMore, setPTab, openModule, KMODS, PAGE_BY_ID, loopDraw, SIDE_META, sideDefs, ALLOY_M, setLen, setPtn, patKey, patName, serialState, setTMore, logoSvg, MACH, KANA, randomParams, scaleName, gMeta, PAGES, recSide,
+window.__impakt = { get state() { return state; }, ui, setAll, WS_PAGES, changeMachine, modDestVal, modDestOf, MOD_DEST, MODP, MOD_SLOT, MOD_TY, MOD_DST, MOD_DEP, modRoutes, setRoute, clearRoute, renderMapUI, toV90, migrate, copyTrack, pasteTrack, moveTrack, cubeState, cubeMem, ORDER, selectTrack, stateOps, demoState, demoState20, demoState21, demoState22, demoState24, migrate, setToneMore, setPTab, openModule, KMODS, PAGE_BY_ID, loopDraw, SIDE_META, sideDefs, ALLOY_M, setLen, setPtn, patKey, patName, serialState, setTMore, logoSvg, MACH, KANA, randomParams, scaleName, gMeta, PAGES, recSide,
   knobScale, paramMeta, BIPOLAR, gBip, GRN_MOD_PAGE, renderAll, setTrackParam, P, G, setGlobal, haloChordName, keyLayout,
   presetEntries, presetValues, get userPresets() { return userPresets; }, brkDecodeAudio, brkTempo, brkPrepare, brkV15, brkResolve,
   get brkNames() { return ui.brkNames; }, trackView, setRet, tzHandles, fltDb, fltState, toneDb, toneParams };

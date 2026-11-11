@@ -47,7 +47,7 @@ void Engine::slotLock (PatSlot& sl, int t, int s, int p, float v)
         else l.v = clampf (v, 0.0f, 1.0f);
         return;
     }
-    if (v >= 0.0f && sl.nlk < PAT_LOCKS) sl.lk[sl.nlk++] = { (u8) t, (u8) s, (u8) p, 0, clampf (v, 0.0f, 1.0f) };
+    if (v >= 0.0f && sl.nlk < PAT_LOCKS) sl.lk[sl.nlk++] = { (u8) t, (u8) s, (unsigned short) p, clampf (v, 0.0f, 1.0f) };
 }
 
 // ----------------------------------------------------------------- the page's calls
@@ -134,7 +134,7 @@ void Engine::patSave (int i)
         {
             d.trig[s] = k.trig[s]; d.rat[s] = k.rat[s]; d.rec[s] = k.rec[s]; d.tlk[s] = k.tlk[s];
             for (int p = 0; p < NUM_PARAMS; ++p)
-                if (k.lock[s][p] >= 0.0f && sl.nlk < PAT_LOCKS) sl.lk[sl.nlk++] = { (u8) t, (u8) s, (u8) p, 0, k.lock[s][p] };
+                if (k.lock[s][p] >= 0.0f && sl.nlk < PAT_LOCKS) sl.lk[sl.nlk++] = { (u8) t, (u8) s, (unsigned short) p, k.lock[s][p] };
         }
         d.len = (u8) k.len; d.spd = (u8) k.spd; d.q = (u8) k.q;
     }

@@ -96,6 +96,31 @@ static const int LFO_DEST[NUM_LFO_DEST] = {
     P_HPF, P_LPF, P_MIDF };                                             // TONE, since v42 (projects v10)
 
 
+// v90: a route's destinations. The LFO's 38 first (a project made before keeps its routes, moved onto this grid of 256),
+// then every other setting of the track but those it makes no sense to move: the machine, the choices a hit or the
+// sequencer reads once (NOTE, PROB, MICR, GATE, the choke group, JUMP), the seeds, the RAM's recording, the routes
+// themselves and the modulators' types
+int MOD_DEST[MOD_DEST_SLOTS];
+int NUM_MOD_DEST = 0;
+void modDestInit()
+{
+    if (NUM_MOD_DEST) return;
+    bool used[NUM_PARAMS] = {};
+    int n = 0;
+    for (int i = 0; i < NUM_LFO_DEST; ++i) { MOD_DEST[n++] = LFO_DEST[i]; if (LFO_DEST[i] >= 0) used[LFO_DEST[i]] = true; }
+    static const int NO[] = { P_MACH, P_FTYP, P_NOTE, P_PROB, P_MICR, P_GATE, P_SPC, P_CHOK, P_JUMP, P_JRNG, P_HARM, P_DRON,
+                              P_RSRC, P_RLEN, P_RLEV, P_RTHR, P_ROVD, P_RMON, P_RBUF, P_BSED, P_RDSD, P_L1SD, P_L2SD, P_RTSD, P_PQNT };
+    for (int p : NO) used[p] = true;
+    for (int m = 0; m < MOD_N; ++m)
+    {
+        used[MOD_TY[m]] = true;
+        for (int r = 0; r < MOD_ROUTES; ++r) used[MOD_DST[m][r]] = used[MOD_DEP[m][r]] = true;
+    }
+    for (int p = 0; p < NUM_PARAMS && n < MOD_DEST_SLOTS; ++p) if (! used[p]) MOD_DEST[n++] = p;
+    NUM_MOD_DEST = n;
+    for (int i = n; i < MOD_DEST_SLOTS; ++i) MOD_DEST[i] = -1;
+}
+
 static const float RETRIG_DEN[NUM_RETRIG] = { 0, 8, 12, 16, 24, 32, 48, 64, 96, 128, 192, 256 };
 
 static const float DLY_STEPS[NUM_DLY_TIMES] = {
@@ -240,12 +265,12 @@ static void defaultTrack (Track& t, int machine)
     t.p[P_DRV]  = 0.0f;  t.p[P_BITS] = 0.0f; t.p[P_SRR] = 0.0f;
     t.p[P_VOL]  = 0.8f;  t.p[P_PAN] = 0.5f; t.p[P_DLY] = 0.0f; t.p[P_REV] = 0.0f;
     t.p[P_LSPD] = 7.5f / (float) NUM_LFO_SPEEDS; t.p[P_LDEP] = 0.5f;
-    t.p[P_LDST] = 0.5f / (float) NUM_LFO_DEST;   t.p[P_LWAV] = 0.5f / (float) NUM_LFO_WAVES;
+    t.p[P_LDST] = 0.5f / (float) MOD_DEST_SLOTS; t.p[P_LWAV] = 0.5f / (float) NUM_LFO_WAVES;
     t.p[P_NOTE] = 0.5f;  t.p[P_VEL] = 100.0f / 127.0f; t.p[P_PROB] = 1.0f; t.p[P_MICR] = 0.5f;
     t.p[P_RTRG] = 0.5f / (float) NUM_RETRIG; t.p[P_RCNT] = 3.5f / (float) NUM_RCOUNT; t.p[P_RVEL] = 0.5f; t.p[P_GATE] = 0.0f;
     t.p[P_RCRV] = 0.5f; t.p[P_JUMP] = 0.5f; t.p[P_JRNG] = 11.5f / (float) NUM_JRANGE; t.jAcc = 0;
     t.p[P_SPC] = 0.0f; t.p[P_ATK] = 0.0f; t.p[P_CHOK] = 0.5f / (float) NUM_CHOKE; t.p[P_DUCK] = 0.0f;
-    t.p[P_L2SP] = 5.5f / (float) NUM_LFO_SPEEDS; t.p[P_L2DP] = 0.5f; t.p[P_L2DS] = 0.5f / (float) NUM_LFO_DEST; t.p[P_L2WV] = 0.5f / (float) NUM_LFO_WAVES;
+    t.p[P_L2SP] = 5.5f / (float) NUM_LFO_SPEEDS; t.p[P_L2DP] = 0.5f; t.p[P_L2DS] = 0.5f / (float) MOD_DEST_SLOTS; t.p[P_L2WV] = 0.5f / (float) NUM_LFO_WAVES;
     // v65: RDEC off, SLW half the cycle, LOOP's 8 draws, the seeds at 0 (the page draws new ones)
     t.p[P_RDEC] = 0.5f; t.p[P_RDSD] = 0.0f;
     t.p[P_RTUN] = 0.5f; t.p[P_RTSD] = 0.0f;     // v88: RTUN off
@@ -300,7 +325,17 @@ static void defaultTrack (Track& t, int machine)
     {
         const int b = e ? P_E2SR : P_E1SR;
         t.p[b] = 0.5f / (float) EF_SRCS; t.p[b + 1] = 0.25f; t.p[b + 2] = 0.5f / (float) EF_BANDS; t.p[b + 3] = 0.0f;
-        t.p[b + 4] = 0.4247f; t.p[b + 5] = 0.5088f; t.p[b + 6] = 0.5f; t.p[b + 7] = 0.5f / (float) NUM_LFO_DEST;
+        t.p[b + 4] = 0.4247f; t.p[b + 5] = 0.5088f; t.p[b + 6] = 0.5f; t.p[b + 7] = 0.5f / (float) MOD_DEST_SLOTS;
+    }
+    // v90: M1, M2 WAVE (the LFOs), M3, M4 FOLLOW (the followers), their new settings at rest (WAVE: no phase, SYNC), all of
+    // their routes at full AMT, routes 2 .. 4 off
+    for (int m = 0; m < MOD_N; ++m)
+    {
+        t.p[MOD_TY[m]] = ((m < 2 ? MT_WAVE : MT_FOLLOW) + 0.5f) / (float) MOD_TYPES;
+        for (int k = m < 2 ? 5 : 6; k < MOD_SLOTS; ++k) t.p[MOD_SLOT[m][k]] = 0.0f;
+        if (m < 2) t.p[MOD_SLOT[m][6]] = 0.25f;
+        t.p[MOD_AM[m]] = 1.0f;
+        for (int r = 1; r < MOD_ROUTES; ++r) { t.p[MOD_DST[m][r]] = 0.5f / (float) MOD_DEST_SLOTS; t.p[MOD_DEP[m][r]] = 0.5f; }
     }
     for (int s = 0; s < NUM_STEPS; ++s)
     {
@@ -313,6 +348,7 @@ static void defaultTrack (Track& t, int machine)
 // ----------------------------------------------------------------- setup
 void Engine::init (float sampleRate, int liteMode)
 {
+    modDestInit();
     zeroBytes (this, sizeof (Engine));
     lite = liteMode ? 1 : 0;
     for (int p = 0; p < NUM_PARAMS; ++p) { NOLOCK[p] = -1.0f; SLEW_BIT[p] = -1; }
@@ -761,26 +797,30 @@ float Engine::lock (const Track& t, int step, int p) const
     return t.p[p];
 }
 
-// does an LFO or an envelope follower of this step target parameter p? (bits 0 / 1: LFO 1 / 2, bits 2 / 3: EF 1 / 2)
+// does a modulator of this step target parameter p? (bit 4m + r: modulator m's route r)
 int Engine::lfoTargets (const Track& t, int step, int p) const
 {
-    return (LFO_DEST[idxOf (lock (t, step, P_LDST), NUM_LFO_DEST)] == p ? 1 : 0)
-         | (LFO_DEST[idxOf (lock (t, step, P_L2DS), NUM_LFO_DEST)] == p ? 2 : 0)
-         | (LFO_DEST[idxOf (lock (t, step, P_E1DS), NUM_LFO_DEST)] == p ? 4 : 0)
-         | (LFO_DEST[idxOf (lock (t, step, P_E2DS), NUM_LFO_DEST)] == p ? 8 : 0);
+    int b = 0;
+    for (int m = 0; m < MOD_N; ++m)
+        for (int r = 0; r < MOD_ROUTES; ++r)
+            if (modDest (lock (t, step, MOD_DST[m][r])) == p) b |= 1 << (4 * m + r);
+    return b;
 }
 
-// a parameter read once per trig (the retrig settings): its value with the LFOs at that instant, like a
-// sample & hold of the LFO on every hit
+// a parameter read once per trig (the retrig settings): its value with the modulators at that instant, like a
+// sample & hold of them on every hit
 float Engine::trigParam (const Track& t, int step, int p) const
 {
     float v = lock (t, step, p);
-    const int m = lfoTargets (t, step, p);
-    if (m & 1) v += t.lfo[0].val * (lock (t, step, P_LDEP) - 0.5f) * 2.0f;
-    if (m & 2) v += t.lfo[1].val * (lock (t, step, P_L2DP) - 0.5f) * 2.0f;
-    if (m & 4) v += t.ef[0].val * (lock (t, step, P_E1DP) - 0.5f) * 2.0f;
-    if (m & 8) v += t.ef[1].val * (lock (t, step, P_E2DP) - 0.5f) * 2.0f;
-    return m ? clampf (v, 0.0f, 1.0f) : v;
+    const int b = lfoTargets (t, step, p);
+    for (int m = 0; m < MOD_N; ++m)
+        if (b & (15 << (4 * m)))
+        {
+            const float amt = lock (t, step, MOD_AM[m]), mv = modValue (t, m);
+            for (int r = 0; r < MOD_ROUTES; ++r)
+                if (b & (1 << (4 * m + r))) v += mv * (lock (t, step, MOD_DEP[m][r]) - 0.5f) * 2.0f * amt;
+        }
+    return b ? clampf (v, 0.0f, 1.0f) : v;
 }
 
 double Engine::samplesPerStep (const Track& t) const
@@ -1078,16 +1118,10 @@ void Engine::droneStart (Track& t, int ti)
 // CHOIR sings on, legato; HOWL's strings glide to the new chord, picked again by EXCT); the trig-mode LFOs start again
 void Engine::droneChange (Track& t, int ti, Voice& v, const float* lk, int step, float vel, float note)
 {
-    (void) ti;
     for (int p = 1; p < NUM_PARAMS; ++p) v.lk[p] = lk[p];
     v.lk[P_MACH] = -1.0f;
     v.step = step; v.vel = vel;
-    {
-        auto at = [&] (int p) { return lk[p] >= 0.0f ? lk[p] : t.p[p]; };
-        const float wv1 = at (P_LWAV), wv2 = at (P_L2WV);
-        if (idxOf (wv1, NUM_LFO_WAVES) >= LFO_SHAPES) lfoRestart (t.lfo[0], t.rng, wv1, { at (P_L1SL), at (P_L1LN), at (P_L1SD), 1u });
-        if (idxOf (wv2, NUM_LFO_WAVES) >= LFO_SHAPES) lfoRestart (t.lfo[1], t.rng, wv2, { at (P_L2SL), at (P_L2LN), at (P_L2SD), 2u });
-    }
+    modHit (ti, lk, vel, 0.0f);
     const int m = v.machine;
     if (m == M_HALO || m == M_STRUM || m == M_CHOIR || m == M_HOWL || m == M_MANTRA)
     {
@@ -1154,12 +1188,7 @@ void Engine::startVoice (Track& t, int ti, const float* lk, int step, float vel,
     // the LFOs in a trig mode start again with this hit (at the start of their cycle), then the settings as the hit
     // finds them: its locks, and what the LFOs and the envelope followers do to them now (what a machine reads only
     // when it is struck — STRUM's chord and spread, a model, a count... — follows them from hit to hit)
-    {
-        auto at = [&] (int p) { return lk[p] >= 0.0f ? lk[p] : t.p[p]; };
-        const float wv1 = at (P_LWAV), wv2 = at (P_L2WV);
-        if (idxOf (wv1, NUM_LFO_WAVES) >= LFO_SHAPES) lfoRestart (t.lfo[0], t.rng, wv1, { at (P_L1SL), at (P_L1LN), at (P_L1SD), 1u });
-        if (idxOf (wv2, NUM_LFO_WAVES) >= LFO_SHAPES) lfoRestart (t.lfo[1], t.rng, wv2, { at (P_L2SL), at (P_L2LN), at (P_L2SD), 2u });
-    }
+    modHit (ti, lk, vel, holdSec);
     float P[NUM_PARAMS];
     effParams (t, lk, P);
     // RPAN: this hit's pan around the track's: to the right a draw on either side (as far as the knob says, at its top
@@ -2861,26 +2890,33 @@ void Engine::machineRender (Voice& v, const float* P, int n, float* out)
 void Engine::effParams (const Track& t, const float* lk, float* P) const
 {
     for (int p = 0; p < NUM_PARAMS; ++p) P[p] = lk[p] >= 0.0f ? lk[p] : t.p[p];
-    const int d1 = LFO_DEST[idxOf (P[P_LDST], NUM_LFO_DEST)];
-    const int d2 = LFO_DEST[idxOf (P[P_L2DS], NUM_LFO_DEST)];
-    const float a1 = (P[P_LDEP] - 0.5f) * 2.0f, a2 = (P[P_L2DP] - 0.5f) * 2.0f;
-    if (d1 >= 0) P[d1] = clampf (P[d1] + t.lfo[0].val * a1, 0.0f, 1.0f);
-    if (d2 >= 0) P[d2] = clampf (P[d2] + t.lfo[1].val * a2, 0.0f, 1.0f);
-    // the envelope followers (their settings read before any modulation lands on them)
-    const int e1 = LFO_DEST[idxOf (P[P_E1DS], NUM_LFO_DEST)], e2 = LFO_DEST[idxOf (P[P_E2DS], NUM_LFO_DEST)];
-    const float b1 = (P[P_E1DP] - 0.5f) * 2.0f, b2 = (P[P_E2DP] - 0.5f) * 2.0f;
-    if (e1 >= 0) P[e1] = clampf (P[e1] + t.ef[0].val * b1, 0.0f, 1.0f);
-    if (e2 >= 0) P[e2] = clampf (P[e2] + t.ef[1].val * b2, 0.0f, 1.0f);
+    // v90: the modulators' routes, in order (M1's four, then M2's...: the LFOs then the followers, as before); their
+    // destinations, depths and AMT read before any modulation lands (AMT with the routes that land on it: a modulator's
+    // amount moved by another)
+    float dep[MOD_N][MOD_ROUTES], amt[MOD_N]; int dst[MOD_N][MOD_ROUTES];
+    for (int m = 0; m < MOD_N; ++m)
+    {
+        amt[m] = modded (t, lk, MOD_AM[m]);
+        for (int r = 0; r < MOD_ROUTES; ++r) { dst[m][r] = modDest (P[MOD_DST[m][r]]); dep[m][r] = (P[MOD_DEP[m][r]] - 0.5f) * 2.0f * amt[m]; }
+    }
+    for (int m = 0; m < MOD_N; ++m)
+    {
+        const float mv = modValue (t, m);
+        for (int r = 0; r < MOD_ROUTES; ++r)
+            if (dst[m][r] >= 0) P[dst[m][r]] = clampf (P[dst[m][r]] + mv * dep[m][r], 0.0f, 1.0f);
+    }
 }
 
-static void lfoAdvance (Lfo& l, Rng& rng, float spdP, float wavP, float steps, const LfoMore& m)
+static void lfoAdvance (Lfo& l, Rng& rng, float spdP, float wavP, float steps, const LfoMore& m, float phas = 0.0f, float hz = 0.0f, float secs = 0.0f)
 {
     const int wv = idxOf (wavP, NUM_LFO_WAVES), shape = wv % LFO_SHAPES;
     const bool trigMode = wv >= LFO_SHAPES;
-    l.ph += steps / LFO_STEPS[idxOf (spdP, NUM_LFO_SPEEDS)];
+    // (v90: on the tempo, as it always was; FREE: hz cycles a second)
+    l.ph += hz > 0.0f ? hz * secs : steps / LFO_STEPS[idxOf (spdP, NUM_LFO_SPEEDS)];
     if (trigMode && shape == LW_EXP) { if (l.ph > 64.0f) l.ph = 64.0f; }
     else if (l.ph >= 1.0f) { l.ph -= floorf_ (l.ph); l.from = l.val; l.sh = rng.bi(); l.k = l.k >= (1 << 30) ? 0 : l.k + 1; }
-    const float ph = l.ph;
+    // (v90: PHAS moves the periodic waves along their cycle)
+    const float ph = phas > 0.0f && shape <= LW_SQR ? wrap01 (l.ph + phas) : l.ph;
     l.lp = -1.0f;
     switch (shape)
     {
@@ -2893,6 +2929,156 @@ static void lfoAdvance (Lfo& l, Rng& rng, float spdP, float wavP, float steps, c
         case LW_LOOP: l.val = loopAt (l, m); break;
         default:      l.val = exp2f_ (-ph * 6.0f); break;
     }
+}
+
+// ----------------------------------------------------------------- the modulators (v90)
+// a setting as the modulators move it (the routes of this chunk that land on it): what a modulator reads of its own
+// settings, and AMT; untouched, the setting itself
+float Engine::modded (const Track& t, const float* lk, int p) const
+{
+    float v = lk[p] >= 0.0f ? lk[p] : t.p[p];
+    bool on = false;
+    for (int i = 0; i < t.rN; ++i) if (t.rDst[i] == p) { v += modValue (t, t.rSrc[i]) * t.rAmt[i]; on = true; }
+    return on ? clampf (v, 0.0f, 1.0f) : v;
+}
+// each track's routes for this chunk, from the settings of the step its current voice plays
+void Engine::modPrep()
+{
+    for (int ti = 0; ti < NUM_TRACKS; ++ti)
+    {
+        Track& t = tr[ti];
+        const float* lk = t.voice[t.cur].lk;
+        auto Q = [&] (int p) { return lk[p] >= 0.0f ? lk[p] : t.p[p]; };
+        t.rN = 0;
+        for (int m = 0; m < MOD_N; ++m)
+            for (int r = 0; r < MOD_ROUTES; ++r)
+            {
+                const int d = modDest (Q (MOD_DST[m][r]));
+                if (d < 0) continue;
+                t.rDst[t.rN] = (short) d; t.rSrc[t.rN] = (signed char) m; t.rAmt[t.rN] = (Q (MOD_DEP[m][r]) - 0.5f) * 2.0f * Q (MOD_AM[m]);
+                ++t.rN;
+            }
+    }
+}
+// the salt of a modulator's draws (WAVE's LOOP: M1 and M2 as LFO 1 and 2 were; RANDOM its own)
+static inline unsigned waveSalt (int m) { return m == 0 ? 1u : m == 1 ? 2u : 24u + (unsigned) m; }
+static inline unsigned randSalt (int m) { return 28u + (unsigned) m; }
+static const int MOD_RLEN_N[MOD_RLENS] = { 0, 2, 3, 4, 5, 6, 7, 8, 12, 16, 32 };
+// RANDOM: its loop drawn again from its seed (the transport starts, a new seed)
+static void randReset (ModRnd& r, float seed, int m)
+{
+    r.seed = seed; r.i = 0; r.k = 1; r.cnt = 0; r.ph = 0.0f;     // (k: drawn)
+    for (int j = 0; j < MOD_RLEN; ++j) r.v[j] = loopDraw (seed, randSalt (m), (unsigned) j);
+    r.from = r.val; r.to = r.v[0];
+}
+// RANDOM, once a chunk: at each cycle the next value of its loop (LEN of them; FREE: a new draw each time), which VARI
+// may draw anew (the loop changes as it goes), reached in SMTH of the cycle (an S-curve; at 0 a step)
+static void randAdvance (ModRnd& r, int m, float rate, float lenP, float vari, float smth, float seed, float hz, float secs, float steps)
+{
+    if (! r.k || seed != r.seed) randReset (r, seed, m);
+    const int len = MOD_RLEN_N[idxOf (lenP, MOD_RLENS)];
+    r.ph += hz > 0.0f ? hz * secs : steps / LFO_STEPS[idxOf (rate, NUM_LFO_SPEEDS)];
+    if (r.ph >= 1.0f)
+    {
+        r.ph -= floorf_ (r.ph);
+        r.from = r.val;
+        if (len == 0) r.to = loopDraw (seed, randSalt (m) + 8u, r.cnt++);
+        else
+        {
+            r.i = (r.i + 1) % len;
+            if (vari > 0.0f && (loopDraw (seed, randSalt (m) + 4u, r.cnt) + 1.0f) * 0.5f < vari) r.v[r.i] = loopDraw (seed, randSalt (m) + 8u, r.cnt);
+            ++r.cnt;
+            r.to = r.v[r.i];
+        }
+    }
+    if (smth <= 0.001f) r.val = r.to;
+    else { const float x = minf (r.ph / smth, 1.0f); r.val = r.from + (r.to - r.from) * x * x * (3.0f - 2.0f * x); }
+    r.lp = len ? ((float) r.i + minf (r.ph, 1.0f)) / (float) len : r.ph;
+}
+// ENV's curve: k at 0 a straight line; towards EXP a rise that starts slow (and a fall that starts fast), towards LOG the
+// other way
+static inline float envShape (float x, float k)
+{
+    if (absf (k) < 0.02f) return x;
+    const float a = 6.0f * k;
+    return (expf_ (a * x) - 1.0f) / (expf_ (a) - 1.0f);
+}
+// ENV, once a chunk: attack to the top, decay to SUS, held while the hit's gate (GATE) is open, released; at the hit's velocity
+// as far as VEL says
+static void envAdvance (ModEnv& e, float atk, float dec, float sus, float rel, float crv, float velAmt, float secs)
+{
+    const float k = (crv - 0.5f) * 2.0f;
+    const float tA = 0.0005f * powf_ (4000.0f, atk), tD = 0.005f * powf_ (1600.0f, dec), tR = 0.005f * powf_ (1600.0f, rel);
+    float y = 0.0f;
+    // (the gate counts from the hit; it is let go no sooner than the end of the decay: GATE OFF, an AD then the release)
+    if (e.stage >= 1 && e.stage <= 3) e.gate -= secs;
+    switch (e.stage)
+    {
+        case 1: e.x += secs / tA; if (e.x >= 1.0f) { e.x = 0.0f; e.stage = 2; y = 1.0f; } else y = e.from + (1.0f - e.from) * envShape (e.x, k); break;
+        case 2: e.x += secs / tD; if (e.x >= 1.0f) { e.x = 0.0f; e.stage = 3; y = sus; } else y = sus + (1.0f - sus) * (1.0f - envShape (e.x, -k)); break;
+        case 3: y = sus; if (e.gate <= 0.0f || sus <= 0.0f) { e.stage = 4; e.x = 0.0f; e.from = sus; } break;
+        case 4: e.x += secs / tR; if (e.x >= 1.0f) { e.stage = 0; y = 0.0f; } else y = e.from * (1.0f - envShape (e.x, -k)); break;
+        default: y = 0.0f; break;
+    }
+    e.val = y * (1.0f - velAmt + velAmt * e.vel);
+    e.pk = maxf (e.pk, e.val);
+}
+// a track's WAVE, RANDOM and ENV modulators, once a chunk (FOLLOW's run in efAdvance, before the tracks), with their
+// settings as the routes move them
+void Engine::modAdvance (Track& t, float steps, int n)
+{
+    const float* lk = t.voice[t.cur].lk;
+    const float secs = (float) n / sr;
+    auto S = [&] (int m, int k) { return modded (t, lk, MOD_SLOT[m][k]); };
+    for (int m = 0; m < MOD_N; ++m)
+    {
+        const int ty = modType (t, m);
+        if (ty == MT_WAVE)
+        {
+            const float hz = S (m, 6) >= 0.5f ? 0.05f * powf_ (400.0f, S (m, 0)) : 0.0f;
+            lfoAdvance (t.lfo[m], t.rng, S (m, 0), S (m, 1), steps, { S (m, 2), S (m, 3), S (m, 4), waveSalt (m) }, S (m, 5), hz, secs);
+        }
+        else if (ty == MT_RAND)
+        {
+            const float hz = S (m, 6) >= 0.5f ? 0.05f * powf_ (400.0f, S (m, 0)) : 0.0f;
+            const float seed = lk[MOD_SLOT[m][4]] >= 0.0f ? lk[MOD_SLOT[m][4]] : t.p[MOD_SLOT[m][4]];
+            randAdvance (t.mrn[m], m, S (m, 0), S (m, 1), S (m, 2), S (m, 3), seed, hz, secs, steps);
+        }
+        else if (ty == MT_ENV)
+            envAdvance (t.men[m], S (m, 0), S (m, 1), S (m, 2), S (m, 3), S (m, 4), S (m, 6), secs);
+    }
+}
+// a hit on track ti: its WAVE modulators in a trig mode start their cycle again, its RANDOM ones on HIT their loop, and
+// the ENV modulators of every track that listens to it (SELF, or this track) fire
+void Engine::modHit (int ti, const float* lk, float vel, float holdSec)
+{
+    Track& t = tr[ti];
+    auto at = [&] (int p) { return lk[p] >= 0.0f ? lk[p] : t.p[p]; };
+    for (int m = 0; m < MOD_N; ++m)
+    {
+        const int ty = modType (t, m);
+        if (ty == MT_WAVE)
+        {
+            const float wv = at (MOD_SLOT[m][1]);
+            if (idxOf (wv, NUM_LFO_WAVES) >= LFO_SHAPES)
+                lfoRestart (t.lfo[m], t.rng, wv, { at (MOD_SLOT[m][2]), at (MOD_SLOT[m][3]), at (MOD_SLOT[m][4]), waveSalt (m) });
+        }
+        else if (ty == MT_RAND && at (MOD_SLOT[m][5]) >= 0.5f)
+        {
+            ModRnd& r = t.mrn[m];
+            r.i = 0; r.ph = 0.0f; r.from = r.val; r.to = r.v[0];
+        }
+    }
+    for (int tt = 0; tt < NUM_TRACKS; ++tt)
+        for (int m = 0; m < MOD_N; ++m)
+        {
+            Track& o = tr[tt];
+            if (modType (o, m) != MT_ENV) continue;
+            const int src = idxOf (tt == ti ? at (MOD_SLOT[m][5]) : o.p[MOD_SLOT[m][5]], MOD_ESRCS);
+            if (! ((src == 0 && tt == ti) || src == ti + 1)) continue;
+            ModEnv& e = o.men[m];
+            e.stage = 1; e.x = 0.0f; e.from = e.val; e.gate = holdSec; e.vel = vel;
+        }
 }
 
 // ----------------------------------------------------------------- voice chain (into the track bus)
@@ -3894,6 +4080,7 @@ void Engine::renderChunk (int n, float* L, float* R)
         else for (int i = 0; i < n; ++i) inM[i] = 0.0f;
     }
     prismAnalyze();
+    modPrep();
     efAdvance (n);
     radioAdvance (n);
     fxPrepass();
@@ -3919,8 +4106,7 @@ void Engine::renderChunk (int n, float* L, float* R)
         // LFOs use the lock snapshot of the current voice
         const float* lk = t.voice[t.cur].lk;
         auto P = [&] (int p) { return lk[p] >= 0.0f ? lk[p] : t.p[p]; };
-        lfoAdvance (t.lfo[0], t.rng, P (P_LSPD), P (P_LWAV), steps, { P (P_L1SL), P (P_L1LN), P (P_L1SD), 1u });
-        lfoAdvance (t.lfo[1], t.rng, P (P_L2SP), P (P_L2WV), steps, { P (P_L2SL), P (P_L2LN), P (P_L2SD), 2u });
+        modAdvance (t, steps, n);
 
         for (int i = 0; i < n; ++i) t.bus[i] = 0.0f;
         for (int k = 0; k < 2; ++k)
@@ -4065,8 +4251,13 @@ void Engine::process (float* L, float* R, int n, const HostTime* ht)
         {
             tr[t].rtLeft = 0; tr[t].hProg = 0; tr[t].hWalk = 0; tr[t].jAcc = 0; tr[t].wsNext = 0;
             // (the free waves start their cycle with the transport; LOOP its first draw)
-            if (idxOf (tr[t].p[P_LWAV], NUM_LFO_WAVES) < LFO_SHAPES) { tr[t].lfo[0].ph = 0.0f; tr[t].lfo[0].k = 0; }
-            if (idxOf (tr[t].p[P_L2WV], NUM_LFO_WAVES) < LFO_SHAPES) { tr[t].lfo[1].ph = 0.0f; tr[t].lfo[1].k = 0; }
+            // (v90: every WAVE modulator; RANDOM's loop as its seed draws it)
+            for (int m = 0; m < MOD_N; ++m)
+            {
+                const int ty = modType (tr[t], m);
+                if (ty == MT_WAVE && idxOf (tr[t].p[MOD_SLOT[m][1]], NUM_LFO_WAVES) < LFO_SHAPES) { tr[t].lfo[m].ph = 0.0f; tr[t].lfo[m].k = 0; }
+                else if (ty == MT_RAND) randReset (tr[t].mrn[m], tr[t].p[MOD_SLOT[m][4]], m);
+            }
             tr[t].rdStep = -1; tr[t].rdSub = 0;
         }
     if (! running) for (int t = 0; t < NUM_TRACKS; ++t) { tr[t].rtLeft = 0; tr[t].curStep = -1; }

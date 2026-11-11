@@ -72,8 +72,10 @@ EXPORT(sk_loop_info)   const float* sk_loop_info()                       { retur
 EXPORT(sk_set_spec)    void   sk_set_spec (int t)                        { E.setSpecTrack (t); }
 EXPORT(sk_spec_info)   const float* sk_spec_info()                       { return E.specInfo(); }
 // the screen's modulation view: per track, LFO 1 / 2 (phase, value) and EF 1 / 2 (value, band input level)
-static float MODINFO[8 * sk::NUM_TRACKS];
+static float MODINFO[sk::MOD_INFO * sk::NUM_TRACKS];
 EXPORT(sk_mod_info)    const float* sk_mod_info()                        { E.modInfo (MODINFO); return MODINFO; }
+EXPORT(sk_mod_dest)    int    sk_mod_dest (int i)                        { sk::modDestInit(); return i >= 0 && i < sk::MOD_DEST_SLOTS ? sk::MOD_DEST[i] : -2; }   // (v90: a route's destinations, for the page's test)
+EXPORT(sk_param_def)   float  sk_param_def (int t, int p)                { return t >= 0 && t < sk::NUM_TRACKS && p >= 0 && p < sk::NUM_PARAMS ? E.tr[t].p[p] : -1.0f; }
 // GRAIN's LFO (phase, value) and OTT's gain change per band (dB), GRAIN on, OTT on
 static float FXINFO[7];
 EXPORT(sk_fx_info)     const float* sk_fx_info()

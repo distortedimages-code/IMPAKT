@@ -97,15 +97,15 @@ function testWav(bpm, bars, variant) {
           rows: new Set([...document.querySelectorAll('#km-EF1 .rtab')].map(b => Math.round(b.getBoundingClientRect().top))).size,
           scr: r('#tspec').top >= 0 && r('#tspec').bottom <= innerHeight, mod: r('#km-EF1').bottom <= innerHeight, page: I.PAGES[I.ui.page].id }; });
       await page.screenshot({ path: `${shotDir}/impakt-${label}-page-md-ef1.png` });
-      await page.evaluate(() => { const I = window.__impakt, P = I.P, tr = I.state.tracks[I.ui.t]; tr.p[P.LDST] = (9 + 0.5) / 38; tr.p[P.LDEP] = 0.8; tr.steps[2].l[P.L2SP] = 0.3; I.renderAll(); });
+      await page.evaluate(() => { const I = window.__impakt, P = I.P, tr = I.state.tracks[I.ui.t]; tr.p[P.LDST] = I.modDestVal(P.FREQ); tr.p[P.LDEP] = 0.8; tr.steps[2].l[P.L2SP] = 0.3; I.renderAll(); });
       ph.mdt.lit = await page.evaluate(() => [...document.querySelectorAll('#km-EF1 .rtab')].map(b => (b.classList.contains('on') ? 'o' : '-') + (b.classList.contains('haslock') ? 'L' : '')).join(','));
-      await page.evaluate(() => { const I = window.__impakt, P = I.P, tr = I.state.tracks[I.ui.t]; tr.p[P.LDST] = 0.5 / 38; tr.p[P.LDEP] = 0.5; delete tr.steps[2].l[P.L2SP]; I.renderAll(); });
+      await page.evaluate(() => { const I = window.__impakt, P = I.P, tr = I.state.tracks[I.ui.t]; tr.p[P.LDST] = I.modDestVal(-1); tr.p[P.LDEP] = 0.5; delete tr.steps[2].l[P.L2SP]; I.renderAll(); });
       await page.click('#km-EF1 .rtab[data-ret="LFO2"]'); await page.waitForTimeout(80);
       ph.mdt.lfo2 = await page.evaluate(() => ({ view: window.__impakt.trackView(), page: window.__impakt.PAGES[window.__impakt.ui.page].id }));
       await page.click('#km-LFO2 .rtab[data-ret="LFO1"]'); await page.waitForTimeout(80);
-      ok('v69 phone: MOD, one module at a time under its tabs (one row), the screen following the tab and on the first screen with it; a routed LFO lit, a hidden lock dotted',
-        ph.mdt.vis === 'false,false,true,false' && ph.mdt.view === 'EF1' && ph.mdt.page === 'EF1' && ph.mdt.tabs === 'LFO 1,LFO 2,FOLLOWER 1,FOLLOWER 2' && ph.mdt.rows === 1
-        && ph.mdt.scr && ph.mdt.mod && ph.mdt.lit === 'o,-L,-,-' && ph.mdt.lfo2.view === 'LFO' && ph.mdt.lfo2.page === 'LFO2', JSON.stringify(ph.mdt));
+      ok('v69 phone (v90: M1..M4): MOD, one module at a time under its tabs (one row), the modulators\' screen on the first screen with it; a routed modulator lit, a hidden lock dotted',
+        ph.mdt.vis === 'false,false,true,false' && ph.mdt.view === 'MODS' && ph.mdt.page === 'EF1' && ph.mdt.tabs === 'M1,M2,M3,M4' && ph.mdt.rows === 1
+        && ph.mdt.scr && ph.mdt.mod && ph.mdt.lit === 'o,-L,-,-' && ph.mdt.lfo2.view === 'MODS' && ph.mdt.lfo2.page === 'LFO2', JSON.stringify(ph.mdt));
       // v69: OPTION at the end of the transport, on every page: its menu (Clear track, Clear all, Kits, Init, Demo) on the
       // screen; a tap elsewhere closes it; Kits opens the kits panel and closes the menu; Escape closes the panel
       const op = { bar: await page.evaluate(() => document.getElementById('projbtn').closest('#bar') !== null && document.getElementById('projbtn').textContent) };
@@ -174,7 +174,7 @@ function testWav(bpm, bars, variant) {
         wm.shut = await page.isHidden('#projrow');
         await page.click('#ptabs [data-tab="ms"]'); await page.waitForTimeout(60);
         ok('v69 wide: MOD, each of its four modules under its tab with the track\'s screen on the first screen (no scrolling); OPTION after SWING, its menu under it',
-          wm.fit.join() === 'true,true,true,true' && wm.view === 'EF2' && wm.opt && wm.menu && wm.shut, JSON.stringify(wm));
+          wm.fit.join() === 'true,true,true,true' && wm.view === 'MODS' && wm.opt && wm.menu && wm.shut, JSON.stringify(wm));
       }
       // v70: TONE, its four modules under their tabs (FILTER, TONE, AMP, BOX), the visualiser above them and a module on
       // the first screen; its handles: MID dragged up and right (the band's gain and frequency, TONE's tab), the filter
@@ -347,8 +347,8 @@ function testWav(bpm, bars, variant) {
       await seqPage();
       await page.click('#allrev');
       const decRev = await page.evaluate(() => window.__impakt.state.tracks.map(t => t.p[2]));
-      ok('CONTROL ALL: a track left out does not move, REVERT goes back to before ALL, the LFO destinations and waves locked',
-        Math.abs(decOut[1] - decAfter[1]) < 1e-9 && decOut[0] > decAfter[0] + 0.05 && ledOff === '10111111' && lockedK === '--LL--|--LL--'
+      ok('CONTROL ALL: a track left out does not move, REVERT goes back to before ALL, the modulators\' types and the LFO waves locked',
+        Math.abs(decOut[1] - decAfter[1]) < 1e-9 && decOut[0] > decAfter[0] + 0.05 && ledOff === '10111111' && lockedK === 'L-L-----|L-L-----'
         && decRev.every((v, i) => Math.abs(v - decBefore[i]) < 1e-9), JSON.stringify({ decOut, ledOff, lockedK, decRev }));
       await page.locator('#lockbar .aled').nth(1).click();
       await page.click('#allok');
@@ -511,6 +511,68 @@ function testWav(bpm, bars, variant) {
           && w2.len === 3 && w2.seed !== seed0 && w2.bars === 4
           && w3.m === 2 && w3.x === 40 && w3.txt === 'LFO 40' && w3.wave === 1 && w3.free && /Hz$/.test(w3.rate) && w3.trig === 1 && w3.paths === 2
           && !w4.open && w4.loop !== 'none' && w4.qz !== 'none' && w4.exp === 'false', JSON.stringify({ w0, w1, w2, w3, w4 }));
+      }
+      // v90: the modulators M1..M4. The destinations as the engine's (sk_mod_dest), a fresh track's modulators as the
+      // engine's defaults; MAP: tap M1 (it stays on, the banner), drag FREQ (a route, its ring), tap FREQ (turned over),
+      // tap it twice (gone), OK; a TYPE chosen starts from its own settings (RANDOM, ENV); the routes beside the screen:
+      // a depth dragged, × removes
+      {
+        const mo = {};
+        const wx = new WebAssembly.Instance(new WebAssembly.Module(fs.readFileSync(path.resolve(__dirname, '../web/impakt.wasm'))), {}).exports;
+        wx.sk_init(48000);
+        mo.dest = await page.evaluate(() => window.__impakt.MOD_DEST.slice());
+        const eng = []; for (let i = 0; i < 256; i++) eng.push(wx.sk_mod_dest(i));
+        mo.destSame = mo.dest.length <= 256 && eng.slice(0, mo.dest.length).every((p, i) => p === mo.dest[i]) && eng.slice(mo.dest.length).every(p => p === -1);
+        mo.defsSame = await page.evaluate(engDefs => { const I = window.__impakt, P = I.P, t = I.demoState().tracks[0].p;
+          return Object.keys(P).filter(n => /^M[1-4]/.test(n)).every(n => Math.abs(t[P[n]] - engDefs[P[n]]) < 1e-6 || /X1$|SEED/.test(n)); }, Array.from({ length: 284 }, (_, p) => wx.sk_param_def(0, p)));
+        await page.evaluate(() => { const I = window.__impakt; I.selectTrack(0); for (let m = 0; m < 4; m++) for (let r = 0; r < 4; r++) I.clearRoute(m, r); I.setPTab('tn'); I.openModule('FLT'); I.renderAll(); }); await page.waitForTimeout(120);
+        const k1 = await page.locator('#mkeysT .mkey[data-m="0"]').boundingBox();
+        await page.mouse.click(k1.x + k1.width / 2, k1.y + k1.height / 2);
+        mo.on = await page.evaluate(() => ({ m: window.__impakt.ui.map && window.__impakt.ui.map.m, bar: !document.getElementById('mapbar').hidden }));
+        const fk = page.locator('#k-FLT .knob').filter({ has: page.locator('.lt', { hasText: /^FREQ$/ }) }).first();
+        await fk.scrollIntoViewIfNeeded();
+        const fb = await fk.locator('svg').boundingBox(), fx = fb.x + fb.width / 2, fy = fb.y + fb.height / 2;
+        await page.mouse.move(fx, fy); await page.mouse.down(); await page.mouse.move(fx, fy + 50, { steps: 6 }); await page.mouse.up();
+        mo.made = await page.evaluate(() => { const I = window.__impakt; return { r: I.modRoutes(0, 0), ring: !!document.querySelector('#k-FLT .knob .mrg'), sign: (document.querySelector('#k-FLT .knob .mgl') || {}).textContent }; });
+        await page.waitForTimeout(400); await page.mouse.click(fx, fy);
+        mo.over = await page.evaluate(() => window.__impakt.modRoutes(0, 0));
+        await page.waitForTimeout(400); await page.mouse.click(fx, fy); await page.waitForTimeout(60); await page.mouse.click(fx, fy);
+        mo.gone = await page.evaluate(() => ({ r: window.__impakt.modRoutes(0, 0), ring: !!document.querySelector('#k-FLT .knob .mrg') }));
+        await page.click('#mapok');
+        mo.off = await page.evaluate(() => ({ map: window.__impakt.ui.map, bar: !document.getElementById('mapbar').hidden }));
+        // TYPE: RANDOM, then ENV (the modules on MOD)
+        await page.evaluate(() => { const I = window.__impakt; I.setTrackParam(I.P.M2TY, 1.5 / 4); I.setPTab('md'); I.openModule('LFO2'); I.renderAll(); }); await page.waitForTimeout(120);
+        mo.rand = await page.evaluate(() => { const I = window.__impakt, P = I.P, t = I.state.tracks[0].p;
+          return { labels: [...document.querySelectorAll('#k-LFO2 .knob .lt')].map(e => e.textContent).join(), len: document.querySelectorAll('#k-LFO2 .knob')[2].querySelector('.kv').textContent, seed: t[P.L2SD] }; });
+        await page.evaluate(() => { const I = window.__impakt; I.setTrackParam(I.P.M2TY, 2.5 / 4); I.renderAll(); });
+        mo.env = await page.evaluate(() => [...document.querySelectorAll('#k-LFO2 .knob .lt')].map(e => e.textContent).join());
+        await page.evaluate(() => { const I = window.__impakt; I.setTrackParam(I.P.M2TY, 0.5 / 4); I.renderAll(); });
+        // the routes beside the screen: M1 on DEC (+20), its bar dragged right, then ×
+        await page.evaluate(() => { const I = window.__impakt; I.ui.modSel = 0; I.setRoute(0, 0, I.P.DEC, 0.3); I.renderAll(); }); await page.waitForTimeout(80);
+        const bar = await page.locator('#mroutes .mbar').first().boundingBox();
+        await page.mouse.move(bar.x + bar.width * 0.65, bar.y + bar.height / 2); await page.mouse.down(); await page.mouse.move(bar.x + bar.width * 0.9, bar.y + bar.height / 2, { steps: 5 }); await page.mouse.up();
+        mo.drag = await page.evaluate(() => ({ r: window.__impakt.modRoutes(0, 0), txt: document.getElementById('mroutes').textContent }));
+        await page.click('#mroutes .mx');
+        mo.cleared = await page.evaluate(() => window.__impakt.modRoutes(0, 0).length);
+        await seqPage();
+        ok('v90 modulators: the destinations as the engine\'s; MAP M1 (tap: on, banner), FREQ dragged (a route, its ring, ▲), tapped (turned over), tapped twice (gone), OK; RANDOM, ENV start from their settings; a route\'s depth dragged, × removes',
+          mo.destSame && mo.dest.length > 200 && mo.defsSame && mo.on.m === 0 && mo.on.bar
+          && mo.made.r.length === 1 && mo.made.r[0].p === 10 && mo.made.r[0].d < -0.2 && mo.made.ring && mo.made.sign === '▲'
+          && mo.over.length === 1 && Math.abs(mo.over[0].d + mo.made.r[0].d) < 1e-6 && mo.gone.r.length === 0 && !mo.gone.ring && mo.off.map === null && !mo.off.bar
+          && mo.rand.labels === 'TYPE,RATE,LEN,VARI,SMTH,TRIG,CLK,AMT' && mo.rand.len === '8' && mo.rand.seed > 0 && mo.env === 'TYPE,ATK,DEC,SUS,REL,CURV,TRIG,AMT'
+          && mo.drag.r.length === 1 && mo.drag.r[0].d > 0.4 && /DEC/.test(mo.drag.txt) && mo.cleared === 0, JSON.stringify(mo));
+      }
+      // v90: a project of v89 (no "v90"): its LFOs' and followers' destinations (and their locks, in its patterns too)
+      // move from the 38 of before onto the grid of 256, the same destination; marked
+      {
+        const mg = await page.evaluate(() => { const I = window.__impakt, P = I.P, s = JSON.parse(JSON.stringify(I.state));
+          delete s.v90; const t = s.tracks[1];
+          t.p[P.LDST] = (9 + 0.5) / 38; t.p[P.E2DS] = (14 + 0.5) / 38; t.steps[3].l[P.L2DS] = (2 + 0.5) / 38;
+          s.pats[5] = { tracks: JSON.parse(JSON.stringify(s.tracks)), chg: 0 }; s.pats[5].tracks[1].p[P.LDST] = (37 + 0.5) / 38;
+          const r = I.migrate(s), f = v => r.tracks[1] ? I.modDestOf(v) : -9;
+          return { v90: r.v90, d: f(r.tracks[1].p[P.LDST]), e: f(r.tracks[1].p[P.E2DS]), lk: f(r.tracks[1].steps[3].l[P.L2DS]), pt: r.pats[5] && r.pats[5].tracks ? f(r.pats[5].tracks[1].p[P.LDST]) : -1, P: [P.FREQ, P.VOL, P.DEC, P.MIDF] }; });
+        ok('v90: a v89 project\'s routes onto the grid of 256 (FREQ, VOL, a lock on DEC, a pattern\'s MFRQ), marked v90',
+          mg.v90 === 1 && mg.d === mg.P[0] && mg.e === mg.P[1] && mg.lk === mg.P[2] && mg.pt === mg.P[3], JSON.stringify(mg));
       }
       await proj('demo'); await proj('demo');
       const eng = await page.evaluate(() => window.__impakt.ui.engine);
@@ -903,8 +965,8 @@ function testWav(bpm, bars, variant) {
           && ws.hint === 'FOLDS THE WAVE OVER ITSELF: MORE = BRIGHTER' && ws.defs, JSON.stringify(ws));
         ok('WEST: a v75 project\'s SPHERE becomes WEST at its defaults (its locks gone, a step locked onto it with WEST\'s sides), a v76 one stays as it is, the page marks what it saves',
           ws.mig.af && ws.mig.sides && !ws.mig.lockA && ws.mig.lockS && ws.mig.kept === 0.97 && ws.mig.keptL === 0.9 && ws.mig.wst === 1 && ws.mig.saved === 1, JSON.stringify(ws.mig));
-        ok('WEST (v78): a v77 project\'s tracks padded to 242 (v88), WEST\'s new places at its own, a step locked onto it from another machine with them, ECRV at EXP, marked',
-          ws.mig78.np === '242,242,242,242,242,242,242,242' && ws.mig78.w && ws.mig78.other === 0 && Math.abs(ws.mig78.lock - Math.SQRT1_2) < 1e-6 && ws.mig78.ecrv === 1
+        ok('WEST (v78): a v77 project\'s tracks padded to 284 (v90), WEST\'s new places at its own, a step locked onto it from another machine with them, ECRV at EXP, marked',
+          ws.mig78.np === '284,284,284,284,284,284,284,284' && ws.mig78.w && ws.mig78.other === 0 && Math.abs(ws.mig78.lock - Math.SQRT1_2) < 1e-6 && ws.mig78.ecrv === 1
           && ws.mig78.v78 === 1 && ws.mig78.saved === 1, JSON.stringify(ws.mig78));
         ok('WEST: a pad held, the pulser at 1/64 pings it on the tempo (the light, the pulses); every page drawn on the screen; the ring where the envelope takes TIMBRE, the stage on MOTION\'s tab, the envelope\'s level on SHAPE\'s',
           ws.info && ws.info.on === 1 && ws.info.np >= 2 && ws.info.left === -1 && ws.info.iv > 15 && ws.info.iv < 60 && ws.info.lvl > 0.005 && ws.info.n === 24
@@ -970,7 +1032,8 @@ function testWav(bpm, bars, variant) {
         await page.locator('.pad').nth(tH).dispatchEvent('pointerdown', { pointerId: 9, isPrimary: true }); await page.waitForTimeout(900);
         hw.scr = await page.evaluate(() => { const hi = window.__impakt.ui.halo, cv = document.getElementById('ovw'); let lit = 0;
           if (cv) { const d = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data; for (let i = 3; i < d.length; i += 4) if (d[i]) lit++; }
-          return { kind: hi ? hi[0] : -1, n: hi ? hi[1] : 0, root: hi ? Math.round(hi[8]) : 0, lit }; });
+          const I = window.__impakt, tp = I.state.tracks[I.ui.t].p;
+          return { kind: hi ? hi[0] : -1, n: hi ? hi[1] : 0, root: hi ? Math.round(hi[8]) : 0, lit, why: { play: I.ui.playing, run: I.ui.pos.run, rt: [0, 1, 2, 3].map(m => I.modRoutes(I.ui.t, m).map(r => r.p + ':' + r.d.toFixed(2)).join()).join('|'), tune: tp[I.P.TUNE], note: tp[I.P.NOTE], jump: tp[I.P.JUMP], lock: I.ui.lock, hi: hi ? Array.from(hi).slice(2, 11).map(x => Math.round(x * 10) / 10) : null } }; });
         await page.screenshot({ path: `${shotDir}/impakt-${label}-howl.png`, fullPage: true });
         { const m = /^([A-G]#?)(-?\d)$/.exec(hw.root); hw.rootN = m ? ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'].indexOf(m[1]) + 12 * (+m[2] + 1) : -1; }
         await page.locator('.pad').nth(tH).dispatchEvent('pointerup', { pointerId: 9, isPrimary: true }); await page.waitForTimeout(60);
@@ -1735,14 +1798,15 @@ function testWav(bpm, bars, variant) {
       }
       // EF1 follows the track itself and ducks its VOL: the follower moves, its history scrolls, DEST shows VOL
       await openMod('EF1');
-      await setP('E1DS', 14.5 / 38); await setP('E1DP', 0.1); await page.waitForTimeout(1500);
-      tv.ef = await page.evaluate(() => { const I = window.__impakt, t = I.ui.t, m = I.ui.mod, hst = I.ui.efHist[0];
-        return { n: m && m.length, max: Math.max(...hst.map(x => x[0])), inMax: Math.max(...hst.map(x => x[1])), len: hst.length, dest: document.querySelectorAll('#k-EF1 .knob')[7].querySelector('.kv').textContent }; });
-      await setP('E1DS', 0); await setP('E1DP', 0.5);
-      ok('TONE + EF1 / EF2, the TRACK screen draws the module in focus (TONE\'s visualiser, also on BOX; LFO, follower)',
-        tv.TONE.labels === 'HP,LP,LOW,LFRQ,MID,MFRQ,HIGH,HFRQ' && tv.EF1.labels === 'SRC,GAIN,BAND,TRG,ATK,DEC,DPTH,DEST' && tv.EF2.labels === tv.EF1.labels
-        && new Set(['TONE', 'EF1', 'LFO1'].map(k => tv[k].h)).size === 3 && tv.TONE.view === 'TVIZ' && tv.BOX.view === 'TVIZ' && tv.BOX.labels.startsWith('IR,MIX')
-        && tv.ef.n === 64 && tv.ef.len > 20 && tv.ef.max > 0.05 && tv.ef.inMax > 0.05 && /VOL/.test(tv.ef.dest), JSON.stringify(tv));
+      await page.evaluate(() => { const I = window.__impakt; I.setTrackParam(I.P.E1DS, I.modDestVal(I.P.VOL)); I.ui.modSel = 2; I.renderAll(); });
+      await setP('E1DP', 0.1); await page.waitForTimeout(1500);
+      tv.ef = await page.evaluate(() => { const I = window.__impakt, m = I.ui.mod, hst = I.ui.modHist[2];
+        return { n: m && m.length, max: Math.max(...hst.map(x => x[0])), len: hst.length, dest: document.getElementById('mroutes').textContent }; });
+      await page.evaluate(() => { const I = window.__impakt; I.setTrackParam(I.P.E1DS, I.modDestVal(-1)); I.ui.modSel = 0; I.renderAll(); }); await setP('E1DP', 0.5);
+      ok('TONE + M1..M4, the TRACK screen draws the module in focus (TONE\'s visualiser, also on BOX; the modulators\' lanes, M3 a follower onto VOL)',
+        tv.TONE.labels === 'HP,LP,LOW,LFRQ,MID,MFRQ,HIGH,HFRQ' && tv.EF1.labels === 'TYPE,SRC,GAIN,BAND,TRG,ATK,DEC,AMT' && tv.EF2.labels === tv.EF1.labels
+        && tv.TONE.h !== tv.EF1.h && tv.TONE.view === 'TVIZ' && tv.BOX.view === 'TVIZ' && tv.EF1.view === 'MODS' && tv.LFO1.view === 'MODS' && tv.BOX.labels.startsWith('IR,MIX')
+        && tv.ef.n === 128 && tv.ef.len > 20 && tv.ef.max > 0.05 && /VOL/.test(tv.ef.dest), JSON.stringify(tv));
       await page.screenshot({ path: `${shotDir}/impakt-${label}-ef1.png`, fullPage: true });
       // v64: TONE's MORE page (the MORE key in TONE's header): SPRD and MONO; a SYNTH machine starts a little wide, the
       // others centred; back to TONE; no other module has the key
@@ -1778,7 +1842,7 @@ function testWav(bpm, bars, variant) {
         await page.evaluate(() => window.__impakt.selectTrack(0)); await page.waitForTimeout(60);
         await openMod('LFO1');
         lm.l1 = await knobLabels('LFO1'); await openMod('LFO2'); lm.l2 = await knobLabels('LFO2'); await openMod('LFO1');
-        lm.vals = await page.evaluate(() => [...document.querySelectorAll('#k-LFO1 .knob')].map(k => k.querySelector('.kv').textContent).slice(4, 6).join());
+        lm.vals = await page.evaluate(() => [...document.querySelectorAll('#k-LFO1 .knob')].map(k => k.querySelector('.kv').textContent).slice(5, 7).join());
         lm.waves = await page.evaluate(() => { const I = window.__impakt, m = I.paramMeta(I.ui.t, I.P.LWAV); return [4, 6, 7, 14, 15].map(i => m.f((i + 0.5) / 16)).join(); });
         lm.sd = await page.evaluate(() => { const I = window.__impakt, P = I.P, t = I.state.tracks[I.ui.t], s = [];
           I.setTrackParam(P.LDEP, 0.5); t.p[P.L1SD] = 0;
@@ -1786,12 +1850,12 @@ function testWav(bpm, bars, variant) {
           I.setTrackParam(P.LDEP, 0.8); s.push(t.p[P.L1SD]);
           I.setTrackParam(P.LDEP, 0.9); s.push(t.p[P.L1SD]);
           I.setTrackParam(P.LWAV, 15.5 / 16); s.push(t.p[P.L1SD]);
-          I.setTrackParam(P.LWAV, 7.5 / 16); I.setTrackParam(P.LDST, 1.5 / 38); I.renderAll(); return s; });
+          I.setTrackParam(P.LWAV, 7.5 / 16); I.setTrackParam(P.LDST, I.modDestVal(P.TUNE)); I.renderAll(); return s; });
         await page.waitForTimeout(400);
         await page.screenshot({ path: `${shotDir}/impakt-${label}-mod.png`, fullPage: true });
-        await page.evaluate(() => { const I = window.__impakt, P = I.P; I.setTrackParam(P.LDEP, 0.5); I.setTrackParam(P.LDST, 0.5 / 38); I.setTrackParam(P.LWAV, 0.5 / 16); I.renderAll(); });
-        ok('v67: MOD: LFO 1 and LFO 2 each with SLW and LEN (50 %, 8); S&H, SLEW, LOOP, their ·T; LOOP draws a seed, its depth out of 0 another',
-          lm.l1 === 'SPD1,DEP1,DST1,WAV1,SLW1,LEN1' && lm.l2 === 'SPD2,DEP2,DST2,WAV2,SLW2,LEN2' && lm.vals === '50%,8'
+        await page.evaluate(() => { const I = window.__impakt, P = I.P; I.setTrackParam(P.LDEP, 0.5); I.setTrackParam(P.LDST, I.modDestVal(-1)); I.setTrackParam(P.LWAV, 0.5 / 16); I.renderAll(); });
+        ok('v67 (v90: M1, M2 WAVE): MOD: the LFOs each with SLW and LEN (50 %, 8); S&H, SLEW, LOOP, their ·T; LOOP draws a seed, its depth out of 0 another',
+          lm.l1 === 'TYPE,RATE,SHAP,PHAS,CLK,SLW,LEN,AMT' && lm.l2 === lm.l1 && lm.vals === '50%,8'
           && lm.waves === 'S&H,SLEW,LOOP,SLEW·T,LOOP·T' && lm.sd[0] > 0 && lm.sd[1] > 0 && lm.sd[1] !== lm.sd[0] && lm.sd[2] === lm.sd[1] && lm.sd[3] === lm.sd[2], JSON.stringify(lm));
       }
       await seqPage();
@@ -1864,7 +1928,7 @@ function testWav(bpm, bars, variant) {
       await page.locator('#rknobs .knob').nth(2).focus();
       for (let i = 0; i < 12; i++) await page.keyboard.press('ArrowDown');
       trgRow.p1 = await page.evaluate(() => window.__impakt.state.tracks[window.__impakt.ui.t].p[27]);
-      ok('trig row under the steps (NOTE .. GATE), PROB turns from it; TONE: FILTER TONE AMP BOX (v70), MOD: LFO 1 LFO 2 FOLLOWER 1 FOLLOWER 2, FX: SEND REVERB DELAY CHORUS PHASER, MASTR: OUT', trgRow.labels === 'NOTE,VEL,PROB,MICR,RTRG,RCNT,RVEL,GATE'
+      ok('trig row under the steps (NOTE .. GATE), PROB turns from it; TONE: FILTER TONE AMP BOX (v70), MOD: M1 M2 M3 M4 (v90), FX: SEND REVERB DELAY CHORUS PHASER, MASTR: OUT', trgRow.labels === 'NOTE,VEL,PROB,MICR,RTRG,RCNT,RVEL,GATE'
         && trgRow.tabs === 'FLT,TONE,AMP,BOX|LFO1,LFO2,EF1,EF2|SEND,REV,DLY,CHO,PHS|OUT' && trgRow.p1 < trgRow.p0, JSON.stringify(trgRow));
       for (let i = 0; i < 12; i++) await page.keyboard.press('ArrowUp');
       // ON keys on every effect: REVERB and DELAY (their screens on FX), MIX (MASTR); crossed out when the key is off
@@ -1941,8 +2005,8 @@ function testWav(bpm, bars, variant) {
         localStorage.setItem('impakt.state.v1', JSON.stringify(s));
       });
       await page.reload(); await page.waitForTimeout(300);
-      const mig = await page.evaluate(() => { const s = window.__impakt.state; return { v: s.v, np: s.tracks[0].p.length, m: Math.floor(s.tracks[0].p[0] * 64), d: Math.floor(s.tracks[0].p[23] * 38), ng: s.g.length, alg: Math.floor(s.g[42] * 6) }; });
-      ok('version-1 project migrated', mig.v === 26 && mig.np === 242 && mig.m === 9 && mig.d === 3 && mig.ng === 190 && mig.alg === 1, JSON.stringify(mig));
+      const mig = await page.evaluate(() => { const s = window.__impakt.state; return { v: s.v, np: s.tracks[0].p.length, m: Math.floor(s.tracks[0].p[0] * 64), d: Math.floor(s.tracks[0].p[23] * 256), ng: s.g.length, alg: Math.floor(s.g[42] * 6) }; });
+      ok('version-1 project migrated', mig.v === 26 && mig.np === 284 && mig.m === 9 && mig.d === 3 && mig.ng === 190 && mig.alg === 1, JSON.stringify(mig));
       await page.evaluate(() => localStorage.clear());
       // a project saved by version 2 (18 machines, µLOOP morphing 4 synth sources)
       await page.evaluate(() => {
@@ -1984,7 +2048,7 @@ function testWav(bpm, bars, variant) {
         localStorage.setItem('impakt.state.v4', JSON.stringify(s));
       });
       await page.reload(); await page.waitForTimeout(300);
-      const mig4 = await page.evaluate(() => { const s = window.__impakt.state, t = s.tracks[2]; return { v: s.v, ng: s.g.length, d1: Math.floor(t.p[23] * 38), d2: Math.floor(t.p[39] * 38), lk: Math.floor(t.steps[4].l[23] * 38),
+      const mig4 = await page.evaluate(() => { const s = window.__impakt.state, t = s.tracks[2]; return { v: s.v, ng: s.g.length, d1: Math.floor(t.p[23] * 256), d2: Math.floor(t.p[39] * 256), lk: Math.floor(t.steps[4].l[23] * 256),
         dice: s.g[61], r0: Math.floor(s.g[78] * 9), dst: Math.floor(s.g[79] * 44), stp: s.g[72], alg: Math.floor(s.g[42] * 6), dv: s.g[67] }; });
       ok('version-4 project migrated (LFO destinations, DICE off)', mig4.v === 26 && mig4.ng === 190 && mig4.d1 === 17 && mig4.d2 === 23 && mig4.lk === 9 && mig4.dice === 0 && mig4.r0 === 0 && mig4.dst === 0 && Math.abs(mig4.stp - 0.6) < 1e-6 && mig4.alg === 5 && mig4.dv === 0.5, JSON.stringify(mig4));
       await page.evaluate(() => localStorage.clear());
@@ -2024,8 +2088,8 @@ function testWav(bpm, bars, variant) {
       });
       await page.reload(); await page.waitForTimeout(300);
       const mig7 = await page.evaluate(() => { const s = window.__impakt.state, t = s.tracks[4]; return { v: s.v, np: t.p.length, side: Math.floor(t.p[8] * 4), w: t.p[62], wl: t.steps[3].l[62],
-        voic: Math.floor(t.p[58] * 16) + 1, d1: Math.floor(t.p[23] * 38), dice: Math.floor(s.g[79] * 44), wave: t.p[64], oct: t.p[66], w0: s.tracks[0].p[62] }; });
-      ok('version-7 project migrated (PRISM v2, the new LFO / DICE destinations)', mig7.v === 26 && mig7.np === 242 && mig7.side === 2 && Math.abs(mig7.w - 0.5) < 1e-9
+        voic: Math.floor(t.p[58] * 16) + 1, d1: Math.floor(t.p[23] * 256), dice: Math.floor(s.g[79] * 44), wave: t.p[64], oct: t.p[66], w0: s.tracks[0].p[62] }; });
+      ok('version-7 project migrated (PRISM v2, the new LFO / DICE destinations)', mig7.v === 26 && mig7.np === 284 && mig7.side === 2 && Math.abs(mig7.w - 0.5) < 1e-9
         && Math.abs(mig7.wl - 0.9) < 1e-9 && mig7.voic === 8 && mig7.d1 === 26 && mig7.dice === 33 && mig7.wave === 0 && mig7.oct === 0.5 && Math.abs(mig7.w0 - 0.5) < 1e-9, JSON.stringify(mig7));
       await page.evaluate(() => localStorage.clear());
       await page.reload(); await page.waitForTimeout(300);
@@ -2058,10 +2122,10 @@ function testWav(bpm, bars, variant) {
         localStorage.setItem('impakt.state.v4', JSON.stringify(s));
       });
       await page.reload(); await page.waitForTimeout(300);
-      const mig9 = await page.evaluate(() => { const s = window.__impakt.state, t = s.tracks[2], P = window.__impakt.P, f = v => Math.floor(v * 38);
+      const mig9 = await page.evaluate(() => { const s = window.__impakt.state, t = s.tracks[2], P = window.__impakt.P, f = v => Math.floor(v * 256);
         return { v: s.v, np: t.p.length, d1: f(t.p[23]), d2: f(t.p[39]), lk: f(t.steps[4].l[23]), dice: Math.floor(s.g[79] * 44), hp: t.p[P.HPF], lp: t.p[P.LPF], mid: t.p[P.MID],
           e1: f(t.p[P.E1DS]), e2: f(t.p[P.E2DS]), gn: t.p[P.E1GN] }; });
-      ok('version-9 project migrated (TONE flat, followers off, LFO destinations 35 -> 38, DICE 42 -> 44)', mig9.v === 26 && mig9.np === 242 && mig9.d1 === 17 && mig9.d2 === 34
+      ok('version-9 project migrated (TONE flat, followers off, LFO destinations 35 -> 38, DICE 42 -> 44)', mig9.v === 26 && mig9.np === 284 && mig9.d1 === 17 && mig9.d2 === 34
         && mig9.lk === 9 && mig9.dice === 41 && mig9.hp === 0 && mig9.lp === 1 && mig9.mid === 0.5 && mig9.e1 === 0 && mig9.e2 === 0 && mig9.gn === 0.25, JSON.stringify(mig9));
       // a project saved by v42 .. v44 (state v10): 140 globals; GLITCH arrives off, its r tracks from the r keys
       await page.evaluate(() => {
@@ -2095,7 +2159,7 @@ function testWav(bpm, bars, variant) {
       await page.reload(); await page.waitForTimeout(300);
       const m13 = await page.evaluate(() => { const s = window.__impakt.state, P = window.__impakt.P, t = s.tracks[3].p;
         return { v: s.v, np: t.length, rnd: t[P.BRND], skp: t[P.BSKP], seed: Math.floor(t[P.BSED] * 33), swp: t[P.BSWP] }; });
-      ok('version-13 project migrated (BREAK: its CHOP side at rest)', m13.v === 26 && m13.np === 242 && m13.rnd === 0 && m13.skp === 0 && m13.seed === 0 && m13.swp === 0, JSON.stringify(m13));
+      ok('version-13 project migrated (BREAK: its CHOP side at rest)', m13.v === 26 && m13.np === 284 && m13.rnd === 0 && m13.skp === 0 && m13.seed === 0 && m13.swp === 0, JSON.stringify(m13));
       // v14: BREAK on its own breaks (BRK, KIT, the ghost notes' weight, MODE at the end): slot 1, SYNC / VARI from MODE
       await page.evaluate(() => {
         const I = window.__impakt, s = I.demoState20(), P = I.P;
@@ -2119,7 +2183,7 @@ function testWav(bpm, bars, variant) {
       await page.reload(); await page.waitForTimeout(300);
       const m15 = await page.evaluate(() => { const s = window.__impakt.state, P = window.__impakt.P;
         return { v: s.v, np: s.tracks.map(t => t.p.length).join(), xs: s.tracks.flatMap(t => [t.p[P.XA], t.p[P.XB], t.p[P.XC], t.p[P.XD], t.p[P.XE], t.p[P.XF], t.p[P.XG]]).every(x => x === 0) }; });
-      ok('version-15 project migrated (the FX machines\' MORE side at 0)', m15.v === 26 && m15.np === '242,242,242,242,242,242,242,242' && m15.xs, JSON.stringify(m15));
+      ok('version-15 project migrated (the FX machines\' MORE side at 0)', m15.v === 26 && m15.np === '284,284,284,284,284,284,284,284' && m15.xs, JSON.stringify(m15));
       // v17 -> v18: 16 steps padded to 64, DEC at its top on a synth keeps its decay (0.985), RAM's HOLD kept; a v18
       // project keeps its patterns (packed when saved: sparse steps), the one playing, its chain
       await page.evaluate(() => {
@@ -2156,7 +2220,7 @@ function testWav(bpm, bars, variant) {
       await page.reload(); await page.waitForTimeout(300);
       const m19 = await page.evaluate(() => { const I = window.__impakt, s = I.state, P = I.P, t = s.tracks[3];
         return { v: s.v, np: t.p.length, prog: Math.floor(t.p[P.B] * 28), side: Math.floor(t.p[P.F] * 4), lk: Math.floor(t.steps[4].l[P.B] * 28), harm: Math.floor(t.p[P.HARM] * 3), cut: t.p[P.HCUT] }; });
-      ok('version-18 project migrated (HALO: PROG WALK stays WALK, VOICE stays VOICE, its locks; HARM FREE, TONE at rest)', m19.v === 26 && m19.np === 242 && m19.prog === 27
+      ok('version-18 project migrated (HALO: PROG WALK stays WALK, VOICE stays VOICE, its locks; HARM FREE, TONE at rest)', m19.v === 26 && m19.np === 284 && m19.prog === 27
         && m19.side === 1 && m19.lk === 1 && m19.harm === 0 && m19.cut === 1, JSON.stringify(m19));
       // v19 -> v20: HALO's and STRUM's switch a fourth side (AGE): their F (TONE, STRING) and a lock onto the new grid;
       // AGE at rest, STRUM's AIR off (what v59 played)
@@ -2173,7 +2237,7 @@ function testWav(bpm, bars, variant) {
       const m20 = await page.evaluate(() => { const I = window.__impakt, s = I.state, P = I.P, h = s.tracks[3], st = s.tracks[5];
         return { v: s.v, np: h.p.length, hs: Math.floor(h.p[P.F] * 4), hl: Math.floor(h.steps[6].l[P.F] * 4), ss: Math.floor(st.p[P.F] * 4),
           age: [P.GDTN, P.GVAR, P.GSHN, P.GDRP, P.SAIR, P.S1, P.S6].map(q => st.p[q]).join() }; });
-      ok('version-19 project migrated (HALO on TONE, STRUM on STRING: the four sides; AGE at rest, STRUM\'s AIR off)', m20.v === 26 && m20.np === 242 && m20.hs === 2
+      ok('version-19 project migrated (HALO on TONE, STRUM on STRING: the four sides; AGE at rest, STRUM\'s AIR off)', m20.v === 26 && m20.np === 284 && m20.hs === 2
         && m20.hl === 1 && m20.ss === 2 && m20.age === '0,0,0,0,0,0,0', JSON.stringify(m20));
       ok('version-18 project: its patterns kept (packed: sparse steps), its chain and change mode', m18.v === 26 && m18.has && m18.chg === 32 && m18.len === 32 && m18.n === 64 && m18.st.on === 1 && m18.st.r === 3 && m18.st.l[3] === 0.25
         && m18.chain === '0,9' && m18.mode === 1 && m18.packed === '20', JSON.stringify(m18));
@@ -2200,7 +2264,7 @@ function testWav(bpm, bars, variant) {
           l0: Object.keys(l0).sort((a, b) => a - b).join(), l7m: f(l7[P.MACH]), l7a: l7[P.A], l7b: l7[P.B], l7s: Math.round(l7[P.S2] * 1000) / 1000, lxs2: Math.round(I.sideDefs(lx)[1] * 1000) / 1000,
           pre5: s.tracks[5].pre && s.tracks[5].pre.m, pre0: s.tracks[0].pre, u: I.userPresets.map(x => x.m + ':' + x.name).join() }; });
       ok('version-20 project migrated (v61, v62: the machines renumbered, the five gone onto ALLOY at its defaults, the MORE page gone, presets)',
-        m21.v === 26 && m21.np === 242 && m21.m === '37,37,37,37,37,28,36,0' && m21.a === '0.1875,0.1875,0.1875,0.1875,0.1875,0.97,0.97,0.97' && m21.sm && m21.sl && m21.s0
+        m21.v === 26 && m21.np === 284 && m21.m === '37,37,37,37,37,28,36,0' && m21.a === '0.1875,0.1875,0.1875,0.1875,0.1875,0.97,0.97,0.97' && m21.sm && m21.sl && m21.s0
         && m21.l0 === '1' && m21.l7m === 37 && m21.l7a === 0.1875 && m21.l7b === 0.5 && m21.l7s === m21.lxs2 && m21.pre5 === 28 && m21.pre0 === null && m21.u === '28:HALO PAD', JSON.stringify(m21));
       // v21 -> v22 (v62): MATTER (37) and LATEX (38) both onto ALLOY at its defaults (A..F, the sides), the A..F and side
       // locks made for them gone, a step locked onto MATTER on another machine's track: ALLOY with its sides as locks; a
@@ -2241,7 +2305,7 @@ function testWav(bpm, bars, variant) {
           lpenv: r(l[P.S3]), ldac: r(l[P.S14]), lold: r(l[P.S5]), kb: r(k[P.S6]), kr: r(k[P.S35]), km: r(k[P.S21]), kn: r(k[P.S10]), kold: r(k[P.S7]),
           um: u && u.m, udv: u && u.dv, umalt: u && r(u.p[P.S1]), ubn: u && r(u.p[P.S6]), uadd: u && r(u.p[P.S22]), uverb: u && r(u.p[P.S29]) }; });
       ok('version-22 project migrated (v63: ALLOY\'s sides onto its five pages, BNCE and PENV on their new ranges, the new ones at rest; its locks; a lock onto ALLOY; a v22 preset)',
-        m23.v === 26 && m23.np === 242 && m23.m === 37 && m23.malt === 0.6 && m23.clik === 0 && m23.penv === 0.3 && m23.bnce === 0.75 && m23.nois === 0.7 && m23.ncol === 0.65
+        m23.v === 26 && m23.np === 284 && m23.m === 37 && m23.malt === 0.6 && m23.clik === 0 && m23.penv === 0.3 && m23.bnce === 0.75 && m23.nois === 0.7 && m23.ncol === 0.65
         && m23.nlen === 0.4 && m23.dac === 0.3125 && m23.obj === 1 && m23.menv === 0.5 && m23.verb === 0 && m23.room === 0.3 && m23.rate === 0
         && m23.lpenv === 0.3 && m23.ldac === 0.75 && m23.lold === 'none' && m23.kb === 0.7 && m23.kr === 0.9 && m23.km === 0.5 && m23.kn === 0.7625 && m23.kold === 0
         && m23.um === 37 && m23.udv === 26 && m23.umalt === 0.4 && m23.ubn === 0.6 && m23.uadd === 0.6 && m23.uverb === 0, JSON.stringify(m23));
@@ -2257,7 +2321,7 @@ function testWav(bpm, bars, variant) {
         return { v: s.v, np: s.tracks.map(t => t.p.length).join(), rp: s.tracks.every(t => t.p[P.RPAN] === 0.5), sp: s.tracks.every(t => t.p[P.SPRD] === 0),
           mo: s.tracks.every(t => t.p[P.SMON] === 0.5), synth: s.tracks.map(t => I.MACH[Math.floor(t.p[0] * 64)].id).filter(id => ['FM·X', 'SY·RAW', 'TRIO'].includes(id)).length }; });
       ok('version-23 project migrated (v64: RPAN centred, no spread, a SYNTH track too, MONO at its middle)',
-        m24.v === 26 && m24.np === '242,242,242,242,242,242,242,242' && m24.rp && m24.sp && m24.mo && m24.synth >= 1, JSON.stringify(m24));
+        m24.v === 26 && m24.np === '284,284,284,284,284,284,284,284' && m24.rp && m24.sp && m24.mo && m24.synth >= 1, JSON.stringify(m24));
       // v24 -> v25 (v65): the LFO waves onto the 16 (S&H·T stays S&H·T, EXP stays EXP, EXP·T in a lock too), RDEC off, SLW and
       // LEN at rest; a user preset of v64 with a TRI·T keeps it
       await page.evaluate(() => {
@@ -2275,7 +2339,7 @@ function testWav(bpm, bars, variant) {
           sl: s.tracks.every(t => t.p[P.L1SL] === 0.5 && t.p[P.L2SL] === 0.5), ln: s.tracks.every(t => t.p[P.L1LN] === 0.65 && t.p[P.L2LN] === 0.65),
           name: I.paramMeta(0, P.LWAV).f(s.tracks[0].p[P.LWAV]), udv: u && u.dv, uw: u && r(u.p[P.LWAV] * 16 - 0.5) }; });
       ok('version-24 project migrated (v65: the LFO waves onto 16, S&H·T and EXP kept, an EXP·T lock too; RDEC off, SLW 50 %, LEN 8; a user preset\'s TRI·T)',
-        m25.v === 26 && m25.np === '242,242,242,242,242,242,242,242' && m25.w0 === 12 && m25.w2 === 4 && m25.w1 === 5 && m25.lk === 13 && m25.rd && m25.sl && m25.ln
+        m25.v === 26 && m25.np === '284,284,284,284,284,284,284,284' && m25.w0 === 12 && m25.w2 === 4 && m25.w1 === 5 && m25.lk === 13 && m25.rd && m25.sl && m25.ln
         && m25.name === 'S&H·T' && m25.udv === 26 && m25.uw === 9, JSON.stringify(m25));
       await page.evaluate(() => localStorage.clear());
       await page.reload(); await page.waitForTimeout(300);

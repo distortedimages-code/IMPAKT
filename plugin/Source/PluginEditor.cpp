@@ -206,8 +206,8 @@ void ImpaktEditor::timerCallback()
     }
     {
         juce::Array<juce::var> mod;
-        mod.ensureStorageAllocated (8 * sk::NUM_TRACKS);
-        for (int k = 0; k < 8 * sk::NUM_TRACKS; ++k) mod.add ((k & 7) < 4 ? proc.meters.mod[k].load (std::memory_order_relaxed) : proc.meters.mod[k].exchange (0.0f, std::memory_order_relaxed));
+        mod.ensureStorageAllocated (sk::MOD_INFO * sk::NUM_TRACKS);
+        for (int k = 0; k < sk::MOD_INFO * sk::NUM_TRACKS; ++k) mod.add ((k % sk::MOD_INFO) < 8 ? proc.meters.mod[k].load (std::memory_order_relaxed) : proc.meters.mod[k].exchange (0.0f, std::memory_order_relaxed));
         obj->setProperty ("mod", mod);
     }
     // RAM machine: each buffer, and the peaks of those that changed

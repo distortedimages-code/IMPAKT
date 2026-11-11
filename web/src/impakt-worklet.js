@@ -226,7 +226,7 @@ class ImpaktProcessor extends AudioWorkletProcessor {
       // PRISM of the track the page shows on its PRSM side: its oscillators (Hz, amplitude)
       const prism = this.prsmT >= 0 && x.sk_prism_info ? Array.from(new Float32Array(x.memory.buffer, x.sk_prism_info(this.prsmT), 32)) : null;
       // LFO 1 / 2 (phase, value) and EF 1 / 2 (value, input) of every track, for the TRACK screen
-      const mod = x.sk_mod_info ? Array.from(new Float32Array(x.memory.buffer, x.sk_mod_info(), 64)) : null;
+      const mod = x.sk_mod_info ? Array.from(new Float32Array(x.memory.buffer, x.sk_mod_info(), 128)) : null;
       // GLITCH (only while it is in): its last divisions, the current one, the codec's bandwidth
       let glitch = null;
       if (x.sk_glitch_info) { const f = new Float32Array(x.memory.buffer, x.sk_glitch_info(), 22); if (f[19] > 0.5) glitch = Array.from(f); }

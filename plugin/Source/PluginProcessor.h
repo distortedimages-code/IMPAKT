@@ -117,7 +117,7 @@ public:
         std::atomic<float> west[sk::WS_INFO];
         std::atomic<int> chimT { -1 };                             // CHIMERA shown by the page: the bank, the track's last hit, its neighbours
         std::atomic<float> chim[sk::CHIM_INFO];
-        std::atomic<float> mod[8 * sk::NUM_TRACKS];                // LFO 1 / 2 (phase, value), EF 1 / 2 (value, input), per track
+        std::atomic<float> mod[sk::MOD_INFO * sk::NUM_TRACKS];     // v90: per track, the modulators' place, value, peak, input (Engine::modInfo)
         // BREAK's slots (state, tempo, bars, seconds) and their waveforms, copied when they change (brkVer moves last)
         std::atomic<float> brkSlots[sk::BRK_SLOTS * sk::BRK_SLOT_INFO];
         std::atomic<float> brkPeaks[sk::BRK_SLOTS * sk::BRK_NPEAK];

@@ -1,5 +1,24 @@
 # Versions d'IMPAKT
 
+## 0.90.0
+
+- **Les modulateurs** : la page MOD passe de deux LFO et deux suiveurs à quatre modulateurs, **M1** à **M4** (▲ ■ ⬢ ●,
+  chacun sa couleur), chacun d'un type au choix :
+  - **WAVE** : le LFO, ses 16 formes, en mesure (SYNC) ou en Hz (FREE), avec sa phase (**PHAS**) ;
+  - **RAND** : du hasard en marches ou glissé (**SMTH**), libre ou en boucle de 2 à 32 valeurs (**LEN**) qui change peu
+    à peu avec **VARI** ; il peut repartir à chaque coup (**TRIG** HIT) ;
+  - **ENV** : une enveloppe ATK, DEC, SUS, REL et sa courbe, déclenchée par les coups de la piste ou d'une autre ;
+  - **FLLW** : le suiveur d'enveloppe.
+- **Quatre routes par modulateur**, vers presque tous les réglages de la piste : la machine et ses pages de côté, le
+  filtre, TONE, AMP, les envois, la rangée TRIG, et les autres modulateurs (M2 qui fait varier la vitesse de M1).
+  **AMT** les dose toutes ensemble. Les routes se p-lockent.
+- **Assigner** : maintenez **M1** (ou M2, M3, M4) et tournez un potard, la distance tournée devient la profondeur. Sur
+  un téléphone ou à la souris, touchez **M1** : la touche reste allumée, tournez autant de potards que vous voulez, puis
+  **OK**. Toucher un potard retourne sa route, deux touches la retirent.
+- Un potard modulé montre un anneau de la couleur de chaque modulateur et un point qui suit la modulation. L'écran de
+  MOD montre les quatre modulateurs en direct et les routes de celui qu'on choisit, avec leur profondeur à glisser.
+- Les projets existants sonnent exactement comme avant : M1 et M2 sont les anciens LFO, M3 et M4 les anciens suiveurs.
+
 ## 0.89.0
 
 - **WTF?!** : LIVE change de nom et gagne des modes. Touchez son nom sur la touche rouge : sa ligne de réglages

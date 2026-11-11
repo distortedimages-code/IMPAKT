@@ -427,9 +427,9 @@ int main()
     }
     // 25. the LFO destinations reach the PRISM controls (the last one, TILT, too)
     {
-        auto lfo = prismPlay (sine (440.0, 0.5), [&] { e.setParam (0, P_PMIX, 0.0f); e.setParam (0, P_LDST, takeIdx (27, NUM_LFO_DEST)); e.setParam (0, P_LDEP, 1.0f);
+        auto lfo = prismPlay (sine (440.0, 0.5), [&] { e.setParam (0, P_PMIX, 0.0f); e.setParam (0, P_LDST, takeIdx (27, MOD_DEST_SLOTS)); e.setParam (0, P_LDEP, 1.0f);
                                                         e.setParam (0, P_LSPD, takeIdx (NUM_LFO_SPEEDS - 1, NUM_LFO_SPEEDS)); e.setParam (0, P_LWAV, takeIdx (3, NUM_LFO_WAVES)); }, 24000);
-        auto tl = prismPlay (two (250.0, 4000.0), [&] { e.setParam (0, P_LDST, takeIdx (34, NUM_LFO_DEST)); e.setParam (0, P_LDEP, 1.0f); e.setParam (0, P_LSPD, takeIdx (0, NUM_LFO_SPEEDS));
+        auto tl = prismPlay (two (250.0, 4000.0), [&] { e.setParam (0, P_LDST, takeIdx (34, MOD_DEST_SLOTS)); e.setParam (0, P_LDEP, 1.0f); e.setParam (0, P_LSPD, takeIdx (0, NUM_LFO_SPEEDS));
                                                         e.setParam (0, P_LWAV, takeIdx (LFO_SHAPES + LW_SQR, NUM_LFO_WAVES)); }, 24000);
         const double r = ampAt (tl, 4800, 24000, 4000.0) / ampAt (tl, 4800, 24000, 250.0);
         ok ("LFO on PRISM: MIX and TILT are destinations", peak (lfo) > 0.05 && r > 1.5, "peak %.3f, tilt %.1f", peak (lfo), r);
@@ -454,9 +454,9 @@ int main()
             e.setParam (t, P_C, takeIdx (t % RAM_MODES, RAM_MODES)); e.setParam (t, P_D, takeIdx (t % RAM_SLICES, RAM_SLICES));
             setSrc (e, t, t % RAM_SRCS); setTake (e, t, t % 4); e.setParam (t, P_ROVD, 0.7f);
             e.setParam (t, P_RTRG, takeIdx (NUM_RETRIG - 1, NUM_RETRIG)); e.setParam (t, P_RCNT, takeIdx (NUM_RCOUNT - 1, NUM_RCOUNT));
-            e.setParam (t, P_LSPD, takeIdx (NUM_LFO_SPEEDS - 1, NUM_LFO_SPEEDS)); e.setParam (t, P_LDEP, 1.0f); e.setParam (t, P_LDST, takeIdx (3, NUM_LFO_DEST));
+            e.setParam (t, P_LSPD, takeIdx (NUM_LFO_SPEEDS - 1, NUM_LFO_SPEEDS)); e.setParam (t, P_LDEP, 1.0f); e.setParam (t, P_LDST, takeIdx (3, MOD_DEST_SLOTS));
             e.setParam (t, P_L2SP, takeIdx (NUM_LFO_SPEEDS - 1, NUM_LFO_SPEEDS)); e.setParam (t, P_L2DP, 0.0f);
-            e.setParam (t, P_L2DS, takeIdx (t % 2 ? 1 : 28, NUM_LFO_DEST));            // TUNE, or WAVE
+            e.setParam (t, P_L2DS, takeIdx (t % 2 ? 1 : 28, MOD_DEST_SLOTS));            // TUNE, or WAVE
             for (int s = 0; s < NUM_STEPS; ++s) { e.setTrig (t, s, 1); e.setRec (t, s, s % 2); e.setRatchet (t, s, 1 + s % 8); }
         }
         e.setPlay (1);
