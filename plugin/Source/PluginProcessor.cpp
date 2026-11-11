@@ -301,8 +301,13 @@ void ImpaktProcessor::pushStateOps (const juce::var& st)
     auto destIn = [&] (double raw) {
         int d = idx (raw, ver == 1 ? 18 : (ver < 5 ? 24 : (ver < 8 ? 27 : 35)));
         if (ver < 4 && d == 18) d = 0;
-        return mid (d, sk::NUM_LFO_DEST);
+        return mid (d, sk::MOD_DEST_SLOTS);
     };
+    // v90: the modulators. A project saved before them (no "v90") has its LFOs' and followers' destinations (now the first
+    // route of M1..M4) on the 38 of before: onto the grid of 256 (the same place in the list), on its steps too
+    const bool pre90 = ! st.hasProperty ("v90");
+    auto isDest90 = [] (int i) { return i == sk::P_LDST || i == sk::P_L2DS || i == sk::P_E1DS || i == sk::P_E2DS; };
+    auto dest90 = [&] (double raw) { return mid (idx (raw, sk::NUM_LFO_DEST), sk::MOD_DEST_SLOTS); };
     // v7 -> v8: PRISM's WDTH becomes bipolar (12 o'clock = the whole band, a band narrows to the right): the old
     // width (0 narrow .. 1 the whole band) moves to the right half; the DICE destinations grow from 34 to 42
     auto widthIn = [] (double raw) { return (float) (0.5 + 0.5 * (1.0 - juce::jlimit (0.0, 1.0, raw))); };
@@ -415,6 +420,7 @@ void ImpaktProcessor::pushStateOps (const juce::var& st)
                 else if ((ver < 21 || trackGone) && sk::sideP (i)) v = sideDefault (machine, i);   // (v20's MORE page; v21's MATTER, LATEX)
                 else if (al23 && machine == sk::M_ALLOY && i >= sk::P_S1) continue;                  // (v22's ALLOY: below)
                 else if (ver < 10 && (i == sk::P_LDST || i == sk::P_L2DS)) v = destIn (raw);
+                else if (pre90 && isDest90 (i)) v = dest90 (raw);
                 else if (ver < 25 && isWave (i)) v = waveIn (raw);
                 else if (ver < 8 && i == sk::P_PWID) v = widthIn (raw);
                 else if (ver < 3 && i == sk::P_A && machine == sk::M_ULOOP) v = srcMap (raw);
@@ -545,6 +551,7 @@ void ImpaktProcessor::pushStateOps (const juce::var& st)
                         }
                         if (pi == sk::P_MACH) v = sk::machineVal (stepMachine);
                         else if (ver < 10 && (pi == sk::P_LDST || pi == sk::P_L2DS)) v = destIn (raw);
+                        else if (pre90 && isDest90 (pi)) v = dest90 (raw);
                         else if (ver < 25 && isWave (pi)) v = waveIn (raw);
                         else if (ver < 8 && pi == sk::P_PWID) v = widthIn (raw);
                         else if (ver < 3 && pi == sk::P_A && stepMachine == sk::M_ULOOP) v = srcMap (raw);

@@ -171,7 +171,14 @@ const IMPAKT_PRESETS = (() => {
     S22:176, S23:177, S24:178, S25:179, S26:180, S27:181, S28:182, S29:183, S30:184, S31:185, S32:186, S33:187, S34:188, S35:189,
     RPAN:190, SPRD:191, SMON:192, RDEC:193, RDSD:194, L1SL:195, L1LN:196, L1SD:197, L2SL:198, L2LN:199, L2SD:200, CHO:201, PHS:202,
     // v78: S36 .. S70 (after the rest), the amplitude envelope's curve
-    ...Object.fromEntries(Array.from({ length: 35 }, (_, i) => ['S' + (36 + i), 203 + i])), ECRV:238 };
+    ...Object.fromEntries(Array.from({ length: 35 }, (_, i) => ['S' + (36 + i), 203 + i])), ECRV:238,
+    // v90: the modulators (app.js P.M1TY ..): M1 and M2 eleven each, M3 and M4 ten each
+    ...Object.fromEntries(['M1TY', 'M1X1', 'M1X2', 'M1X3', 'M1AM', 'M1D2', 'M1A2', 'M1D3', 'M1A3', 'M1D4', 'M1A4',
+      'M2TY', 'M2X1', 'M2X2', 'M2X3', 'M2AM', 'M2D2', 'M2A2', 'M2D3', 'M2A3', 'M2D4', 'M2A4',
+      'M3TY', 'M3X1', 'M3X2', 'M3AM', 'M3D2', 'M3A2', 'M3D3', 'M3A3', 'M3D4', 'M3A4',
+      'M4TY', 'M4X1', 'M4X2', 'M4AM', 'M4D2', 'M4A2', 'M4D3', 'M4A3', 'M4D4', 'M4A4'].map((n, i) => [n, 242 + i])) };
+  // v90: a route's destination on the grid of 256 (the LFO's 38 first, in their order: DEST)
+  const DSLOTS = 256;
   const SQ = q => q < 35 ? P.S1 + q : P.S36 + (q - 35);   // (the param of a side place, app.js SQ)
   const KEYS = { T: P.TUNE, D: P.DEC, a: P.A, b: P.B, c: P.C, d: P.D, e: P.E, f: P.F, fq: P.FREQ, rs: P.RES, fe: P.FENV,
     fd: P.FDEC, dr: P.DRV, bt: P.BITS, sr: P.SRR, at: P.ATK, dl: P.DLY, rv: P.REV, ch: P.CHO, ph: P.PHS, im: P.IMIX, ip: P.IPRE, id: P.IDCY,
@@ -258,13 +265,13 @@ const IMPAKT_PRESETS = (() => {
     const si = EF_SRC.indexOf(src), bi = EF_BAND.indexOf(band), di = DEST.indexOf(dest);
     if (si < 0 || bi < 0 || di < 0) throw new Error('EF ' + src + ' ' + band + ' ' + dest);
     return [ix(si, 11), (gain + 12) / 48, ix(bi, 4), trg === null ? 0 : (trg + 48) / 48, Math.log(atk / 0.1) / Math.log(10000),
-      Math.log(dec / 5) / Math.log(800), 0.5 + depth / 2, ix(di, DEST.length)];
+      Math.log(dec / 5) / Math.log(800), 0.5 + depth / 2, ix(di, DSLOTS)];
   };
   const EF_REST = efVals(['SELF', 0, 'FULL', null, 5, 150, 0, 'OFF']);
   // what a preset owns: everything else on the track (pan, sends to nothing, trig settings) is left alone
   const BASE = { [P.FTYP]: ix(0, 4), [P.FREQ]: 1, [P.RES]: 0.1, [P.FENV]: 0.5, [P.FDEC]: 0.3, [P.DRV]: 0, [P.BITS]: 0, [P.SRR]: 0,
-    [P.ATK]: 0, [P.DLY]: 0, [P.REV]: 0, [P.CHO]: 0, [P.PHS]: 0, [P.LSPD]: ix(7, 16), [P.LDEP]: 0.5, [P.LDST]: ix(0, DEST.length), [P.LWAV]: ix(0, 16),
-    [P.L2SP]: ix(5, 16), [P.L2DP]: 0.5, [P.L2DS]: ix(0, DEST.length), [P.L2WV]: ix(0, 16), [P.GATE]: 0, [P.RTRG]: ix(0, 12),
+    [P.ATK]: 0, [P.DLY]: 0, [P.REV]: 0, [P.CHO]: 0, [P.PHS]: 0, [P.LSPD]: ix(7, 16), [P.LDEP]: 0.5, [P.LDST]: ix(0, DSLOTS), [P.LWAV]: ix(0, 16),
+    [P.L2SP]: ix(5, 16), [P.L2DP]: 0.5, [P.L2DS]: ix(0, DSLOTS), [P.L2WV]: ix(0, 16), [P.GATE]: 0, [P.RTRG]: ix(0, 12),
     [P.RCNT]: ix(3, 16), [P.RVEL]: 0.5, [P.RCRV]: 0.5, [P.IR]: ix(0, 25), [P.IMIX]: 0.5, [P.IPRE]: 0, [P.IDCY]: 1, [P.IGAT]: 1,
     [P.ITON]: 0.5, [P.IFB]: 0, [P.IREV]: ix(0, 2), [P.PNCH]: 0,
     // HALO's VOICE side at its defaults (a preset of another machine leaves it as a fresh track has it)
@@ -289,7 +296,12 @@ const IMPAKT_PRESETS = (() => {
     [P.L1SL]: 0.5, [P.L1LN]: ix(6, 10), [P.L1SD]: 0, [P.L2SL]: 0.5, [P.L2LN]: ix(6, 10), [P.L2SD]: 0,
     // TONE flat, the followers at rest
     [P.HPF]: 0, [P.LPF]: 1, [P.LOW]: 0.5, [P.LOWF]: 0.5, [P.MID]: 0.5, [P.MIDF]: 0.5, [P.HIGH]: 0.5, [P.HIGF]: 0.5,
-    ...Object.fromEntries(EF_REST.flatMap((v, i) => [[P.E1SR + i, v], [P.E2SR + i, v]])) };
+    ...Object.fromEntries(EF_REST.flatMap((v, i) => [[P.E1SR + i, v], [P.E2SR + i, v]])),
+    // v90: the modulators as a fresh track has them: M1, M2 WAVE, M3, M4 FOLLOW, their new settings at rest, AMT full, routes
+    // 2 .. 4 off (app.js V90_PAD)
+    [P.M1TY]: ix(0, 4), [P.M2TY]: ix(0, 4), [P.M3TY]: ix(3, 4), [P.M4TY]: ix(3, 4),
+    [P.M1X1]: 0, [P.M1X2]: 0.25, [P.M1X3]: 0, [P.M2X1]: 0, [P.M2X2]: 0.25, [P.M2X3]: 0, [P.M3X1]: 0, [P.M3X2]: 0, [P.M4X1]: 0, [P.M4X2]: 0,
+    ...Object.fromEntries([1, 2, 3, 4].flatMap(m => [['M' + m + 'AM', 1], ...[2, 3, 4].flatMap(r => [['M' + m + 'D' + r, ix(0, DSLOTS)], ['M' + m + 'A' + r, 0.5]])]).map(([n, v]) => [P[n], v])) };
   const OWNED = [P.TUNE, P.DEC, P.A, P.B, P.C, P.D, P.E, P.F, P.VOL, ...Object.keys(BASE).map(Number)];
 
   const TAGS = {
@@ -1463,7 +1475,7 @@ const IMPAKT_PRESETS = (() => {
         const [spd, dep, dest, wave] = v, d = DEST.indexOf(dest);
         if (d < 0) throw new Error('LFO dest ' + dest);
         const base = k === 'l1' ? [P.LSPD, P.LDEP, P.LDST, P.LWAV] : [P.L2SP, P.L2DP, P.L2DS, P.L2WV];
-        out[base[0]] = ix(spd, 16); out[base[1]] = 0.5 + dep / 2; out[base[2]] = ix(d, DEST.length); out[base[3]] = ix(wave, 16);
+        out[base[0]] = ix(spd, 16); out[base[1]] = 0.5 + dep / 2; out[base[2]] = ix(d, DSLOTS); out[base[3]] = ix(wave, 16);
       } else throw new Error('preset key ' + k);
     }
     return out;
