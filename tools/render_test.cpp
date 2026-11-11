@@ -3703,6 +3703,108 @@ static int spreadtest()
 }
 
 
+// v88: RTUN (each hit's pitch drawn around TUNE: to the right at each hit, to the left a draw per step that comes back
+// with the pattern; up to an octave at its ends, by the square of the knob; not on the FX machines)
+static int rtuntest()
+{
+    Engine* e = new Engine(); e->init (48000.f);
+    if (! REF) { REF = new Engine(); REF->init (48000.f); }
+    int fails = 0;
+    auto check = [&] (bool ok, const char* what, double v) { printf ("%s %-96s %.4f\n", ok ? "PASS" : "FAIL", what, v); if (! ok) ++fails; };
+    std::vector<float> draws;
+    // a sine on every 16th for two bars: each hit's pitch (semitones against the first hit of a centred run, from its
+    // zero crossings), and each hit's draw as the engine keeps it
+    auto hits = [&] (float rtun, float seed, int machine) {
+        softReset (e, 48000.f);
+        for (int t = 1; t < NUM_TRACKS; ++t) e->setParam (t, P_VOL, 0.0f);
+        e->setGlobal (G_BPM, 120.0f); e->g[G_MXON] = 0.0f;
+        e->setParam (0, P_MACH, machineVal (machine)); e->setParam (0, P_DEC, 0.3f); e->setParam (0, P_VOL, 0.6f);
+        e->setParam (0, P_RTUN, rtun); e->setParam (0, P_RTSD, seed); e->setParam (0, P_REV, 0.0f); e->setParam (0, P_DLY, 0.0f);
+        for (int st = 0; st < 16; ++st) e->setTrig (0, st, 1);
+        e->setPlay (1);
+        std::vector<float> L (128), R (128), l;
+        draws.clear(); int hc = e->tr[0].hitCount;
+        for (int i = 0; i < 48000 * 4 + 6000; i += 128)
+        {
+            e->process (L.data(), R.data(), 128, nullptr); for (int k = 0; k < 128; ++k) l.push_back (L[k] + R[k]);
+            if (e->tr[0].hitCount != hc) { hc = e->tr[0].hitCount; draws.push_back (e->tr[0].voice[e->tr[0].cur].rtun); }
+        }
+        e->setPlay (0);
+        std::vector<double> hz;
+        const int sps = 6000;
+        for (int k = 0; k < 32; ++k)
+        {
+            // (the upward zero crossings from 300 to 2700 samples into the hit)
+            int first = -1, last = -1, n = 0;
+            for (int i = k * sps + 200; i < k * sps + 1600 && i + 1 < (int) l.size(); ++i)
+                if (l[i] <= 0.0f && l[i + 1] > 0.0f) { const int x = i; if (first < 0) first = x; last = x; ++n; }
+            hz.push_back (n >= 3 ? 48000.0 * (n - 1) / (double) (last - first) : 0.0);
+        }
+        return hz;
+    };
+    hits (0.5f, 0.0f, M_SINUS);
+    double d0 = 0; for (float d : draws) d0 = std::max (d0, (double) fabsf (d));
+    check (draws.size() >= 32 && d0 == 0.0, "RTUN at its centre: no draw", d0);
+    hits (1.0f, 0.0f, M_SINUS);
+    double dmax = 0; int diff = 0;
+    for (int k = 0; k < 16; ++k) if (fabsf (draws[k] - draws[k + 16]) > 0.005f) ++diff;
+    for (float d : draws) dmax = std::max (dmax, (double) fabsf (d));
+    check (draws.size() >= 32 && dmax > 0.15 && dmax <= 0.25 + 1e-6 && diff >= 12, "RTUN to the right: each hit its own draw, up to an octave (12 of TUNE's 48 semitones), bar 2 not bar 1 again (largest)", dmax);
+    // (the draw follows the knob's square: half way, a quarter as far)
+    hits (0.75f, 0.0f, M_SINUS);
+    double hr = 0; for (float d : draws) hr = std::max (hr, (double) fabsf (d));
+    check (hr <= 0.0625 + 1e-6 && hr > 0.02, "RTUN half way right: within a quarter of the range (3 semitones; largest draw, of the knob)", hr);
+    hits (0.0f, 0.25f, M_SINUS);
+    double dsame = 0, pmax = 0; for (int k = 0; k < 16 && draws.size() >= 32; ++k) { dsame = std::max (dsame, (double) fabsf (draws[k] - draws[k + 16])); pmax = std::max (pmax, (double) fabsf (draws[k])); }
+    check (draws.size() >= 32 && dsame == 0.0 && pmax > 0.1, "RTUN to the left (LOOP): each step its own draw, the same again in bar 2 (largest change)", dsame);
+    check (fabsf (draws[3] - 0.25f * loopDraw (0.25f, 7u, 3u * 64u)) < 1e-6f, "RTUN LOOP: step 4's draw is loopDraw's (its own salt), an octave at its end", draws[3]);
+    // the pitch heard: RTUN's LOOP against the same pitches as p-locks of TUNE (the draws moved TUNE: each hit lands on
+    // its locked twin, within the machine's own drift), and against no draw (far off)
+    auto pitches = [&] (float rtun, const std::vector<float>* locks) {
+        softReset (e, 48000.f);
+        for (int t = 1; t < NUM_TRACKS; ++t) e->setParam (t, P_VOL, 0.0f);
+        e->setGlobal (G_BPM, 120.0f); e->g[G_MXON] = 0.0f;
+        e->setParam (0, P_MACH, machineVal (getenv ("RTUN_M") ? atoi (getenv ("RTUN_M")) : M_SINUS)); e->setParam (0, P_DEC, 0.3f); e->setParam (0, P_VOL, 0.6f);
+        e->setParam (0, P_RTUN, rtun); e->setParam (0, P_RTSD, 0.25f); e->setParam (0, P_REV, 0.0f); e->setParam (0, P_DLY, 0.0f);
+        for (int st = 0; st < 16; ++st) { e->setTrig (0, st, 1); if (locks) e->setLock (0, st, P_TUNE, 0.5f + (*locks)[st]); }
+        e->setPlay (1);
+        std::vector<float> L (128), R (128), l;
+        for (int i = 0; i < 48000 * 2 + 6000; i += 128) { e->process (L.data(), R.data(), 128, nullptr); for (int k = 0; k < 128; ++k) l.push_back (L[k] + R[k]); }
+        e->setPlay (0);
+        // (each hit's period: the lag of the strongest autocorrelation, 30 Hz .. 2 kHz, over 2048 samples from 150 in)
+        std::vector<double> hz;
+        for (int k = 0; k < 16; ++k)
+        {
+            const int o = k * 6000 + 150, W = 2048;
+            double best = -1, bl = 0;
+            for (int lag = 24; lag <= 1600; ++lag)
+            {
+                double c = 0, e0 = 0, e1 = 0;
+                for (int i = 0; i < W; ++i) { const double x = l[o + i], y = l[o + i + lag]; c += x * y; e0 += x * x; e1 += y * y; }
+                c /= sqrt (e0 * e1) + 1e-20;
+                if (c > best + 0.02 || (c > best && lag < 2 * bl)) { best = c; bl = lag; }
+            }
+            hz.push_back (bl > 0 ? 48000.0 / bl : 0.0);
+        }
+        return hz;
+    };
+    std::vector<float> lp (16); for (int k = 0; k < 16; ++k) lp[k] = 0.25f * loopDraw (0.25f, 7u, (unsigned) k * 64u);
+    const auto pa = pitches (0.0f, nullptr), pb = pitches (0.5f, &lp), pc = pitches (0.5f, nullptr);
+    // (the zero crossings of this sine read its pitch roughly, a semitone or so either way: on average over the hits that
+    // moved more than 3 semitones)
+    double ab = 0, ac = 0; int n = 0;
+    for (int k = 0; k < 16; ++k) if (fabsf (lp[k]) * 48.0f > 3.0f) { ab += fabs (12.0 * log2 (pa[k] / pb[k])); ac += fabs (12.0 * log2 (pa[k] / pc[k])); ++n; }
+    if (n) { ab /= n; ac /= n; }
+    if (getenv ("RTUN_DEBUG")) for (int k = 0; k < 16; ++k) printf ("  hit %2d draw %+6.2f st | rtun %7.1f Hz  lock %7.1f Hz  none %7.1f Hz\n", k, 48.0 * lp[k], pa[k], pb[k], pc[k]);
+    check (n >= 6 && ab < 1.2 && ac > 2.0 && ab < 0.5 * ac, "RTUN: each hit at the pitch of TUNE moved by its draw (mean gap to its locked twin, st; against no draw: twice as far)", ab);
+    hits (0.0f, 0.25f, M_FXVERB);
+    double fx = 0; for (float d : draws) fx = std::max (fx, (double) fabsf (d));
+    check (fx == 0.0, "RTUN on an FX machine (VERB): no draw", fx);
+    delete e;
+    printf ("%d failure(s)\n%s\n", fails, fails ? "RTUN FAILED" : "RTUN OK");
+    return fails ? 1 : 0;
+}
+
 // v65: RDEC (each hit's decay drawn: to the right at each hit, to the left a draw per step that comes back with the
 // pattern) and the LFO's SLEW (a random line, SLW of each cycle to reach its draw) and LOOP (LEN draws, round again)
 static int rdectest()
@@ -7053,6 +7155,7 @@ int main (int argc, char** argv)
     if (argc >= 2 && ! strcmp (argv[1], "alloy")) return alloytest();
     if (argc >= 2 && ! strcmp (argv[1], "spread")) return spreadtest();
     if (argc >= 2 && ! strcmp (argv[1], "rdec")) return rdectest();
+    if (argc >= 2 && ! strcmp (argv[1], "rtun")) return rtuntest();
     if (argc >= 2 && ! strcmp (argv[1], "chimera")) return chimtest();
     if (argc >= 2 && ! strcmp (argv[1], "v68")) return v68test();
     if (argc >= 2 && ! strcmp (argv[1], "v71")) return v71test();

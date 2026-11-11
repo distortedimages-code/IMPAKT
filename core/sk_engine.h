@@ -202,6 +202,10 @@ enum Param {
     // v81: DRONE (AMP): the track plays on its own while the transport runs, no trig needed; its trigs change it (a new
     // note, a new chord, their locks) instead of striking it again
     P_DRON,
+    // v88: the trig's pitch drawn at each hit (RTUN, the TRIG row's MORE page, beside RDEC: centre none, to the right a
+    // draw at each hit, to the left LOOP, a draw per step of the pattern that comes back with it) and the seed of LOOP's
+    // draws (RTSD: a new one each time RTUN leaves its centre to the left)
+    P_RTUN, P_RTSD,
     NUM_PARAMS
 };
 // the side places: S1 .. S35 (v63), then S36 .. S70 (v78) after the params that came between
@@ -452,6 +456,7 @@ struct Voice
     int   smOk;
     float rnd[12]; int rndOn;   // RAND: this hit's offsets (-1..1) of the synthesis settings (Engine::RND_PS)
     float rdec;                 // RDEC: this hit's offset of DEC (0: none)
+    float rtun;                 // RTUN (v88): this hit's offset of TUNE (0: none)
     float mWet;             // the machine's own drive / fold / grit stage in the last chunk (it fades, never switches)
     float smFn, smRs, smDrv, smAmp, smD1, smA1, smF1, smR1;   // *1: after their per-sample (filter: per 4) smoothing
     // HOLD (DEC at its top): the voice holds (hold), held by a pad or a key until it is let go (padHeld), the decay once
@@ -468,8 +473,8 @@ struct Voice
 // an LFO: its phase in the cycle, this cycle's draw, its value; SLEW: where its glide started; LOOP: the cycles counted
 // since it started (which draw of the loop plays) and where it is in its loop (for the page; -1: another wave)
 struct Lfo { float ph, sh, val, from, lp; int k; };
-// RDEC's LOOP and the LOOP wave: draw i of a loop (-1 .. 1), from its seed (a parameter, 0..1: 2^20 seeds) and a salt (the
-// LFO, RDEC); the same draws on the page (app.js loopDraw)
+// RDEC's and RTUN's LOOP and the LOOP wave: draw i of a loop (-1 .. 1), from its seed (a parameter, 0..1: 2^20 seeds) and
+// a salt (the LFO, RDEC, RTUN); the same draws on the page (app.js loopDraw)
 inline float loopDraw (float seedP, unsigned salt, unsigned i)
 {
     unsigned h = (unsigned) (seedP * 1048576.0f) * 0x9E3779B1u + salt * 0x632BE5ABu + i * 0x85EBCA77u;
@@ -557,7 +562,7 @@ struct Track
     // v64: RPAN, this hit's pan against the track's (drawn at the hit, applied, the side of the last ping-pong hit);
     // SPRD, its all-passes and crossover
     float rpanT, rpan; int rpanS;
-    int   rdStep, rdSub;     // RDEC's LOOP: the step of the last hit and how many hits it has had (a roll's hits each draw)
+    int   rdStep, rdSub;     // RDEC's and RTUN's LOOP: the step of the last hit and how many hits it has had (a roll's hits each draw)
     // CHIMERA (v66): its voices' sides (sbus), through the BOX's latency (sdly) and their own TONE; how many chunks they
     // still sound (sAct); the last hit for the screen: its samples, how many hits, the neighbours it drew from
     float sbus[CHUNK], sdly[LATENCY]; int sdw, sAct; ToneEq sTone;

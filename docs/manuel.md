@@ -80,8 +80,13 @@ qu'on p-locke le plus :
 | GATE | la durée d'une note tenue, en pas (OFF : jusqu'au trig suivant) |
 
 Sa touche **MORE** ouvre la deuxième page : **RPAN** (le pan de chaque coup, au hasard ou en ping-pong), **JUMP** et
-**RNG** (des sauts de transposition), **CURV** (la courbe des roulements) et **RDEC** (le decay de chaque coup, au
-hasard ou en boucle).
+**RNG** (des sauts de transposition), **CURV** (la courbe des roulements), **RTUN** et **RDEC** (la hauteur et le decay
+de chaque coup, au hasard ou en boucle).
+
+**RTUN** et **RDEC** se lisent pareil : au milieu, rien ; vers la droite (**RND**), chaque coup tire sa valeur ; vers la
+gauche (**LOOP**), chaque pas tire la sienne et la garde, la suite revient à chaque tour du pattern. RTUN suit le carré
+du potard : quelques cents près du milieu (une dérive humaine), jusqu'à une octave en butée ; sur une piste qui suit la
+gamme, les notes tirées tombent dans la gamme.
 
 ### P-lock
 
@@ -301,7 +306,7 @@ l'accord du moment.
 - **Rnd · Track** tire un nouveau son pour la piste affichée ; **Rnd · All** pour toutes les pistes marquées **r** ;
   le pourcentage règle jusqu'où ; **↶** annule.
 - **LIVE** donne à chaque coup un écart aléatoire, sans rien écrire : ramené à zéro, le son d'origine revient.
-- **RPAN** et **RDEC** (rangée TRIG, page MORE) tirent le pan et le decay de chaque coup.
+- **RPAN**, **RTUN** et **RDEC** (rangée TRIG, page MORE) tirent le pan, la hauteur et le decay de chaque coup.
 
 ## Dans le DAW
 

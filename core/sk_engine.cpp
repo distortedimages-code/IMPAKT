@@ -138,6 +138,14 @@ static inline void rdecApply (const Voice& v, float* P)
     if (v.rdec == 0.0f || P[P_DEC] >= RDEC_TOP) return;
     P[P_DEC] = clampf (P[P_DEC] + v.rdec, 0.0f, RDEC_TOP);
 }
+// RTUN (v88): every machine but the FX machines (whose TUNE is not a pitch); at its ends a hit's TUNE moves by up to an
+// octave either way (TUNE's 48 semitones over the knob), by the square of the knob: a few cents near its centre, a
+// human drift, then whole notes; a quantised track lands on its scale (the scale is applied to TUNE + NOTE)
+constexpr float RTUN_RANGE = 12.0f / 48.0f;
+static inline void rtunApply (const Voice& v, float* P)
+{
+    if (v.rtun != 0.0f) P[P_TUNE] = clampf (P[P_TUNE] + v.rtun, 0.0f, 1.0f);
+}
 
 static inline double floord (double x) { return __builtin_floor (x); }
 static inline double minf_d (double a, double b) { return a < b ? a : b; }
@@ -176,6 +184,7 @@ static void defaultTrack (Track& t, int machine)
     t.p[P_L2SP] = 5.5f / (float) NUM_LFO_SPEEDS; t.p[P_L2DP] = 0.5f; t.p[P_L2DS] = 0.5f / (float) NUM_LFO_DEST; t.p[P_L2WV] = 0.5f / (float) NUM_LFO_WAVES;
     // v65: RDEC off, SLW half the cycle, LOOP's 8 draws, the seeds at 0 (the page draws new ones)
     t.p[P_RDEC] = 0.5f; t.p[P_RDSD] = 0.0f;
+    t.p[P_RTUN] = 0.5f; t.p[P_RTSD] = 0.0f;     // v88: RTUN off
     t.p[P_L1SL] = 0.5f; t.p[P_L1LN] = 6.5f / (float) NUM_LFO_LENS; t.p[P_L1SD] = 0.0f;
     t.p[P_L2SL] = 0.5f; t.p[P_L2LN] = 6.5f / (float) NUM_LFO_LENS; t.p[P_L2SD] = 0.0f;
     t.p[P_CHO] = 0.0f; t.p[P_PHS] = 0.0f;                       // v68: the CHORUS and PHASER sends, at 0
@@ -1107,23 +1116,28 @@ void Engine::startVoice (Track& t, int ti, const float* lk, int step, float vel,
     }
     // RDEC: this hit's decay around the track's (see rdecApply): to the right a draw at each hit, to the left the draw
     // of its step (each hit of a roll its own), the same each time the pattern comes round (no draw at its centre)
+    // RTUN (v88): this hit's pitch around the track's (see rtunApply), drawn as RDEC draws its decay (its own seed, its
+    // own salt: the two loops do not move together)
     {
-        const float rd = P[P_RDEC] - 0.5f;
-        v.rdec = 0.0f;
+        const float rd = P[P_RDEC] - 0.5f, rt = P[P_RTUN] - 0.5f;
+        v.rdec = 0.0f; v.rtun = 0.0f;
         if (step >= 0) { t.rdSub = (step == t.rdStep && retrigHit) ? t.rdSub + 1 : 0; t.rdStep = step; }
         else t.rdSub = (t.rdSub + 1) & 15;
-        if (absf (rd) > 0.005f && decayMachine (machineOf (P[P_MACH])))
+        // (a hit off the steps — MIDI, the pads — draws by its count: 16, then round again)
+        const unsigned li = step >= 0 ? (unsigned) step * 64u + (unsigned) minf ((float) t.rdSub, 63.0f) : 4096u + (unsigned) t.rdSub;
+        const int mach = machineOf (P[P_MACH]);
+        if (absf (rd) > 0.005f && decayMachine (mach))
         {
             const float a = absf (rd) * 2.0f * RDEC_RANGE;
-            if (rd > 0.0f) v.rdec = a * t.rng.bi();
-            else
-            {
-                // (a hit off the steps — MIDI, the pads — draws by its count: 16, then round again)
-                const unsigned i = step >= 0 ? (unsigned) step * 64u + (unsigned) minf ((float) t.rdSub, 63.0f) : 4096u + (unsigned) t.rdSub;
-                v.rdec = a * loopDraw (P[P_RDSD], 3u, i);
-            }
+            v.rdec = rd > 0.0f ? a * t.rng.bi() : a * loopDraw (P[P_RDSD], 3u, li);
+        }
+        if (absf (rt) > 0.005f && ! fxMachine (mach))
+        {
+            const float a = absf (rt) * 2.0f, s = a * a * RTUN_RANGE;
+            v.rtun = rt > 0.0f ? s * t.rng.bi() : s * loopDraw (P[P_RTSD], 7u, li);
         }
         rdecApply (v, P);
+        rtunApply (v, P);
     }
     if (reuse)
     {
@@ -2805,6 +2819,7 @@ void Engine::renderVoice (Track& t, Voice& v, int n)
     effParams (t, v.lk, P);
     applyRnd (v, xrndS, P);
     rdecApply (v, P);
+    rtunApply (v, P);
     v.ecrv = P[P_ECRV];             // (v78: the amplitude envelope's curve, ampTick)
 
     float* x = vb;

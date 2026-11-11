@@ -49,7 +49,9 @@ while os.path.exists('bank/chimera.%d.bin' % len(chim_parts)):
     n = os.path.getsize('bank/chimera.%d.bin' % len(chim_parts))
     chim_parts.append([n, (n + BANK_PART - 1) // BANK_PART])
 VERSION = open('VERSION', encoding='utf-8').read().strip()
-body = body.replace('<!--SCRIPT-->', '<script>\nconst IMPAKT_VERSION = "' + VERSION + '";\nconst WASM_B64 = "__WASM_B64__";\nconst WASM_SIMD_B64 = "__WASM_SIMD_B64__";\nconst CHIM_IDX_B64 = "' + chim_idx + '";\nconst CHIM_PARTS = ' + json.dumps(chim_parts) + ';\n</script>\n<script>\n' + app_js + '</script>')
+# the Mac's Terminal command (packaging/mac/terminal-command.txt): the update panel copies it once the disk image is in
+MAC_CMD = open('packaging/mac/terminal-command.txt', encoding='utf-8').read().strip()
+body = body.replace('<!--SCRIPT-->', '<script>\nconst IMPAKT_VERSION = "' + VERSION + '";\nconst MAC_CMD = ' + json.dumps(MAC_CMD) + ';\nconst WASM_B64 = "__WASM_B64__";\nconst WASM_SIMD_B64 = "__WASM_SIMD_B64__";\nconst CHIM_IDX_B64 = "' + chim_idx + '";\nconst CHIM_PARTS = ' + json.dumps(chim_parts) + ';\n</script>\n<script>\n' + app_js + '</script>')
 wasm_b64 = base64.b64encode(open('web/impakt.wasm', 'rb').read()).decode()
 simd_b64 = base64.b64encode(open('web/impakt-simd.wasm', 'rb').read()).decode()
 

@@ -297,7 +297,7 @@ button { font: inherit; color: inherit; }
 .mid:focus-visible { outline: 2px solid var(--lcd-ink); outline-offset: 3px; }
 /* the lockup: the mark, white in a black square, set tight against the name; the katakana under a rule */
 .mlogo { flex: none; width: 44px; height: 44px; box-sizing: border-box; padding: 6px; background: var(--lcd-ink); color: var(--lcd); border-radius: 10px; }
-.lg { display: block; width: 100%; height: 100%; }
+svg.lg { display: block; width: 100%; height: 100%; }
 .mword { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; }
 .mname { font-family: var(--f-display); font-weight: 900; font-size: 33px; line-height: .8; letter-spacing: .01em; white-space: nowrap; }
 .mkana { font-family: var(--f-body); font-weight: 700; font-size: 8.5px; line-height: 1; letter-spacing: .34em; border-top: 2px solid var(--lcd-ink); padding-top: 3px; white-space: nowrap; }
@@ -359,7 +359,12 @@ button { font: inherit; color: inherit; }
 .knobs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px 6px; }
 .knob { display: flex; flex-direction: column; align-items: center; gap: 1px; cursor: ns-resize; touch-action: pan-y; padding: 2px 0; border-radius: var(--r); min-width: 0; }
 /* the face: one box per control (dial or switch), so names and values sit on the same lines across a row */
-.knob { --kw: 85px; }
+/* v88: the knobs' sizes, one scale for every page: M the unit (a machine's knobs, the trig row), L a step up (the
+   effects: FX's returns and SEND, the master's pages, OUT), S a step down (TONE's and MOD's modules, eight to a
+   module), XS for a row of eight and more (WEST's fine tuning). Each step about 1.2 times the next; a knob's face (its
+   arc and printed scale) is that wide, its name and value follow it */
+:root { --k-m: 85px; --k-l: calc(var(--k-m) * 1.19); --k-s: calc(var(--k-m) / 1.2); --k-xs: calc(var(--k-m) / 1.4); }
+.knob { --kw: var(--k-m); }
 .knob .face { position: relative; flex: none; width: 100%; max-width: var(--kw); aspect-ratio: 94 / 76; }
 .knob svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; overflow: visible; touch-action: none; }
 .knob .sw { touch-action: none; }
@@ -837,24 +842,41 @@ canvas { min-width: 0; min-height: 0; }
 .sq { width: 34px; min-height: 34px; padding: 0; font-size: 18px; }
 .spacer { flex: 1; }
 
-/* updates (v87): OPTION > Updates (a panel like the kits'), the banner at the bottom when a newer IMPAKT is out */
-.optw > .upanel { width: min(460px, calc(100vw - 42px)); }
-.plug .optw > .kpanel.upanel { width: 560px; max-height: none; overflow: visible; }
-.projrow .btn.hasupd::after { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--hot); margin-left: 8px; vertical-align: 2px; }
-.ustat { margin: 2px 0 0; font-family: var(--f-display); font-weight: 800; font-size: 26px; line-height: 1; letter-spacing: .03em; color: var(--lcd-ink); }
-.uline { margin: 0; font-family: var(--f-body); font-size: 13px; line-height: 1.45; color: var(--lcd-ink); opacity: .85; max-width: 60ch; }
-.ubar { height: 6px; background: var(--lcd-lo); border-radius: 1px; overflow: hidden; }
+/* updates (v87; v88: in the middle of the panel, in red, over a veil, so it reads as nothing else): OPTION > Updates,
+   and the banner at the bottom when a newer IMPAKT is out (red too) */
+.uveil { position: fixed; inset: 0; z-index: 70; background: rgba(20,22,23,.42); }
+.uveil[hidden] { display: none; }
+.upanel { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 71; box-sizing: border-box;
+  width: min(560px, calc(100vw - 32px)); max-height: calc(100% - 64px); overflow-y: auto; display: flex; flex-direction: column; gap: 12px;
+  padding: 18px 20px 20px; border-radius: 10px; background: var(--led-r); color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.28), inset 0 -1px 0 rgba(0,0,0,.18), 0 0 0 4px rgba(233,71,43,.25), 0 24px 60px rgba(0,0,0,.45); }
+.upanel[hidden] { display: none; }
+.plug .upanel { left: 640px; top: 360px; max-height: 620px; }
+.upanel .phead { display: flex; align-items: center; gap: 10px; font-family: var(--f-px); font-size: 10px; letter-spacing: .04em; color: #fff; }
+.upanel .phead b { font-weight: 400; }
+.upanel .phead span { color: #fff; opacity: .85; }
+.upanel .phead .lb { margin-left: auto; color: #fff; background: none; border: 0; font-size: 22px; line-height: 1; cursor: pointer; padding: 0 2px; }
+.projrow .btn.hasupd::after { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--led-r); margin-left: 8px; vertical-align: 2px; }
+.ustat { margin: 0; font-family: var(--f-display); font-weight: 900; font-size: 34px; line-height: 1; letter-spacing: .02em; color: #fff; }
+.uline { margin: 0; font-family: var(--f-body); font-size: 14px; line-height: 1.45; color: #fff; max-width: 60ch; }
+.ubar { height: 8px; background: rgba(0,0,0,.22); border-radius: 2px; overflow: hidden; }
 .ubar[hidden] { display: none; }
-.ubar i { display: block; height: 100%; width: 0; background: var(--hot); transition: width .15s linear; }
-.unotes { margin: 0; max-height: 190px; overflow-y: auto; padding: 8px 10px; font-family: var(--f-data); font-size: 11px; line-height: 1.55; white-space: pre-wrap; color: var(--lcd-ink); box-shadow: inset 0 0 0 1px var(--lcd-dim); border-radius: 2px; }
+.ubar i { display: block; height: 100%; width: 0; background: #fff; transition: width .15s linear; }
+.unotes { margin: 0; max-height: 200px; overflow-y: auto; padding: 10px 12px; font-family: var(--f-data); font-size: 11.5px; line-height: 1.55; white-space: pre-wrap; color: #fff;
+  background: rgba(0,0,0,.16); border-radius: 4px; }
 .unotes[hidden] { display: none; }
+.upanel .pacts { display: flex; flex-wrap: wrap; gap: 8px; }
+.upanel .pacts .btn { background: none; color: #fff; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.85); }
+.upanel .pacts .btn.ptog.on { background: rgba(0,0,0,.2); }
 .upanel .pacts a.btn { display: inline-flex; align-items: center; text-decoration: none; }
-.upanel .pacts .btn.go, .updtoast .btn.go { background: var(--hot); color: #141617; box-shadow: none; }
+.upanel .pacts .btn.go, .updtoast .btn.go { background: #fff; color: var(--led-r); box-shadow: none; }
 .updtoast { position: fixed; left: 50%; bottom: max(14px, env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 60; display: flex; align-items: center; gap: 8px;
-  max-width: calc(100vw - 32px); box-sizing: border-box; padding: 8px 8px 8px 14px; border-radius: 4px; background: var(--lcd); color: var(--lcd-ink); box-shadow: 0 0 0 4px var(--bezel), 0 14px 30px rgba(0,0,0,.35); }
+  max-width: calc(100vw - 32px); box-sizing: border-box; padding: 8px 8px 8px 14px; border-radius: 6px; background: var(--led-r); color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.28), 0 14px 30px rgba(0,0,0,.35); }
 .updtoast[hidden] { display: none; }
 .updtoast span { font-family: var(--f-px); font-size: 9px; letter-spacing: .02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; margin-right: 4px; }
-.updtoast .btn { min-height: 30px; padding: 0 10px; font-size: 12px; background: none; color: var(--lcd-ink); box-shadow: inset 0 0 0 1px var(--lcd-ink); border-radius: 2px; flex: none; }
+.updtoast .btn { min-height: 30px; padding: 0 10px; font-size: 12px; background: none; color: #fff; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.85); border-radius: 3px; flex: none; }
+.updtoast .lb { color: #fff; background: none; box-shadow: none; border: 0; font-size: 18px; line-height: 1; padding: 0 6px; cursor: pointer; }
 .updtoast .btn[hidden], .updtoast .lb[hidden] { display: none; }
 /* preset browser: a large LCD under the machine */
 .ppanel { border-radius: 4px; margin: 5px; box-shadow: 0 0 0 5px var(--bezel); padding: 10px; display: flex; flex-direction: column; gap: 9px; }
@@ -1120,9 +1142,9 @@ canvas { min-width: 0; min-height: 0; }
 .plug .mlogo { width: 46px; height: 46px; padding: 6px; border-radius: 11px; }
 .plug .mname { font-size: 36px; }
 .plug .machmod .knobs { gap: 4px 6px; }
-.plug .machmod .knob { --kw: 85px; }
-.plug .machmod .wmain .knob { --kw: 104px; }
-.plug .machmod .wfine .knob { --kw: 76px; }
+.plug .machmod .knob { --kw: var(--k-m); }
+.plug .machmod .wmain .knob { --kw: var(--k-l); }
+.plug .machmod .wfine .knob { --kw: var(--k-s); }
 .plug .wfine { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 /* v85: the screens with a taller drawing (WEST's page, MANTRA's pads) kept inside the band (216 px) */
 .plug .lcd.west .ovw { height: 76px; }
@@ -1133,18 +1155,27 @@ canvas { min-width: 0; min-height: 0; }
 .plug .machmod.west { grid-template-columns: 420px minmax(0, 1fr); }
 .plug .machmod.west .wpanel { gap: 4px; align-self: center; min-height: 0; }
 .plug .machmod.west .wtabs { gap: 4px; }
-.plug .machmod.west .wtab { flex-direction: row; height: 26px; gap: 5px; font-size: 10px; }
+.plug .machmod.west .wtab { flex-direction: row; height: 24px; gap: 5px; font-size: 10px; }
 .plug .machmod.west .wtab svg { width: 20px; height: 12px; }
 .plug .machmod.west .wsay, .plug .machmod.west .wlvl { display: none; }
 .plug .machmod.west .wpanel .knob { padding: 1px 0; }
-.plug .machmod.west .wmain { gap: 6px; }
-.plug .machmod.west .wmain .knob { --kw: 72px; max-width: 110px; }
+/* v88: what you reach for spread over the whole width (one column each), the fine tuning under it, its columns as
+   wide as the controls need, the group in the middle when it has fewer than six */
+.plug .machmod.west .wmain { display: grid; grid-template-columns: repeat(var(--wm, 4), minmax(0, 1fr)); justify-items: center; align-items: end; gap: 6px; }
+.plug .machmod.west .wmain .knob { --kw: var(--k-m); width: 100%; max-width: none; }
 .plug .machmod.west .knob.isfd .face { height: 58px; }
-.plug .machmod.west .wfine { grid-template-columns: repeat(var(--wn, 6), minmax(0, 1fr)); gap: 2px 3px; }
-.plug .machmod.west .wfine .knob { --kw: 58px; }
+.plug .machmod.west .wfine { grid-template-columns: repeat(var(--wn, 6), minmax(0, calc(100% / max(6, var(--wn, 6))))); justify-content: center; gap: 2px 0; }
+.plug .machmod.west .wfine .knob { --kw: var(--k-xs); }
+.plug .machmod.west .wfine .knob .scl text { font-size: 14px; }
+/* (a CV's source and its depth in one frame, room above it for the depth's printed centre) */
+.plug .machmod.west .wfine .knob.pairl, .plug .machmod.west .wfine .knob.pairr { padding-top: 6px; margin-right: 0; }
 .plug .machmod.west .wfine .knob .kl { font-size: 10px; letter-spacing: .03em; }
 .plug .machmod.west .wfine .knob .kv { font-size: 9.5px; }
 .plug .machmod.west .knob.isw .sw { top: 4%; bottom: 2%; grid-auto-rows: minmax(0, 1fr); }
+/* (v88: four positions drawn, in the fine row: two by two, the words without their drawings, so each has a line of its own) */
+.plug .machmod.west .wfine .knob.isw .sw.ic.n4 { grid-template-columns: 1fr 1fr; }
+.plug .machmod.west .wfine .knob.isw .sw.ic.n4 b { justify-content: center; padding-left: 0; }
+.plug .machmod.west .wfine .knob.isw .sw.ic.n4 b svg { display: none; }
 .plug .machmod.west .knob .sw b { font-size: 9.5px; letter-spacing: .02em; }
 .plug .machmod.west .knob .sw b svg { width: 12px; height: 7px; margin-right: 2px; }
 .plug .machmod.west .knob .sw.n7 b, .plug .machmod.west .knob .sw.n8 b, .plug .machmod.west .knob .sw.n9 b,
@@ -1202,7 +1233,7 @@ canvas { min-width: 0; min-height: 0; }
 .plug .seqrow .qz { flex: 0 1 660px; grid-template-columns: auto minmax(0, 1fr) auto auto; grid-template-areas: "name kb fol nav"; padding: 6px 10px; gap: 14px; }
 .plug .seqrow .qhd { width: 84px; }
 .plug .seqrow .kb svg { height: 36px; }
-.plug .knobs.trg .knob { --kw: 84px; }
+.plug .knobs.trg .knob { --kw: var(--k-m); }
 .plug .optw > .kpanel { width: 860px; max-height: 600px; top: calc(100% + 12px); overflow: hidden; }
 .plug .optw > .kpanel .plist { max-height: none; flex: 1 1 auto; min-height: 0; }
 .plug .projrow { top: calc(100% + 12px); }
@@ -1213,19 +1244,23 @@ canvas { min-width: 0; min-height: 0; }
 .plug .trkhead > .mhd { display: none; }
 .plug #tstrip { margin: 0; min-height: 0; }
 .plug .kpage { gap: 16px; align-items: stretch; }
-.plug #kp-tn { grid-template-columns: 4fr 4fr 3fr 4fr; }
-.plug #kp-md { grid-template-columns: 3fr 3fr 4fr 4fr; }
+/* (v88: TONE's four modules as wide as one another: eight knobs each, the same size) */
+.plug #kp-tn { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.plug #kp-md { grid-template-columns: 3fr 3fr 4fr 4fr; gap: 12px; }
 .plug #kp-fx { grid-template-columns: 2fr 8.4fr; }
 .plug #kp-fx > .kret { grid-column: auto; }
 .plug #kp-fx .knobs.kn12 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 .plug #kp-fx .kret .knobs.kn8 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .plug .kstrip .mlab { display: none; }
-.plug .kmod { border: 0; border-radius: 12px; padding: 12px 10px; background: rgba(0,0,0,.04); box-shadow: inset 0 1px 2px rgba(0,0,0,.12), inset 0 0 0 1px rgba(0,0,0,.05);
+.plug .kmod { border: 0; border-radius: 12px; padding: 12px 8px; background: rgba(0,0,0,.04); box-shadow: inset 0 1px 2px rgba(0,0,0,.12), inset 0 0 0 1px rgba(0,0,0,.05);
   display: flex; flex-direction: column; min-height: 0; }
-.plug .kmod > .knobs { flex: 1; align-content: center; gap: 16px 4px; }
-.plug .kmod .knob { --kw: 92px; }
-.plug #kp-fx .kmod .knob { --kw: 84px; }
-.plug .kmod .knobs.kn2 .knob { --kw: 80px; }
+.plug .kmod > .knobs { flex: 1; align-content: center; gap: 16px 2px; }
+.plug .kmod .knob { --kw: var(--k-s); }
+.plug .kmod .knob .kl { font-size: 12px; letter-spacing: .1em; }
+.plug .kmod .knob .kv { font-size: 10.5px; }
+.plug #kp-fx .kmod .knob { --kw: var(--k-l); }
+.plug #kp-fx .kmod .knob .kl { font-size: 13px; letter-spacing: .12em; }
+.plug #kp-fx .kmod .knob .kv { font-size: 11.5px; }
 .plug #kp-fx .knobs.kn4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .plug .knobs.kn2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .plug .kstrip { background: var(--panel); border-radius: 10px; padding: 4px; margin: 0 0 6px; }
@@ -1247,9 +1282,12 @@ canvas { min-width: 0; min-height: 0; }
   border-right: 1.5px solid var(--ink); pointer-events: none; }
 .plug #gknobs::after { content: attr(data-vidx); position: absolute; left: 14px; bottom: 16px; padding: 4px 5px 3px; border-radius: 2px;
   background: var(--ink); color: var(--panel); font-family: var(--f-px); font-size: 8px; line-height: 1; pointer-events: none; }
-.plug .mstmod .knob { --kw: 100px; }
+.plug .mstmod .knob { --kw: var(--k-l); }
+.plug .mstmod .knob .kv { font-size: 11.5px; }
 .plug .km-out > .knobs { grid-template-columns: minmax(0, 1fr); }
-.plug .km-out .knobs.kn2 .knob { --kw: 112px; }
+.plug .km-out .knobs.kn2 .knob { --kw: var(--k-l); }
+.plug .km-out .knob .kl { font-size: 13px; letter-spacing: .12em; }
+.plug .km-out .knob .kv { font-size: 11.5px; }
 /* the track's cells on its screen: numbered keys, straight to a track */
 .plug .tdots { gap: 4px; }
 .plug .tdots i { width: 24px; height: 20px; display: grid; place-items: center; border-radius: 2px; }
@@ -1293,7 +1331,8 @@ canvas { min-width: 0; min-height: 0; }
           <button class="btn" id="demo">Demo</button>
           <button class="btn" id="updbtn" aria-expanded="false" aria-controls="upanel" title="Updates: this version, a newer one and its installer">Updates</button>
         </div>
-        <section class="ppanel kpanel upanel" id="upanel" hidden aria-label="Updates">
+        <div class="uveil" id="uveil" hidden></div>
+        <section class="upanel" id="upanel" hidden role="dialog" aria-modal="true" aria-label="Updates">
           <div class="phead"><b>UPDATES</b><span id="usub"></span><button class="lb" id="uclose" aria-label="Close">×</button></div>
           <p class="ustat" id="ustat"></p>
           <p class="uline" id="uline" hidden></p>

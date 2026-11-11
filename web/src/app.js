@@ -2,7 +2,7 @@
 'use strict';
 
 // ------------------------------------------------------------------ model constants (mirror core/sk_engine.h)
-const NT = 8, NS = 16, NSTEP = 64, NPAT = 128, NP = 240, NG = 182, NM = 47, MS = 64, MS32 = 32, NIR = 24, NORG = 36, RAT_MAX = 16;
+const NT = 8, NS = 16, NSTEP = 64, NPAT = 128, NP = 242, NG = 182, NM = 47, MS = 64, MS32 = 32, NIR = 24, NORG = 36, RAT_MAX = 16;
 // LFO destinations (core LFO_DEST): 24 until v4, then the retrig rate / count / velocity curve, then (v8) PRISM's,
 // then (v10) HP, LP and the mid frequency of TONE. The envelope followers use the same list
 const NDEST = 38, NDEST_V4 = 24, NDEST_V7 = 27, NDEST_V9 = 35;
@@ -62,7 +62,9 @@ const P = { MACH:0, TUNE:1, DEC:2, A:3, B:4, C:5, D:6, E:7, F:8, FTYP:9, FREQ:10
   // panel, and the amplitude envelope's curve (ECRV, AMP: LOG .. LIN .. EXP, EXP at its top as it always was)
   ...Object.fromEntries(Array.from({ length: 35 }, (_, i) => ['S' + (36 + i), 203 + i])), ECRV:238,
   // v81: DRONE (AMP): the track plays on its own while the transport runs; its trigs change it instead of striking it
-  DRON:239 };
+  DRON:239,
+  // v88: the trig's pitch drawn at each hit (RTUN, the TRIG row's MORE page, beside RDEC) and the seed of its LOOP's draws
+  RTUN:240, RTSD:241 };
 const G = { BPM:0, SWING:1, DTIM:2, DFB:3, DTON:4, DPNG:5, RSIZ:6, RDMP:7, MDRV:8, MVOL:9,
   STIM:10, SBLR:11, SWRP:12, SREF:13, SATM:14, SFRZ:15, SREV:16, SLVL:17,
   EQLF:18, EQLB:19, EQLA:20, EQHF:21, EQHB:22, EQBW:23, EQHA:24, EQHS:25,     // master: Pultec EQ
@@ -867,6 +869,10 @@ const TP = {
   [P.SPRD]: k('SPRD', fOff(fPct)), [P.SMON]: k('MONO', v => Math.round(40 * Math.pow(15, v)) + 'Hz'),
   // v65: the hit's decay drawn (to the right: at each hit; to the left: LOOP, a draw per step, round again with the pattern)
   [P.RDEC]: k('RDEC', v => Math.abs(v - 0.5) <= 0.005 ? 'OFF' : (v > 0.5 ? 'RND ' : 'LOOP ') + Math.round(Math.abs(v - 0.5) * 200)),
+  // v88: RTUN, how far a hit's pitch goes either way at most (the square of the knob: cents near its centre, an octave at
+  // its ends; core/sk_engine.cpp rtunApply)
+  [P.RTUN]: k('RTUN', v => { const a = Math.abs(v - 0.5) * 2, st = a * a * 12; if (a <= 0.01) return 'OFF';
+    return (v > 0.5 ? 'RND ±' : 'LOOP ±') + (st < 1 ? Math.round(st * 100) + 'c' : st.toFixed(st < 10 ? 1 : 0)); }),
   [P.IR]: k('IR', fL(IR_NAMES), NIR + 1), [P.IMIX]: k('MIX', fPct), [P.IPRE]: k('PRE', fOff(v => fSec(v * v * 0.25))),
   [P.IDCY]: k('DCY', v => v >= 0.999 ? 'NAT' : fU(v)), [P.ITON]: k('TONE', fB), [P.IFB]: k('FDBK', fOff(fU)), [P.IREV]: k('RVRS', fOnOff, 2),
   // RAM, REC side (LEVL: 0 dB at 12 o'clock, +12 dB at the top; THRS: -60 .. -6 dBFS)
@@ -919,7 +925,7 @@ const TP = {
 };
 FX_XS.forEach(q => { TP[q] = OFF_K; });   // (the MORE side means something on an FX machine only: fxMeta)
 const TRIO_FTYP = k('TYPE', fL(['LP4', 'BP', 'HP', 'COMB']), 4);
-const BIPOLAR = new Set([P.FENV, P.PAN, P.LDEP, P.L2DP, P.NOTE, P.MICR, P.RVEL, P.RCRV, P.JUMP, P.RPAN, P.RDEC, P.TUNE, P.ITON, P.PSPD, P.PWID, P.PWRP, P.PTLT,
+const BIPOLAR = new Set([P.FENV, P.PAN, P.LDEP, P.L2DP, P.NOTE, P.MICR, P.RVEL, P.RCRV, P.JUMP, P.RPAN, P.RDEC, P.RTUN, P.TUNE, P.ITON, P.PSPD, P.PWID, P.PWRP, P.PTLT,
   P.LOW, P.MID, P.HIGH, P.E1DP, P.E2DP]);
 // v68: the sends' levels (80 % gives back what goes in), the PHASER's generators (0.1 .. 18 Hz) and shapes, its routes,
 // the DELAY's models
@@ -1129,7 +1135,7 @@ GP[G.DVRT].sc = ['.05', '20Hz']; GP[G.PRT1].sc = GP[G.PRT2].sc = ['.1', '18Hz'];
 GP[G.GPIT].sc = ['-24st', '+24st', '0'];
 TP[P.PGLD].sc = ['OFF', '1s'];
 TP[P.RCRV].sc = ['SLOW', 'FAST', 'EVEN']; TP[P.JUMP].sc = ['-12', '+12', 'OFF']; TP[P.JRNG].sc = ['1', '24'];
-TP[P.RPAN].sc = ['PING', 'RND', 'OFF']; TP[P.SMON].sc = ['40', '600']; TP[P.RDEC].sc = ['LOOP', 'RND', 'OFF'];
+TP[P.RPAN].sc = ['PING', 'RND', 'OFF']; TP[P.SMON].sc = ['40', '600']; TP[P.RDEC].sc = ['LOOP', 'RND', 'OFF']; TP[P.RTUN].sc = ['LOOP', 'RND', 'OFF'];
 TP[P.L1SL].sc = TP[P.L2SL].sc = ['STEP', 'LINE'];
 // JUMP on a quantised track counts scale degrees (°), on a machine with a pitch (core/sk_engine.cpp BASE_HZ)
 const NO_PITCH = new Set(['CP·NZ', 'NOISE', 'BYTE', 'CHAOS']);
@@ -1592,8 +1598,8 @@ const FUZZ_MAIN_PAGE = { id: 'SYN', ps: [P.A, P.S5, P.B, P.C, P.TUNE, P.DEC, P.E
 const fuzzMain = () => !ui.all && curMachine() === FUZZ_M && fxSide(ui.t) === 0;
 // the TRIG row, its MORE page (v58): NOTE and the retrig where they are, JUMP and its range, the retrig's curve
 // (v64: RPAN in the first place, NOTE on the TRIG page)
-// (v65: RDEC in GATE's place, GATE on the TRIG page under it)
-const TRG_MORE_PAGE = { id: 'TRG', seq: true, more: true, ps: [P.RPAN, P.JUMP, P.JRNG, P.RCRV, P.RTRG, P.RCNT, P.RVEL, P.RDEC] };
+// (v65: RDEC in GATE's place, GATE on the TRIG page under it; v88: RTUN beside it, in RVEL's place, RVEL on the TRIG page)
+const TRG_MORE_PAGE = { id: 'TRG', seq: true, more: true, ps: [P.RPAN, P.JUMP, P.JRNG, P.RCRV, P.RTRG, P.RCNT, P.RTUN, P.RDEC] };
 // v64: TONE's MORE page (the track strip's MORE key, on TONE): the spread and its crossover
 const TONE_MORE_PAGE = { id: 'TONE', more: true, ps: [P.SPRD, P.SMON, null, null, null, null, null, null] };
 // v65: the LFO page's MORE page, under each LFO's SPD and DEP: SLEW's glide and LOOP's length
@@ -1760,6 +1766,7 @@ function trackMachine(t) {
 }
 const TRIO_M = 18, TRIO_SWP = k('SWP', v => '+' + Math.round(v * v * 24) + 'st');
 const RDEC_NA = { l: 'RDEC', f: () => '—', off: true };
+const RTUN_NA = { l: 'RTUN', f: () => '—', off: true };
 // (v80: DUCK follows track 1: on track 1 itself it has nothing to follow)
 const DUCK_T1 = { l: 'DUCK', f: () => '—', off: true, frame: 'T1 LEADS' };
 // (v81: DRONE on a machine that cannot hold one)
@@ -1772,6 +1779,7 @@ function paramMeta(t, p) {
   if (m === MANTRA_M) { const r = mantraMeta(t, p); if (r) return r; }
   if (m === RADIO_M) { const r = radioMeta(t, p); if (r) return r; }
   if (p === P.RDEC && fxM(m)) return RDEC_NA;            // (an FX machine has no decay to draw)
+  if (p === P.RTUN && fxM(m)) return RTUN_NA;            // (nor a pitch: its TUNE is something else)
   if (fxM(m)) { const r = fxMeta(t, m, p); if (r) return r; }
   if (m === CHIM_M) { const r = chimMeta(t, p); if (r) return r; }
   if (m === CUBE_M) { const r = cubeMeta(t, p); if (r) return r; }
@@ -2356,7 +2364,9 @@ const V20_PAD = { [P.GDTN]: 0, [P.GVAR]: 0, [P.GSHN]: 0, [P.GDRP]: 0, [P.SAIR]: 
   // v65: no decay drawn; SLEW's glide half the cycle, LOOP's 8 draws (the seeds: new ones when they are first played)
   [P.RDEC]: 0.5, [P.RDSD]: 0, [P.L1SL]: 0.5, [P.L1LN]: mid(6, 10), [P.L1SD]: 0, [P.L2SL]: 0.5, [P.L2LN]: mid(6, 10), [P.L2SD]: 0,
   // v68: no CHORUS nor PHASER send
-  [P.CHO]: 0, [P.PHS]: 0 };
+  [P.CHO]: 0, [P.PHS]: 0,
+  // v88: no pitch drawn (the seed: a new one when RTUN is first turned to LOOP)
+  [P.RTUN]: 0.5, [P.RTSD]: 0 };
 const STRUM_AIR0 = 0.3;
 const padVal = i => i === P.PNCH ? 0 : i === P.JRNG ? mid(11, NJRNG) : i in V20_PAD ? V20_PAD[i] : i in V19_PAD ? V19_PAD[i] : i in RAM_PAD ? RAM_PAD[i] : i in V10_PAD ? V10_PAD[i] : i in HALO_PAD ? HALO_PAD[i] : i in BRK_PAD ? BRK_PAD[i] : i in FX_PAD ? FX_PAD[i] : 0.5;
 // v78: a track's params padded, its machine known: the side places added (S36 ..) at its machine's own, ECRV at EXP
@@ -3718,7 +3728,9 @@ function renderWestPanel() {
   });
   $('wsay').textContent = WS_PAGES[pi].say;
   // (v85: the plugin's fine row, one column per control: up to twelve on one line)
-  $('wfine').style.setProperty('--wn', String(Math.max(6, WS_PAGES[pi].fine.length)));
+  $('wfine').style.setProperty('--wn', String(WS_PAGES[pi].fine.length));
+  // (v88: and its main row, one column per control over the whole width)
+  $('wmain').style.setProperty('--wm', String(WS_PAGES[pi].main.length));
 }
 // the ring (a slider: the glow on its rail) where a CV takes a control now, in its source's colour; g null: none
 function westGhost(K, g, col) {
@@ -4255,7 +4267,7 @@ function onPos(d) {
 // ------------------------------------------------------------------ edits
 function quant(meta, v) { return meta && meta.n ? mid(idx(v, meta.n), meta.n) : clamp(v, 0, 1); }
 
-// v65: the seeds of the loops (RDEC's LOOP, the LOOP wave's): a new loop each time its knob leaves where it rests (RDEC to
+// v65: the seeds of the loops (RDEC's LOOP, v88 RTUN's, the LOOP wave's): a new loop each time its knob leaves where it rests (RDEC to
 // its LOOP side, an LFO's depth out of 0) or the LOOP wave is chosen, the same loop then as long as it plays. A lock
 // draws one only for a track that has none yet
 const isLoopW = v => idx(v, NWAV) % NSHAPE === W_LOOP;
@@ -4263,6 +4275,7 @@ function reseed(t, p, was, v, lock) {
   const tr = state.tracks[t];
   let q = -1;
   if (p === P.RDEC) { if (v < 0.495 && !(was < 0.495)) q = P.RDSD; }
+  else if (p === P.RTUN) { if (v < 0.495 && !(was < 0.495)) q = P.RTSD; }
   else if (p === P.C && mof(tr.p[P.MACH]) === CHIM_M) { if (v < 0.495 && !(was < 0.495)) q = P.S15; }   // (CHIMERA's VARI, to its LOOP side)
   else if (p === P.LDEP || p === P.L2DP) { if (Math.abs(was - 0.5) <= 0.005 && Math.abs(v - 0.5) > 0.005 && isLoopW(tr.p[p === P.LDEP ? P.LWAV : P.L2WV])) q = p === P.LDEP ? P.L1SD : P.L2SD; }
   else if (p === P.LWAV || p === P.L2WV) { if (isLoopW(v) && !isLoopW(was)) q = p === P.LWAV ? P.L1SD : P.L2SD; }
@@ -4685,7 +4698,7 @@ const RND_RANGE = {
   [P.GDTN]: [0, 0.5], [P.GVAR]: [0, 0.6], [P.GSHN]: [0, 0.6], [P.GDRP]: [0, 0.3], [P.SAIR]: [0, 0.7],
 };
 const RND_KEEP = new Set([P.MACH, P.VOL, P.CHOK, P.DUCK, P.SPC, P.JUMP, P.JRNG, P.HARM, ...RAM_REC_PS, ...RAM_PRISM_PS,   // (RAM: its takes and PRISM stay; HARM)
-  ...Array.from({ length: 24 }, (_, i) => P.HPF + i), P.RPAN, P.SPRD, P.SMON, P.RDEC, P.RDSD, P.L1SD, P.L2SD]);                     // (TONE and the followers too, its MORE page; RPAN)
+  ...Array.from({ length: 24 }, (_, i) => P.HPF + i), P.RPAN, P.SPRD, P.SMON, P.RDEC, P.RDSD, P.RTUN, P.RTSD, P.L1SD, P.L2SD]);                     // (TONE and the followers too, its MORE page; RPAN)
 // random walk inside [lo, hi]: each press moves a value by up to ±depth of its range and bounces off the
 // edges, so repeated presses keep exploring instead of drifting back to the middle; 100 % = a fresh value
 function walk(v, lo, hi, d) {
@@ -5371,7 +5384,7 @@ function renderUpdates() {
     $('updmore').textContent = u.state === 5 ? 'How to install' : 'What’s new';
     $('updlater').hidden = u.state === 4;
   }
-  panel.hidden = !ui.upanel;
+  panel.hidden = !ui.upanel; $('uveil').hidden = !ui.upanel;
   $('updbtn').setAttribute('aria-expanded', ui.upanel ? 'true' : 'false');
   if (!ui.upanel) return;
   const cur = (u && u.cur) || IMPAKT_VERSION;
@@ -5384,7 +5397,7 @@ function renderUpdates() {
     acts = link(SITE_URL + 'install.html', 'Get the plugin') + link(SITE_URL + 'manuel.html', 'Manual');
   } else {
     const st = u ? u.state : 0;
-    const how = !u ? '' : u.os === 'mac' ? 'The disk image is open: quit your music software, then run Install IMPAKT.'
+    const how = !u ? '' : u.os === 'mac' ? 'The disk image is open. Quit your music software, drag each item onto its folder, then open Terminal (Cmd + Space, Terminal), paste the command and press Return.'
       : u.os === 'win' ? 'Close your music software, then run the setup in your Downloads folder.'
       : 'Close your music software, unpack the archive in your Downloads folder and run install.sh.';
     if (st === 0) { stat = 'NOT CHECKED YET'; sub = u && !u.auto ? 'The check at start is off.' : ''; }
@@ -5395,6 +5408,7 @@ function renderUpdates() {
     else if (st === 5) { stat = 'DOWNLOADED'; sub = how; notes = u.notes || ''; }
     else if (st === 6) { stat = 'NO ANSWER'; sub = u.msg || ''; }
     if (st === 3) acts += '<button class="btn go" data-u="download">Download ' + esc(u.latest) + '</button>';
+    if (st === 5 && u.os === 'mac') acts += '<button class="btn go" data-u="copy">Copy the Terminal command</button>';
     if (st === 5) acts += '<button class="btn" data-u="show">Show the file</button>';
     if (st === 3 || st === 5) acts += '<button class="btn" data-u="page">Release page</button>';
     if (st !== 1 && st !== 4) acts += '<button class="btn" data-u="check">' + (st === 6 ? 'Try again' : 'Check now') + '</button>';
@@ -5409,11 +5423,19 @@ function renderUpdates() {
   a.querySelectorAll('[data-u]').forEach(b => b.addEventListener('click', () => {
     const op = b.dataset.u;
     if (op === 'auto') updSend('auto', { on: !(ui.upd && ui.upd.auto) });
+    // (v88: the Terminal command: the page's clipboard if it has one, and the plugin's own)
+    else if (op === 'copy') {
+      try { if (navigator.clipboard) navigator.clipboard.writeText(MAC_CMD).catch(() => {}); } catch (e) { /* the plugin copies it */ }
+      updSend('copy', { text: MAC_CMD });
+      b.textContent = 'Copied: paste it in Terminal';
+    }
     else updSend(op);
   }));
 }
 function buildUpdates() {
   $('updbtn').addEventListener('click', () => { ui.upanel = !ui.upanel; setProj(false); renderUpdates(); });
+  // (v88: the panel sits in the middle of the plugin, over a veil: a tap on the veil closes it, as Escape does)
+  $('uveil').addEventListener('click', () => { ui.upanel = false; renderUpdates(); });
   $('uclose').addEventListener('click', () => { ui.upanel = false; renderUpdates(); });
   $('updgo').addEventListener('click', () => { updSend('download'); ui.upanel = true; renderUpdates(); });
   $('updmore').addEventListener('click', () => { ui.upanel = true; renderUpdates(); });
@@ -5584,7 +5606,10 @@ function renderScale(K, meta, bip) {
     const anchor = c < -0.3 ? 'end' : c > 0.3 ? 'start' : 'middle';
     y += sn > 0.3 ? 7.5 : sn < -0.3 ? -1.5 : 3;
     const esc = txt.replace(/&/g, '&amp;').replace(/</g, '&lt;');
-    h += `<text x="${x.toFixed(2)}" y="${y.toFixed(2)}" text-anchor="${anchor}">${esc}</text>`;
+    // (v88: a label at an end that would leave the face, toward the next knob, drawn narrower: it stays over its own)
+    const room = anchor === 'end' ? x + 15 : anchor === 'start' ? 79 - x : 94, need = txt.length * 5.7;
+    const fit = need > room + 1 ? ` textLength="${room.toFixed(1)}" lengthAdjust="spacingAndGlyphs"` : '';
+    h += `<text x="${x.toFixed(2)}" y="${y.toFixed(2)}" text-anchor="${anchor}"${fit}>${esc}</text>`;
   }
   K.scl.innerHTML = h;
 }
@@ -6323,7 +6348,9 @@ function drawSpec(now) {
   // (its height follows its width, up to a band's worth on a wide screen and the plugin; v70: TONE's visualiser
   // taller, the page showing one module under it)
   const pitch = w / SPEC_COLS, gap = Math.max(1, Math.round(pitch * 0.22));
-  const h = pid === 'TVIZ' ? (inPlugin ? 214 : w < 500 ? 160 : 180) : Math.min(Math.round(SPEC_ROWS * pitch - gap), inPlugin ? 104 : 140);
+  // (v88: the plugin's MOD page as tall as TONE's: its LFOs and followers drawn larger, its modules no taller than they need)
+  const tall = pid === 'TVIZ' || (inPlugin && ui.ptab === 'md');
+  const h = tall ? (inPlugin ? 214 : w < 500 ? 160 : 180) : Math.min(Math.round(SPEC_ROWS * pitch - gap), inPlugin ? 104 : 140);
   if (Math.abs(cv.clientHeight - h) > 0.5) cv.style.height = h + 'px';
   const dpr = DPR();
   if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
@@ -8834,7 +8861,7 @@ function demoState22() {
   s.v = SV22;
   return s;
 }
-window.__impakt = { get state() { return state; }, ui, setAll, WS_PAGES, copyTrack, pasteTrack, moveTrack, cubeState, cubeMem, ORDER, selectTrack, stateOps, demoState, demoState20, demoState21, demoState22, demoState24, migrate, setToneMore, setPTab, openModule, KMODS, PAGE_BY_ID, loopDraw, SIDE_META, sideDefs, ALLOY_M, setLen, setPtn, patKey, patName, serialState, setTMore, logoSvg, MACH, KANA, randomParams, scaleName, gMeta, PAGES, recSide,
+window.__impakt = { get state() { return state; }, ui, setAll, WS_PAGES, changeMachine, copyTrack, pasteTrack, moveTrack, cubeState, cubeMem, ORDER, selectTrack, stateOps, demoState, demoState20, demoState21, demoState22, demoState24, migrate, setToneMore, setPTab, openModule, KMODS, PAGE_BY_ID, loopDraw, SIDE_META, sideDefs, ALLOY_M, setLen, setPtn, patKey, patName, serialState, setTMore, logoSvg, MACH, KANA, randomParams, scaleName, gMeta, PAGES, recSide,
   knobScale, paramMeta, BIPOLAR, gBip, GRN_MOD_PAGE, renderAll, setTrackParam, P, G, setGlobal, haloChordName, keyLayout,
   presetEntries, presetValues, get userPresets() { return userPresets; }, brkDecodeAudio, brkTempo, brkPrepare, brkV15, brkResolve,
   get brkNames() { return ui.brkNames; }, trackView, setRet, tzHandles, fltDb, fltState, toneDb, toneParams };

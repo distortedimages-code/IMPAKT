@@ -46,6 +46,8 @@ void ImpaktEditor::createWebView()
             else if (op == "auto") u.setAutoCheck ((bool) v.getProperty ("on", true));
             else if (op == "page") { const auto pg = u.info().page; juce::URL (pg.isNotEmpty() ? pg : juce::String ("https://github.com/") + Updater::repo + "/releases").launchInDefaultBrowser(); }
             else if (op == "show") { const juce::File f (u.info().file); if (f.exists()) f.revealToUser(); }
+            // (v88: the Mac's Terminal command, which the page sends: the WebView's own clipboard is not always there)
+            else if (op == "copy") { const auto txt = v.getProperty ("text", "").toString(); if (txt.length() < 4096) juce::SystemClipboard::copyTextToClipboard (txt); }
         })
         // BREAK: a loop the page decoded into a slot (base64 of its 16-bit samples)
         .withEventListener ("impakt_brk",   [this] (juce::var v)
