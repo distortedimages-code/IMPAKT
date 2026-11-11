@@ -284,6 +284,9 @@ home = '''<main>
 
 # ------------------------------------------------------------------ the install guide
 install = open(os.path.join(SITE, 'install.html.in'), encoding='utf-8').read()
+# the Mac's Terminal command (packaging/mac/terminal-command.txt, also in the disk image's read-me)
+MACCMD = open(os.path.join(ROOT, 'packaging', 'mac', 'terminal-command.txt'), encoding='utf-8').read().strip()
+install = install.replace('@MACCMD@', html.escape(MACCMD, quote=False))
 install = install.replace('@PHOTO@', photo('soudure-miroir', 'photo banner', True)).replace('@DL@', DL).replace('@GH@', GH).replace('@VERSION@', VERSION)
 for k, v in ASSETS.items():
     install = install.replace('@%s@' % k.upper(), v)

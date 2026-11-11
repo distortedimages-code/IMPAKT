@@ -54,7 +54,10 @@ ditto "$WORK/root/vst3/IMPAKT.vst3"      "$WORK/stage/IMPAKT.vst3"
 ditto "$WORK/root/au/IMPAKT.component"   "$WORK/stage/IMPAKT.component"
 ditto "$WORK/root/app/IMPAKT.app"        "$WORK/stage/IMPAKT.app"
 ditto "$WORK/root/bank/IMPAKT"           "$WORK/stage/IMPAKT"
-cp "$HERE/LISEZ-MOI.txt" "$WORK/stage/LISEZ-MOI.txt"
+# the read-me carries the Terminal command (terminal-command.txt, also on the site's install page)
+python3 -c 'import sys; t = open(sys.argv[1], encoding="utf-8").read(); c = open(sys.argv[2], encoding="utf-8").read().strip(); open(sys.argv[3], "w", encoding="utf-8").write(t.replace("@COMMANDE@", c))' \
+    "$HERE/LISEZ-MOI.txt" "$HERE/terminal-command.txt" "$WORK/stage/LISEZ-MOI.txt"
+grep -q "auval -v aumu" "$WORK/stage/LISEZ-MOI.txt"
 tiffutil -cathidpicheck "$HERE/dmg-background.png" "$HERE/dmg-background@2x.png" -out "$WORK/background.tiff"
 rm -f "$OUT/IMPAKT-macOS.dmg"
 DMGBUILD="dmgbuild"; command -v dmgbuild >/dev/null || DMGBUILD="python3 -m dmgbuild"

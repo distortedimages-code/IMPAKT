@@ -115,6 +115,12 @@ h1 { font: 900 clamp(40px, 7vw, 64px)/0.95 var(--f-display); letter-spacing: .00
 .cmd { position: relative; margin: 6px 0 12px; }
 .cmd pre { margin: 0; background: var(--lcd); color: var(--lcd-ink); padding: 14px 84px 14px 14px; border-radius: 6px; overflow-x: auto; line-height: 1.55; }
 .cmd pre code { background: none; padding: 0; font-size: 13px; color: inherit; overflow-wrap: normal; }
+.cmd.wrap pre { white-space: pre-wrap; padding: 46px 14px 14px; }
+.cmd.wrap pre code { overflow-wrap: anywhere; font-size: 12.5px; }
+kbd { font: 700 14px/1 var(--f-ui); letter-spacing: .04em; padding: 4px 7px 3px; border-radius: 4px; background: var(--key); box-shadow: var(--raise); white-space: nowrap; }
+.pairs { list-style: none; margin: 6px 0 10px; padding: 0; display: grid; gap: 6px; }
+.pairs li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.pairs span { color: var(--ink-3); }
 .cmd .copy { position: absolute; top: 8px; right: 8px; font: 700 14px/1 var(--f-ui); letter-spacing: .06em; text-transform: uppercase; border: 0; cursor: pointer;
   padding: 8px 10px 7px; border-radius: 4px; background: var(--lcd-lo); color: var(--lcd-ink); }
 

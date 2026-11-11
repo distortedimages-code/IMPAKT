@@ -16,40 +16,48 @@
     <ol class="steps">
       <li><h3>Téléchargez l'image disque</h3>
         <p><a class="key hot inline" href="@DL@@MAC@"><b>IMPAKT-macOS.dmg</b></a></p></li>
-      <li><h3>Ouvrez-la</h3>
-        <p>Double-cliquez sur le fichier téléchargé. Une fenêtre montre l'installeur à gauche ; à droite, le plugin VST3,
-        l'Audio Unit, l'application et le dossier des sons de CHIMERA, chacun à côté d'un raccourci vers son dossier.</p></li>
-      <li><h3>Quittez votre logiciel de musique</h3>
-        <p>Live, Logic, Bitwig… : un plugin chargé ne peut pas être remplacé proprement.</p></li>
-      <li><h3>Lancez « Install IMPAKT »</h3>
-        <p>IMPAKT n'est pas signé par Apple (il faudrait un compte développeur payant) : la première fois, macOS refuse de
-        l'ouvrir et affiche « Apple n'a pas pu confirmer que “Install IMPAKT” ne contenait pas de logiciel malveillant ».
-        Cliquez sur <b>Terminé</b>, puis :</p>
-        <ol class="sub">
-          <li>ouvrez <b>Réglages Système › Confidentialité et sécurité</b> ;</li>
-          <li>descendez jusqu'à la ligne « “Install IMPAKT” a été bloqué » et cliquez sur <b>Ouvrir quand même</b> ;</li>
-          <li>confirmez avec votre mot de passe, puis <b>Ouvrir</b>.</li>
-        </ol>
-        <p>Ce n'est à faire qu'une fois par version. Sur macOS 14 ou plus ancien, un clic droit sur l'installeur puis
-        <b>Ouvrir</b> suffit.</p></li>
-      <li><h3>Suivez l'installeur</h3>
-        <p><b>Personnaliser</b> permet de ne garder que le VST3, l'Audio Unit ou l'application. Le VST3 va dans
-        <code>/Library/Audio/Plug-Ins/VST3</code>, l'Audio Unit dans <code>/Library/Audio/Plug-Ins/Components</code>,
-        l'application dans <code>Applications</code>, et les sons de CHIMERA, un seul exemplaire pour les trois, dans
-        <code>/Library/Application Support/IMPAKT</code>.</p></li>
+      <li><h3>Ouvrez-la, quittez votre logiciel de musique</h3>
+        <p>Double-cliquez sur le fichier téléchargé. Quittez Live, Logic, Bitwig… : un plugin chargé ne peut pas être
+        remplacé proprement.</p></li>
+      <li><h3>Glissez chaque élément sur son raccourci</h3>
+        <ul class="pairs">
+          <li><code>IMPAKT.vst3</code><span aria-hidden="true">→</span><b>VST3</b></li>
+          <li><code>IMPAKT.component</code><span aria-hidden="true">→</span><b>Components</b></li>
+          <li><code>IMPAKT.app</code><span aria-hidden="true">→</span><b>Applications</b></li>
+          <li><code>IMPAKT</code> (le dossier des sons de CHIMERA)<span aria-hidden="true">→</span><b>Application Support</b></li>
+        </ul>
+        <p>macOS demande votre mot de passe ; s'il propose de remplacer l'ancienne version, acceptez.</p></li>
+      <li><h3>Ouvrez le Terminal</h3>
+        <p><kbd>⌘ Cmd</kbd> + <kbd>Espace</kbd>, tapez <b>Terminal</b>, puis <kbd>Entrée</kbd>.</p></li>
+      <li><h3>Collez cette commande, puis Entrée</h3>
+        <div class="cmd wrap"><pre><code>@MACCMD@</code></pre><button type="button" class="copy">Copier</button></div>
+        <p>Le Terminal demande votre mot de passe : tapez-le (rien ne s'affiche, c'est normal), puis <kbd>Entrée</kbd>.
+        Quand il écrit <b>IMPAKT est prêt.</b>, c'est fini.</p>
+        <details class="alt">
+          <summary>Ce que fait la commande</summary>
+          <ul>
+            <li>elle enlève les anciennes copies d'IMPAKT de votre dossier personnel
+            (<code>~/Library/Audio/Plug-Ins</code>), qui feraient doublon ;</li>
+            <li>elle lève la marque « téléchargé d'internet » qui fait bloquer les plugins par macOS, et signe de nouveau
+            le VST3, l'Audio Unit et l'application sur votre Mac ;</li>
+            <li>elle relance le registre des Audio Units et fait valider IMPAKT (<code>auval</code>) : Logic le trouve
+            prêt à son démarrage. En cas d'échec, le détail est dans <code>/tmp/impakt-auval.txt</code>.</li>
+          </ul>
+          <p>La même commande sert après une mise à jour, ou si votre logiciel ne voit plus IMPAKT.</p>
+        </details></li>
       <li><h3>Rouvrez votre logiciel de musique</h3>
-        <p>IMPAKT est dans les instruments. Dans Live, si vous ne le voyez pas : Réglages › Plug-ins › Réanalyser.
-        Logic le valide tout seul au démarrage.</p></li>
+        <p>IMPAKT est dans les instruments, en VST3 et en Audio Unit. Dans Live, s'il n'apparaît pas : Réglages ›
+        Plug-ins › Réanalyser. L'application autonome est dans Applications.</p></li>
     </ol>
     <details class="alt">
-      <summary>Installer à la main, en glissant les fichiers</summary>
-      <p>Glissez <code>IMPAKT.vst3</code> sur le raccourci <b>VST3</b>, <code>IMPAKT.component</code> sur <b>Components</b>,
-      <code>IMPAKT.app</code> sur <b>Applications</b> et le dossier <code>IMPAKT</code> (les sons de CHIMERA) sur
-      <b>Application Support</b> (macOS demande votre mot de passe). Les fichiers copiés ainsi
-      gardent la marque « téléchargé d'internet » et macOS bloque leur chargement : enlevez-la dans le Terminal
-      (Applications › Utilitaires) avec cette commande, puis votre mot de passe :</p>
-      <div class="cmd"><pre><code>sudo xattr -dr com.apple.quarantine /Library/Audio/Plug-Ins/VST3/IMPAKT.vst3 /Library/Audio/Plug-Ins/Components/IMPAKT.component /Applications/IMPAKT.app</code></pre><button type="button" class="copy">Copier</button></div>
-      <p>L'installeur n'a pas ce problème : c'est pour ça qu'il est conseillé.</p>
+      <summary>Ou avec l'installeur « Install IMPAKT »</summary>
+      <p>Double-cliquez sur <b>Install IMPAKT</b>, à gauche dans l'image disque. IMPAKT n'est pas signé par Apple (il
+      faudrait un compte développeur payant) : la première fois, macOS refuse de l'ouvrir. Cliquez sur <b>Terminé</b>,
+      ouvrez <b>Réglages Système › Confidentialité et sécurité</b>, descendez jusqu'à « “Install IMPAKT” a été bloqué »,
+      cliquez sur <b>Ouvrir quand même</b> et confirmez avec votre mot de passe. Sur macOS 14 ou plus ancien, un clic droit
+      sur l'installeur puis <b>Ouvrir</b> suffit.</p>
+      <p><b>Personnaliser</b> permet de ne garder que le VST3, l'Audio Unit ou l'application. Si votre logiciel ne voit
+      pas IMPAKT ensuite, collez la commande de l'étape 5.</p>
     </details>
   </section>
 

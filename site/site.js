@@ -37,7 +37,10 @@
   document.querySelectorAll('.cmd .copy').forEach(b => b.addEventListener('click', () => {
     const text = b.parentNode.querySelector('code').textContent;
     const done = () => { b.textContent = 'Copié'; setTimeout(() => { b.textContent = 'Copier'; }, 1500); };
-    if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, () => {});
+    // without the clipboard, the command is selected: Cmd+C copies it
+    const select = () => { const r = document.createRange(); r.selectNodeContents(b.parentNode.querySelector('code'));
+      const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); };
+    if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, select); else select();
   }));
 
   // the release really published (its version and date), from GitHub

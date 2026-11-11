@@ -11,12 +11,12 @@ files = [os.path.join(stage, n) for n in ('Install IMPAKT.pkg', 'IMPAKT.vst3', '
 symlinks = {'VST3': '/Library/Audio/Plug-Ins/VST3', 'Components': '/Library/Audio/Plug-Ins/Components', 'Applications': '/Applications',
             'Application Support': '/Library/Application Support'}
 icon_locations = {
-    'Install IMPAKT.pkg': (150, 300),
-    'IMPAKT.vst3': (410, 165), 'VST3': (600, 165),
-    'IMPAKT.component': (410, 255), 'Components': (600, 255),
-    'IMPAKT.app': (410, 345), 'Applications': (600, 345),
-    'IMPAKT': (410, 435), 'Application Support': (600, 435),
-    'LISEZ-MOI.txt': (150, 640),  # (below the window's edge: there, but out of the way)
+    'Install IMPAKT.pkg': (150, 250),
+    'IMPAKT.vst3': (410, 177), 'VST3': (600, 177),
+    'IMPAKT.component': (410, 267), 'Components': (600, 267),
+    'IMPAKT.app': (410, 357), 'Applications': (600, 357),
+    'IMPAKT': (410, 447), 'Application Support': (600, 447),
+    'LISEZ-MOI.txt': (150, 470),  # (the Terminal command)
 }
 format = 'ULFO'                   # (lzfse: macOS 10.11 and later)
 filesystem = 'HFS+'
