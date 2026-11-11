@@ -680,7 +680,7 @@ struct Reverb
 
 // a stored pattern: per track its sounds, steps and settings; its p-locks as a list (track, step, parameter, value)
 struct PatTrack { float p[NUM_PARAMS]; u8 trig[NUM_STEPS], rat[NUM_STEPS], rec[NUM_STEPS], tlk[NUM_STEPS]; u8 len, spd, q, pad; };
-struct PatLock  { u8 t, s, p, pad; float v; };
+struct PatLock  { u8 t, s; unsigned short p; float v; };      // (p: v90 has more than 256 params)
 struct PatSlot  { int used, chg, nlk; PatTrack trk[NUM_TRACKS]; PatLock lk[PAT_LOCKS]; };
 
 struct HostTime

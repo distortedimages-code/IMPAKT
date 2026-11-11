@@ -386,13 +386,28 @@ svg.lg { display: block; width: 100%; height: 100%; }
 .mkey:focus-visible { outline: 2px solid var(--lcd-ink); outline-offset: 2px; }
 .mnav .mkeys.sk { margin-right: 6px; }
 .mnav .mkey { height: 30px; }
-.mapbar { position: fixed; z-index: 60; left: 50%; top: max(8px, env(safe-area-inset-top, 0px)); transform: translateX(-50%); display: flex; align-items: center; gap: 12px;
+/* (the page, on a phone or a computer: the machine's screen has no room beside its name: the keys with the track's length
+   and speed, under the steps (a line of their own on a phone); a tap keeps one on, the banner stays at the top) */
+.trackbar .mkeys.tbk { display: none; }
+:root:not(.plug) .mnav .mkeys.sk { display: none; }
+:root:not(.plug) .trackbar .mkeys.tbk { display: flex; }
+.trackbar .mkey { justify-content: center; height: 34px; border-radius: var(--r); border: 0; background: var(--key); color: var(--ink); box-shadow: var(--raise);
+  font-family: var(--f-data); font-weight: 700; font-size: 12px; }
+.trackbar .mkey.routed { box-shadow: var(--raise), inset 0 -3px 0 var(--mc); }
+.trackbar .mkey.on { background: var(--mc); color: #fff; box-shadow: 0 0 12px var(--mc); }
+@media (max-width: 640px) {
+  :root:not(.plug) .trackbar .mkeys.tbk { flex: 1 0 100%; order: 9; }
+  .trackbar .mkey { flex: 1 1 0; }
+}
+.mapbar { position: fixed; z-index: 60; left: 50%; bottom: max(12px, env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); display: flex; align-items: center; gap: 12px;
   width: min(620px, calc(100vw - 24px)); box-sizing: border-box; padding: 7px 8px 7px 12px; border-radius: 6px; background: #0E1110; color: #E3EAE5; box-shadow: 0 0 0 2px var(--mc), 0 8px 24px rgba(0,0,0,.35); }
 .mapbar .mbt { font-family: var(--f-px); font-weight: 400; font-size: 12px; white-space: nowrap; display: flex; gap: 6px; align-items: center; }
 .mapbar .mbt i { font-style: normal; color: var(--mc); }
 .mapbar .mbs { font-family: var(--f-px); font-size: 8px; line-height: 1.4; color: #B9C2BE; min-width: 0; }
 .mapbar .mbok { flex: none; border: 0; border-radius: 2px; background: #E3EAE5; color: #0E1110; font-family: var(--f-px); font-size: 11px; padding: 7px 11px; cursor: pointer; }
-.plug .mapbar { left: 640px; top: 8px; width: auto; max-width: 900px; }
+/* (the plugin: over the logo, the page keys and the transport free) */
+.plug .mapbar { left: 18px; top: 9px; bottom: auto; transform: none; width: 344px; padding: 6px 6px 6px 10px; gap: 10px; }
+.plug .mapbar .mbs { font-size: 7px; }
 .mapbar .mbs { flex: 1; }
 .app.mapping .knob:not(.mapok):not(.glob) { opacity: .35; }
 .app.mapping .knob.mapok .face { cursor: crosshair; }
@@ -1581,6 +1596,7 @@ canvas { min-width: 0; min-height: 0; }
         <div class="pages" id="pages" role="group" aria-label="Pages"></div>
         <div class="lenbar lcdw" id="lenbar" tabindex="0" role="slider" aria-label="Track length" aria-valuemin="1" aria-valuemax="64" title="Track length: touch or drag along the cells of the page shown"><small>LEN</small><span class="cells" id="lencells"></span><b id="lenv">16</b></div>
         <div class="readout spd" id="spd" tabindex="0" role="slider" aria-label="Track speed" title="Track speed: drag up or down, double-tap for 1&#xD7;"><b id="spdv">1&#xD7;</b><small>SPD</small></div>
+        <span class="mkeys tbk" id="mkeysB"></span>
         <div class="grp rnd"><span class="gl">RND</span><span class="gv rdep" id="rndd" tabindex="0" role="slider" aria-label="Random depth" title="Random depth: drag up or down">50%</span><button class="btn" id="rndt">Track</button><button class="btn" id="rnda">All</button><button class="btn sq" id="rndu" aria-label="Undo random" disabled>&#x21B6;</button><div class="live" id="rlive" tabindex="0" role="slider" aria-label="WTF?! amount (Enter: its settings)" aria-controls="wtfbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" title="WTF?!: moves the sounds of the r tracks as they play, nothing is written. Turn it; double-tap: the sounds as written. Tap its name for its modes: LIVE (a new draw on every hit), LOOMND (left: a loop of draws, right: new draws), LFO (a wave on the sounds)"><svg viewBox="4 4 56 56" aria-hidden="true"><path class="trk"/><path class="val"/><circle class="cap" cx="32" cy="32" r="16"/><line class="ind" x1="32" y1="32" x2="32" y2="20"/></svg><span class="lvl"><small>WTF?!</small><b id="rlivev">0%</b></span></div></div>
       </div>
     </section>
@@ -1614,7 +1630,7 @@ canvas { min-width: 0; min-height: 0; }
   </div>
 </div>
 <script>
-const IMPAKT_VERSION = "0.89.0";
+const IMPAKT_VERSION = "0.90.0";
 const MAC_CMD = "rm -rf ~/Library/Audio/Plug-Ins/VST3/IMPAKT.vst3 ~/Library/Audio/Plug-Ins/Components/IMPAKT.component; sudo sh -c 'cd /Library/Audio/Plug-Ins; for f in VST3/IMPAKT.vst3 Components/IMPAKT.component /Applications/IMPAKT.app \"/Library/Application Support/IMPAKT\"; do [ -e \"$f\" ] && xattr -cr \"$f\"; done; for f in VST3/IMPAKT.vst3 Components/IMPAKT.component /Applications/IMPAKT.app; do [ -e \"$f\" ] && codesign --force --deep --sign - \"$f\" 2>/dev/null; done; killall -9 AudioComponentRegistrar 2>/dev/null; true'; auval -v aumu Imp8 Impk > /tmp/impakt-auval.txt 2>&1 && echo \"IMPAKT est pr\u00eat.\" || echo \"L'Audio Unit ne passe pas : le d\u00e9tail est dans /tmp/impakt-auval.txt\"";
 const WASM_B64 = "";
 const WASM_SIMD_B64 = "";
@@ -9091,7 +9107,7 @@ function renderMapUI() {
 }
 function flashMap(msg) { ui.mapMsg = msg; renderMapUI(); clearTimeout(ui.mapMsgT); ui.mapMsgT = setTimeout(() => { ui.mapMsg = ''; renderMapUI(); }, 1600); }
 function buildMapKeys() {
-  for (const [id, cls] of [['mkeysT', 'tk'], ['mkeysS', 'sk']]) { const host = $(id); if (host) host.outerHTML = modKeysHtml(cls, id); }
+  for (const [id, cls] of [['mkeysT', 'tk'], ['mkeysS', 'sk'], ['mkeysB', 'tbk']]) { const host = $(id); if (host) host.outerHTML = modKeysHtml(cls, id); }
   document.addEventListener('pointerdown', e => {
     const b = e.target.closest && e.target.closest('.mkey'); if (!b) return;
     e.preventDefault(); backend.ensureAudio();
@@ -9855,7 +9871,7 @@ function drawSpec(now) {
   const pitch = w / SPEC_COLS, gap = Math.max(1, Math.round(pitch * 0.22));
   // (v88: the plugin's MOD page as tall as TONE's: its LFOs and followers drawn larger, its modules no taller than they need)
   const tall = pid === 'TVIZ' || ui.ptab === 'md';     // (v90: the four modulators' lanes, on the web too)
-  const h = tall ? (inPlugin ? 214 : w < 500 ? 160 : 180) : Math.min(Math.round(SPEC_ROWS * pitch - gap), inPlugin ? 104 : 140);
+  const h = tall ? (inPlugin ? 214 : pid === 'MODS' ? (w < 500 ? 150 : 132) : w < 500 ? 160 : 180) : Math.min(Math.round(SPEC_ROWS * pitch - gap), inPlugin ? 104 : 140);
   if (Math.abs(cv.clientHeight - h) > 0.5) cv.style.height = h + 'px';
   const dpr = DPR();
   if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }

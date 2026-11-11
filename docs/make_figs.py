@@ -429,8 +429,56 @@ def wtf():
     f.save()
 
 
+# ------------------------------------------------------------------ the modulators (v90)
+def mods():
+    f = Fig('mods', 232, "Les modulateurs : M1 (WAVE) envoie un sinus sur FREQ (+40) et sur DEC (−22), M3 (ENV) une enveloppe sur FREQ aussi ; chaque route a sa profondeur, et le potard montre ses anneaux, un par modulateur")
+    cols = ['#E9472B', '#F28A1E', '#E2B414', '#3FAE6A']
+    glyph = ['▲', '■', '⬢', '●']
+    names = ['M1 WAVE', 'M2 RANDOM', 'M3 ENV', 'M4 FOLLOW']
+    x0, x1 = 16, 210
+    rnd = random.Random(5)
+    rv = [rnd.uniform(-1, 1) for _ in range(9)]
+    for m in range(4):
+        y = 30 + m * 50
+        f.text(x0, y - 8, glyph[m] + ' ' + names[m], cols[m] if m in (0, 2) else DIM, 9)
+        pts = []
+        for i in range(61):
+            t = i / 60
+            if m == 0: v = math.sin(2 * math.pi * 2 * t)
+            elif m == 1: v = rv[int(t * 8)]
+            elif m == 2: ph = (t * 3) % 1; v = (math.exp(-ph * 6)) * 2 - 1
+            else: ph = (t * 3) % 1; v = (min(1, ph * 20) * math.exp(-ph * 4)) * 2 - 1
+            pts.append('%s%g %g' % ('L' if i else 'M', x0 + t * (x1 - x0 - 40), y + 12 - v * 10))
+        f.path(' '.join(pts), cols[m] if m in (0, 2) else DIM, 1.4, join='round')
+    # the knobs: FREQ (M1 and M3), DEC (M1)
+    def knob(cx, cy, val, label, rings):
+        a0, sw = 135, 270
+        def pt(r, v):
+            a = math.radians(a0 + sw * v); return cx + r * math.cos(a), cy + r * math.sin(a)
+        def arc(r, va, vb):
+            (xa, ya), (xb, yb) = pt(r, va), pt(r, vb)
+            return 'M%.2f %.2f A%g %g 0 %d 1 %.2f %.2f' % (xa, ya, r, r, 1 if (vb - va) * sw > 180 else 0, xb, yb)
+        f.path(arc(24, 0, 0.999), LO, 2)
+        f.path(arc(24, 0, val), INK, 2)
+        for i, (m, d) in enumerate(rings):
+            r = 18 - i * 5
+            f.path(arc(r, max(0, val - abs(d)), min(0.999, val + abs(d))), cols[m], 3.2)
+        f.add('<circle cx="%g" cy="%g" r="9" fill="%s"/>' % (cx, cy, LO))
+        xi, yi = pt(9, val); f.line(cx, cy, xi, yi, INK, 2)
+        f.text(cx, cy + 40, label, INK, 10, 'middle')
+    knob(330, 70, 0.55, 'FREQ', [(0, 0.3), (2, 0.18)])
+    knob(330, 170, 0.45, 'DEC', [(0, 0.17)])
+    # the routes: depth tags
+    for (ya, yb, c, t) in ((42, 64, cols[0], '+40'), (42, 164, cols[0], '−22'), (142, 76, cols[2], '+25')):
+        f.path('M%g %g C%g %g %g %g %g %g' % (x1 - 30, ya, x1 + 20, ya, 270, yb, 296, yb), c, 1.2, dash='3 2')
+        f.text(286, yb - 5, t, c, 9, 'end')
+    f.text(420, 60, 'MAINTENIR ▲ M1', INK, 9, 'middle'); f.text(420, 74, 'TOURNER UN POTARD', DIM, 8, 'middle')
+    f.text(420, 150, 'UN ANNEAU', INK, 9, 'middle'); f.text(420, 164, 'PAR ROUTE', DIM, 8, 'middle')
+    f.save()
+
+
 if __name__ == '__main__':
     os.makedirs(OUT, exist_ok=True)
-    for fn in (plock, rolls, jump, poly, patterns, looper, ram, fx, path, lfo, wtf):
+    for fn in (plock, rolls, jump, poly, patterns, looper, ram, fx, path, lfo, wtf, mods):
         fn()
     print('figures:', ', '.join(sorted(os.listdir(OUT))))

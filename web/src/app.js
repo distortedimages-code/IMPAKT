@@ -5959,7 +5959,7 @@ function renderMapUI() {
 }
 function flashMap(msg) { ui.mapMsg = msg; renderMapUI(); clearTimeout(ui.mapMsgT); ui.mapMsgT = setTimeout(() => { ui.mapMsg = ''; renderMapUI(); }, 1600); }
 function buildMapKeys() {
-  for (const [id, cls] of [['mkeysT', 'tk'], ['mkeysS', 'sk']]) { const host = $(id); if (host) host.outerHTML = modKeysHtml(cls, id); }
+  for (const [id, cls] of [['mkeysT', 'tk'], ['mkeysS', 'sk'], ['mkeysB', 'tbk']]) { const host = $(id); if (host) host.outerHTML = modKeysHtml(cls, id); }
   document.addEventListener('pointerdown', e => {
     const b = e.target.closest && e.target.closest('.mkey'); if (!b) return;
     e.preventDefault(); backend.ensureAudio();
@@ -6723,7 +6723,7 @@ function drawSpec(now) {
   const pitch = w / SPEC_COLS, gap = Math.max(1, Math.round(pitch * 0.22));
   // (v88: the plugin's MOD page as tall as TONE's: its LFOs and followers drawn larger, its modules no taller than they need)
   const tall = pid === 'TVIZ' || ui.ptab === 'md';     // (v90: the four modulators' lanes, on the web too)
-  const h = tall ? (inPlugin ? 214 : w < 500 ? 160 : 180) : Math.min(Math.round(SPEC_ROWS * pitch - gap), inPlugin ? 104 : 140);
+  const h = tall ? (inPlugin ? 214 : pid === 'MODS' ? (w < 500 ? 150 : 132) : w < 500 ? 160 : 180) : Math.min(Math.round(SPEC_ROWS * pitch - gap), inPlugin ? 104 : 140);
   if (Math.abs(cv.clientHeight - h) > 0.5) cv.style.height = h + 'px';
   const dpr = DPR();
   if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }

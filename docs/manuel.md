@@ -25,7 +25,7 @@ Cinq pages, choisies par les touches de la barre, et un menu :
 | --- | --- |
 | SEQ | la machine (son écran, ses 8 potards, ses presets), les pads, les 16 pas, la rangée TRIG, LEN et SPD, le looper, la gamme |
 | TONE | le son de la piste : FILTER, TONE, AMP, BOX, et un visualiseur pour sculpter le spectre à la main |
-| MOD | deux LFO et deux suiveurs d'enveloppe par piste |
+| MOD | quatre modulateurs par piste (M1 à M4), à envoyer sur n'importe quel potard |
 | FX | les envois de la piste et les quatre retours : REVERB, DELAY, CHORUS, PHASER |
 | MASTR | la chaîne du master (EQ, COMP, DRV, GRN, OTT, GLCH), MIX et la sortie |
 | OPTION | copier, coller, déplacer ou vider une piste, les kits, Init, Demo, les mises à jour |
@@ -263,17 +263,39 @@ envois. Le master le reprend ensuite._
   coupent) et **DRONE**.
 - **BOX** : la piste passe dans l'une de 24 réponses impulsionnelles, d'un jouet à une église.
 
-**Page MOD** :
+**Page MOD** : quatre modulateurs par piste, **M1** à **M4** (▲ ■ ⬢ ●, chacun sa couleur).
 
-- **LFO 1** et **LFO 2** : vitesse (**SPD**), profondeur (**DEP**), destination (**DST**, n'importe quel réglage de la
-  piste) et forme (**WAV**). Chaque forme existe aussi en **·T**, qui repart à chaque coup.
-- **FOLLOWER 1** et **FOLLOWER 2** : un niveau qu'on écoute (**SRC** : la piste, une autre piste, l'entrée ou le
-  master), transformé en enveloppe qui pilote un réglage. Une profondeur négative fait baisser : le kick qui creuse la
-  basse, par exemple.
+- **TYPE** :
+  - **WAVE** : un LFO (vitesse en mesure ou en Hz avec **CLK**, forme, **PHAS**, **SLW** et **LEN** pour SLEW et LOOP ;
+    chaque forme existe aussi en **·T**, qui repart à chaque coup).
+  - **RAND** : une boucle de **LEN** tirages (FREE : jamais la même) que **VARI** change peu à peu, lissée par **SMTH** ;
+    **TRIG HIT** la fait repartir à chaque coup.
+  - **ENV** : une enveloppe **ATK DEC SUS REL** qu'un coup déclenche (**TRIG** : la piste ou une autre), tenue le temps
+    du **GATE**.
+  - **FLLW** : un suiveur d'enveloppe (**SRC** : la piste, une autre, l'entrée ou le master ; **TRG** déclenche une
+    enveloppe au-dessus d'un seuil).
+- **AMT** : tout ce que le modulateur envoie, d'un coup.
+- **Quatre routes par modulateur**, vers n'importe quel potard de la piste : la machine et ses pages, TONE, AMP, BOX,
+  les envois, la rangée TRIG, et même un autre modulateur. Chaque route a sa profondeur, en plus ou en moins.
+
+**Assigner** : maintenez la touche **M1** (sur l'écran de la piste ; sur SEQ, à côté de LEN et SPD, ou sur l'écran de
+la machine dans le plugin) et tournez un potard : la distance tournée devient la profondeur. Sur un téléphone ou à la
+souris, **touchez M1** : il reste allumé, un bandeau le rappelle, tournez autant de potards que vous voulez, sur
+n'importe quelle page, puis **OK**. Pendant l'assignation, toucher un potard inverse sa route ; deux touches la
+retirent. En P-LOCK, la profondeur se verrouille sur les pas levés.
+
+Le potard montre chaque route par un **anneau** de la couleur du modulateur, et un point qui suit la modulation en
+direct. L'écran de MOD montre les quatre modulateurs sur les dernières secondes ; touchez-en un pour voir ses routes à
+côté : leur profondeur se glisse du doigt, **×** en retire une.
+
+![Les modulateurs envoyés sur FREQ et DEC, et leurs anneaux](fig/mods.svg)
+
+_**M1** envoie son sinus sur **FREQ** (+40) et sur **DEC** (−22), **M3** son enveloppe sur **FREQ** aussi. Le potard
+montre un anneau par route, de la couleur de son modulateur._
 
 ![SLEW et LOOP, deux LFO aléatoires](fig/lfo.svg)
 
-_Deux formes de LFO font de l'aléatoire musical. **SLEW** tire une valeur à chaque cycle et la rejoint en marche
+_Deux formes de WAVE font de l'aléatoire musical. **SLEW** tire une valeur à chaque cycle et la rejoint en marche
 (SLW 0) ou en douceur. **LOOP** tire **LEN** valeurs puis les rejoue : de l'aléatoire qui revient._
 
 ## Effets et master

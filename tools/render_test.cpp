@@ -3901,6 +3901,17 @@ static int modstest()
                  e->setTrig (0, 0, 1); e->setTrig (0, 4, 1); e->setPlay (1); });
     float fol = 0; run (600, [&] (int) { fol = std::max (fol, e->tr[0].ef[0].val); });
     check (fol > 0.05f, "FOLLOW on M1: it follows the track (its highest)", fol);
+    // a pattern keeps a lock on a setting past 255 (the routes 2..4: P_M4A4 is 283)
+    {
+        softReset (e, 48000.f);
+        e->setLock (2, 5, P_M4A4, 0.8f); e->setLock (3, 7, P_M1D2, 0.3f); e->setLock (1, 9, P_FREQ, 0.6f);
+        e->patSave (4); e->setLock (2, 5, P_M4A4, -1.0f); e->setLock (3, 7, P_M1D2, -1.0f); e->setLock (1, 9, P_FREQ, -1.0f); e->patLoad (4);
+        const float a4 = e->tr[2].lock[5][P_M4A4], d2 = e->tr[3].lock[7][P_M1D2], lf = e->tr[1].lock[9][P_FREQ];
+        int stray = 0; for (int t = 0; t < NUM_TRACKS; ++t) for (int s = 0; s < NUM_STEPS; ++s) for (int q = 0; q < NUM_PARAMS; ++q)
+            if (e->tr[t].lock[s][q] >= 0.0f && ! ((t == 2 && s == 5 && q == P_M4A4) || (t == 3 && s == 7 && q == P_M1D2) || (t == 1 && s == 9 && q == P_FREQ))) ++stray;
+        check (std::fabs (a4 - 0.8f) < 1e-6f && std::fabs (d2 - 0.3f) < 1e-6f && std::fabs (lf - 0.6f) < 1e-6f && stray == 0,
+               "a pattern saved and loaded keeps its locks past 255 (M4's 4th depth, M1's 2nd route), none elsewhere (stray)", stray);
+    }
     delete e;
     printf ("%d failure(s)\n%s\n", fails, fails ? "MODS FAILED" : "MODS OK");
     return fails ? 1 : 0;
