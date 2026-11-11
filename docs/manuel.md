@@ -305,8 +305,23 @@ l'accord du moment.
 
 - **Rnd · Track** tire un nouveau son pour la piste affichée ; **Rnd · All** pour toutes les pistes marquées **r** ;
   le pourcentage règle jusqu'où ; **↶** annule.
-- **LIVE** donne à chaque coup un écart aléatoire, sans rien écrire : ramené à zéro, le son d'origine revient.
+- **WTF?!** (la touche rouge au bout du groupe RND, LIVE jusqu'à la v88) bouge le son des pistes marquées **r**
+  pendant qu'elles jouent, sans rien écrire : ramené au repos (double-tap), le son d'origine revient. Touchez son nom
+  pour ouvrir ses réglages à la place du looper et de la gamme ; **×** les ramène.
+  - **LIVE** : un nouvel écart à chaque coup.
+  - **LOOMND** : à gauche du centre, une boucle de tirages qui revient tous les **LEN** pas (de 1 à 64), le même hasard
+    à chaque tour ; à droite, un nouveau tirage à chaque coup ; au centre, rien. **NEW** tire une autre boucle.
+  - **LFO** : une onde promène les réglages (SIN, TRI, SAW+, SAW−, SQR, S&H, SLEW, EXP). **RATE** en mesure
+    (**SYNC**, du 1/16 à 16 mesures) ou en Hz (**FREE**, de 0,05 à 20 Hz) ; **RUN** tourne seul, **HIT** repart à
+    chaque coup, **ONE** fait un cycle par coup puis s'arrête ; **SPRD** décale les réglages entre eux, puis en
+    retourne la moitié.
 - **RPAN**, **RTUN** et **RDEC** (rangée TRIG, page MORE) tirent le pan, la hauteur et le decay de chaque coup.
+
+![WTF?! sur seize coups : LIVE, LOOMND à gauche (une boucle de 4), LOOMND à droite, LFO](fig/wtf.svg)
+
+_Seize coups d'une piste marquée **r**. **LIVE** et **LOOMND** à droite tirent un nouvel écart à chaque coup ;
+**LOOMND** à gauche rejoue la même boucle tous les **LEN** pas ; le **LFO** fait suivre aux coups une onde, ici un sinus
+d'une mesure en RUN._
 
 ## Dans le DAW
 

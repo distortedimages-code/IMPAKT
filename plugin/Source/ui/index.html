@@ -848,6 +848,40 @@ canvas { min-width: 0; min-height: 0; }
 .live.on { box-shadow: inset 0 1px 0 rgba(255,255,255,.28), inset 0 -1px 0 rgba(0,0,0,.18), 0 0 0 3px rgba(233,71,43,.28), 0 0 14px rgba(233,71,43,.45); }
 .live.on small, .live.on b { opacity: 1; }
 .live:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+/* v89 WTF?!: its name a key of its own on the red key (a tap opens its settings; open, the name inverted) */
+.live .lvl { cursor: pointer; border-radius: 5px; padding: 3px 5px; margin: -3px -5px; }
+.live.open .lvl { background: #fff; }
+.live.open .lvl small, .live.open .lvl b { color: var(--led-r); opacity: 1; }
+/* its settings, in place of the looper and the scale: one LCD, the mode, then the mode's own */
+.seqrow.wtf > .loopbar, .seqrow.wtf > .qz { display: none; }
+.wtfbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; min-width: 0; margin: 4px; padding: 7px 10px; border-radius: 4px; box-shadow: 0 0 0 4px var(--bezel); }
+.whd { width: 64px; flex: none; }
+.wname { font-family: var(--f-px); font-size: 16px; line-height: 1; color: var(--lcd-ink); white-space: nowrap; }
+.wseg { display: flex; gap: 4px; min-width: 0; }
+.wtfbar .qf { flex: 0 0 auto; height: 30px; padding: 0 7px; font-size: 11px; }
+.wtfbar .qf:focus-visible { outline: 2px solid var(--lcd-ink); outline-offset: 2px; }
+.wopt { display: flex; align-items: center; gap: 8px 10px; flex: 1 1 auto; min-width: 0; flex-wrap: wrap; margin: 0; }
+.wtxt { font-family: var(--f-px); font-size: 8px; line-height: 1.5; color: var(--lcd-dim); }
+.wl0 { font-family: var(--f-px); font-size: 8px; line-height: 1; color: var(--lcd-dim); }
+.wlens { flex-wrap: wrap; }
+.wlens .qf { min-width: 26px; padding: 0 3px; }
+.wloop { flex: 1 1 120px; min-width: 80px; height: 30px; display: block; }
+.wloop rect { fill: var(--lcd-ink); }
+.wloop line { stroke: var(--lcd-dim); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.wloop.idle rect { fill: var(--lcd-dim); }
+.wwave path { fill: none; stroke: var(--lcd-ink); stroke-width: 1.6; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.wwave path.b { stroke: var(--lcd-dim); }
+.wside { width: 28px; color: var(--lcd-ink); }
+.wwaves .qf { width: 30px; padding: 0; display: grid; place-items: center; }
+.ww svg { width: 16px; height: 16px; display: block; overflow: visible; }
+.ww path { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.wrd { display: flex; flex-direction: column; justify-content: center; gap: 4px; min-width: 58px; height: 30px; padding: 0 6px; border: 1px solid var(--lcd-dim); border-radius: 2px;
+  box-sizing: border-box; cursor: ns-resize; touch-action: none; }
+.wrd b { font-family: var(--f-px); font-weight: 400; font-size: 12px; line-height: 1; white-space: nowrap; }
+.wrd small { font-family: var(--f-px); font-size: 8px; line-height: 1; color: var(--lcd-dim); }
+.wrd:focus-visible { outline: 2px solid var(--lcd-ink); outline-offset: 2px; }
+.wclk { min-width: 46px; }
+.wclose { flex: none; margin-left: auto; }
 .grp { display: flex; align-items: center; gap: 4px; }
 .grp .gl { font-size: 12px; letter-spacing: .14em; color: var(--ink-2); margin-right: 2px; font-weight: 500; }
 .grp .gv { font-family: var(--f-data); font-size: 13px; font-weight: 600; min-width: 40px; text-align: center; font-variant-numeric: tabular-nums; }
@@ -1029,6 +1063,7 @@ canvas { min-width: 0; min-height: 0; }
   .kmod .knob { --kw: 74px; }
   .seqrow { flex-direction: row; align-items: center; gap: 22px; }
   .seqrow .loopbar { flex: 1 1 auto; }
+  .seqrow .wtfbar { flex: 1 1 auto; }
   .seqrow .qz { flex: 0 1 620px; grid-template-columns: auto minmax(0, 1fr) auto auto; grid-template-areas: "name kb fol nav"; padding: 7px 10px; gap: 14px; }
   .seqrow .qhd { width: 84px; }
   .seqrow .kb svg { height: 40px; }
@@ -1244,6 +1279,8 @@ canvas { min-width: 0; min-height: 0; }
 .plug .lockbar.ptn .prow { flex-wrap: nowrap; }
 .plug .lenbar { flex: none; width: 280px; }
 .plug .seqrow .loopbar { flex: 1 1 auto; }
+.plug .seqrow .wtfbar { flex: 1 1 auto; flex-wrap: nowrap; padding: 9px 10px; }
+.plug .wtfbar .wopt, .plug .wlens { flex-wrap: nowrap; }
 .plug .seqrow .qz { flex: 0 1 660px; grid-template-columns: auto minmax(0, 1fr) auto auto; grid-template-areas: "name kb fol nav"; padding: 6px 10px; gap: 14px; }
 .plug .seqrow .qhd { width: 84px; }
 .plug .seqrow .kb svg { height: 36px; }
@@ -1463,6 +1500,25 @@ canvas { min-width: 0; min-height: 0; }
           <div class="qfol" id="qfol" role="group" aria-label="The quantizer follows the chords of a HALO or STRUM track"></div>
           <div class="qnav"><button class="lb" id="qdn" aria-label="Transpose down">&lt;</button><button class="lb" id="qup" aria-label="Transpose up">&gt;</button><button class="lb" id="qclr" aria-label="Quantizer off">&#xD7;</button></div>
         </div>
+        <div class="wtfbar lcdw" id="wtfbar" role="group" aria-label="WTF?! settings" hidden>
+          <div class="whd"><b class="wname">WTF?!</b></div>
+          <div class="wseg" id="wmodes" role="radiogroup" aria-label="Mode"><button class="qf wm" data-m="0" role="radio" title="LIVE: a new draw on every hit">LIVE</button><button class="qf wm" data-m="1" role="radio" title="LOOMND: to the left of the knob's centre a loop of draws that comes round every LEN steps, to the right a new draw on every hit">LOOMND</button><button class="qf wm" data-m="2" role="radio" title="LFO: a wave moves the sounds, on the tempo or free">LFO</button></div>
+          <p class="wopt wtxt" id="wlive">EVERY HIT OF THE R TRACKS DRAWS ITS SOUND ANEW. DOUBLE-TAP THE KNOB: AS WRITTEN</p>
+          <div class="wopt" id="wloom" hidden>
+            <span class="wl0">LEN</span><div class="wseg wlens" id="wlens" role="radiogroup" aria-label="Loop length, steps"></div>
+            <svg class="wloop" id="wloop" aria-label="The loop's draws" role="img" preserveAspectRatio="none"></svg><span class="wl0 wside" id="wside">MID</span>
+            <button class="qf wnew" id="wnew" title="NEW: another loop">NEW</button>
+          </div>
+          <div class="wopt" id="wlfo" hidden>
+            <div class="wseg wwaves" id="wwaves" role="radiogroup" aria-label="Wave"></div>
+            <div class="wrd" id="wrate" tabindex="0" role="slider" aria-label="LFO rate" title="Rate: drag up or down, double-tap for the default"><b id="wratev">1 BAR</b><small>RATE</small></div>
+            <button class="qf wclk" id="wclk" aria-pressed="false" title="SYNC: on the tempo; FREE: in Hz">SYNC</button>
+            <div class="wseg" id="wtrig" role="radiogroup" aria-label="How the LFO runs"><button class="qf" data-i="0" role="radio" title="RUN: on its own, the same for every hit">RUN</button><button class="qf" data-i="1" role="radio" title="HIT: from the start of its cycle at every hit">HIT</button><button class="qf" data-i="2" role="radio" title="ONE: one cycle from every hit, then it holds">ONE</button></div>
+            <svg class="wloop wwave" id="wwave" aria-label="The wave: two cycles, two of the sounds it moves" role="img" preserveAspectRatio="none"></svg>
+            <div class="wrd" id="wsprd" tabindex="0" role="slider" aria-label="LFO spread" title="Spread: the sounds apart in phase, then half of them turned over. Drag up or down, double-tap for 50%"><b id="wsprdv">50%</b><small>SPRD</small></div>
+          </div>
+          <button class="lb wclose" id="wclose" aria-label="Back to the looper and the scale">&#xD7;</button>
+        </div>
       </div>
       <div class="lockbar" id="lockbar"></div>
       <div class="steps" id="steps" aria-label="Sequence: 16 steps a page"></div>
@@ -1471,7 +1527,7 @@ canvas { min-width: 0; min-height: 0; }
         <div class="pages" id="pages" role="group" aria-label="Pages"></div>
         <div class="lenbar lcdw" id="lenbar" tabindex="0" role="slider" aria-label="Track length" aria-valuemin="1" aria-valuemax="64" title="Track length: touch or drag along the cells of the page shown"><small>LEN</small><span class="cells" id="lencells"></span><b id="lenv">16</b></div>
         <div class="readout spd" id="spd" tabindex="0" role="slider" aria-label="Track speed" title="Track speed: drag up or down, double-tap for 1&#xD7;"><b id="spdv">1&#xD7;</b><small>SPD</small></div>
-        <div class="grp rnd"><span class="gl">RND</span><span class="gv rdep" id="rndd" tabindex="0" role="slider" aria-label="Random depth" title="Random depth: drag up or down">50%</span><button class="btn" id="rndt">Track</button><button class="btn" id="rnda">All</button><button class="btn sq" id="rndu" aria-label="Undo random" disabled>&#x21B6;</button><div class="live" id="rlive" tabindex="0" role="slider" aria-label="Live random" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" title="LIVE: a new random deviation on every hit of the r tracks, nothing is written. Back to 0 (double-tap) and the sounds are the original ones"><svg viewBox="4 4 56 56" aria-hidden="true"><path class="trk"/><path class="val"/><circle class="cap" cx="32" cy="32" r="16"/><line class="ind" x1="32" y1="32" x2="32" y2="20"/></svg><span class="lvl"><small>LIVE</small><b id="rlivev">0%</b></span></div></div>
+        <div class="grp rnd"><span class="gl">RND</span><span class="gv rdep" id="rndd" tabindex="0" role="slider" aria-label="Random depth" title="Random depth: drag up or down">50%</span><button class="btn" id="rndt">Track</button><button class="btn" id="rnda">All</button><button class="btn sq" id="rndu" aria-label="Undo random" disabled>&#x21B6;</button><div class="live" id="rlive" tabindex="0" role="slider" aria-label="WTF?! amount (Enter: its settings)" aria-controls="wtfbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" title="WTF?!: moves the sounds of the r tracks as they play, nothing is written. Turn it; double-tap: the sounds as written. Tap its name for its modes: LIVE (a new draw on every hit), LOOMND (left: a loop of draws, right: new draws), LFO (a wave on the sounds)"><svg viewBox="4 4 56 56" aria-hidden="true"><path class="trk"/><path class="val"/><circle class="cap" cx="32" cy="32" r="16"/><line class="ind" x1="32" y1="32" x2="32" y2="20"/></svg><span class="lvl"><small>WTF?!</small><b id="rlivev">0%</b></span></div></div>
       </div>
     </section>
   </div>
@@ -1501,7 +1557,7 @@ canvas { min-width: 0; min-height: 0; }
   </div>
 </div>
 <script>
-const IMPAKT_VERSION = "0.88.0";
+const IMPAKT_VERSION = "0.89.0";
 const MAC_CMD = "rm -rf ~/Library/Audio/Plug-Ins/VST3/IMPAKT.vst3 ~/Library/Audio/Plug-Ins/Components/IMPAKT.component; sudo sh -c 'cd /Library/Audio/Plug-Ins; for f in VST3/IMPAKT.vst3 Components/IMPAKT.component /Applications/IMPAKT.app \"/Library/Application Support/IMPAKT\"; do [ -e \"$f\" ] && xattr -cr \"$f\"; done; for f in VST3/IMPAKT.vst3 Components/IMPAKT.component /Applications/IMPAKT.app; do [ -e \"$f\" ] && codesign --force --deep --sign - \"$f\" 2>/dev/null; done; killall -9 AudioComponentRegistrar 2>/dev/null; true'; auval -v aumu Imp8 Impk > /tmp/impakt-auval.txt 2>&1 && echo \"IMPAKT est pr\u00eat.\" || echo \"L'Audio Unit ne passe pas : le d\u00e9tail est dans /tmp/impakt-auval.txt\"";
 const WASM_B64 = "";
 const WASM_SIMD_B64 = "";
@@ -3009,7 +3065,7 @@ if (typeof module !== 'undefined') module.exports = IMPAKT_LFO;
 'use strict';
 
 // ------------------------------------------------------------------ model constants (mirror core/sk_engine.h)
-const NT = 8, NS = 16, NSTEP = 64, NPAT = 128, NP = 242, NG = 182, NM = 47, MS = 64, MS32 = 32, NIR = 24, NORG = 36, RAT_MAX = 16;
+const NT = 8, NS = 16, NSTEP = 64, NPAT = 128, NP = 242, NG = 190, NM = 47, MS = 64, MS32 = 32, NIR = 24, NORG = 36, RAT_MAX = 16;
 // LFO destinations (core LFO_DEST): 24 until v4, then the retrig rate / count / velocity curve, then (v8) PRISM's,
 // then (v10) HP, LP and the mid frequency of TONE. The envelope followers use the same list
 const NDEST = 38, NDEST_V4 = 24, NDEST_V7 = 27, NDEST_V9 = 35;
@@ -3103,7 +3159,9 @@ const G = { BPM:0, SWING:1, DTIM:2, DFB:3, DTON:4, DPNG:5, RSIZ:6, RDMP:7, MDRV:
   // VCO (depth, rate, shape, envelope), HOLD
   CHMD:158, CHIN:159, CHLV:160, CHON:161,
   PRT1:162, PSH1:163, PRT2:164, PSH2:165, PDPA:166, PFBA:167, PDPB:168, PFBB:169, PBSW:170, PSYN:171, PRTE:172, PLVL:173, PHON:174,
-  DMDL:175, DBW:176, DVDP:177, DVRT:178, DVSH:179, DVEN:180, DHLD:181 };
+  DMDL:175, DBW:176, DVDP:177, DVRT:178, DVSH:179, DVEN:180, DHLD:181,
+  // v89: WTF?! (LIVE's key): its mode, LOOMND's loop (length, seed), the LFO (wave, rate, SYNC / FREE, RUN / HIT / ONE, spread)
+  WTFM:182, WTFL:183, WTFS:184, WTFW:185, WTFR:186, WTFY:187, WTFT:188, WTFP:189 };
 
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 const idx = (v, n) => Math.min(n - 1, Math.max(0, Math.floor(v * n)));
@@ -3936,6 +3994,15 @@ const BIPOLAR = new Set([P.FENV, P.PAN, P.LDEP, P.L2DP, P.NOTE, P.MICR, P.RVEL, 
   P.LOW, P.MID, P.HIGH, P.E1DP, P.E2DP]);
 // v68: the sends' levels (80 % gives back what goes in), the PHASER's generators (0.1 .. 18 Hz) and shapes, its routes,
 // the DELAY's models
+// v89: WTF?! (core/sk_engine.h WTF_*): its modes, LOOMND's loop lengths, the LFO's waves, its lengths on the tempo (16ths
+// a cycle), its free rates (0.05 .. 20 Hz), how it runs
+const WTF_MODES = ['LIVE', 'LOOMND', 'LFO'];
+const WTF_LEN = [1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 24, 32, 64];
+const WTF_WAVES = ['SIN', 'TRI', 'SAW+', 'SAW-', 'SQR', 'S&H', 'SLEW', 'EXP'];
+const WTF_SYNC = [1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 128, 256];
+const WTF_SYNC_L = ['1/16', '1/8', '3/16', '1/4', '3/8', '1/2', '3/4', '1 BAR', '1.5 BAR', '2 BAR', '3 BAR', '4 BAR', '8 BAR', '16 BAR'];
+const WTF_TRIGS = ['RUN', 'HIT', 'ONE'];
+const wtfHz = v => 0.05 * Math.pow(400, v);
 const fLvl = v => v < 0.002 ? 'OFF' : (v >= 0.79 && v <= 0.81 ? '0dB' : fDbS(20 * Math.log10(v * 1.25)));
 const fPhRate = v => fHzLow(0.1 * Math.pow(180, v));
 const fShape = v => v < 0.02 ? 'SINE' : v > 0.98 ? 'SQR' : 'SQ ' + Math.round(v * 100);
@@ -3971,7 +4038,7 @@ const GP = {
   [G.EQON]: k('EQ', fOnOff, 2), [G.COON]: k('COMP', fOnOff, 2), [G.DRON]: k('DRV', fOnOff, 2), [G.OON]: k('OTT', fOnOff, 2),
   [G.OTIM]: k('TIME', fPct), [G.OUP]: k('UPWD', fPct), [G.ODN]: k('DNWD', fPct),
   [G.OLO]: k('LOW', fDb(12)), [G.OMD]: k('MID', fDb(12)), [G.OHI]: k('HIGH', fDb(12)), [G.OOUT]: k('OUT', fDb(12)), [G.OMIX]: k('MIX', fPct),
-  [G.XON]: k('GLITCH', fOnOff, 2), [G.XRND]: k('LIVE', fPct), [G.XTIM]: k('TIME', fL(GL_TIMES), 7), [G.XRPT]: k('RPT', fPct), [G.XBND]: k('BEND', fPct),
+  [G.XON]: k('GLITCH', fOnOff, 2), [G.XRND]: k('WTF?!', fPct), [G.XTIM]: k('TIME', fL(GL_TIMES), 7), [G.XRPT]: k('RPT', fPct), [G.XBND]: k('BEND', fPct),
   [G.XBRK]: k('BRK', fPct), [G.XCRP]: k('CRPT', fPct), [G.XLOS]: k('LOSS', fPct), [G.XMIX]: k('MIX', fPct),
   [G.XCMD]: k('CMOD', fL(GL_CMODES), 3), [G.XLMD]: k('LMOD', fL(GL_LMODES), 5), [G.XSPD]: k('SPD', v => { const a = state && state.g[G.XANA] > 0.5;
     return v < 0.02 ? (a ? 'WOW' : 'SMEAR') : v > 0.98 ? (a ? 'FLUT' : 'CHOP') : fPct(v); }),
@@ -3987,6 +4054,11 @@ const GP = {
   [G.DVDP]: k('VCO', fOff(v => '\u00B1' + Math.round(1200 * v * v) + 'ct')), [G.DVRT]: k('RATE', v => fHzLow(0.05 * Math.pow(400, v))),
   [G.DVSH]: k('SHAP', fShape), [G.DVEN]: k('ENV', v => { const e = (v - 0.5) * 2; return Math.abs(e) < 0.02 ? 'OFF' : (e > 0 ? '+' : '\u2212') + Math.round(Math.abs(e) * 100); }),
   [G.DHLD]: k('HOLD', fOnOff, 2),
+  // v89: WTF?!
+  [G.WTFM]: k('MODE', fL(WTF_MODES), 3), [G.WTFL]: k('LEN', v => WTF_LEN[idx(v, WTF_LEN.length)] + ' st', WTF_LEN.length),
+  [G.WTFS]: k('SEED', v => String(Math.round(v * 999))), [G.WTFW]: k('WAVE', fL(WTF_WAVES), WTF_WAVES.length),
+  [G.WTFR]: k('RATE', v => state && state.g[G.WTFY] > 0.5 ? fHzLow(wtfHz(v)) : WTF_SYNC_L[idx(v, WTF_SYNC.length)]),
+  [G.WTFY]: k('CLK', fL(['SYNC', 'FREE']), 2), [G.WTFT]: k('TRIG', fL(WTF_TRIGS), 3), [G.WTFP]: k('SPRD', fPct),
 };
 // GRAIN readouts, following the module's laws (core/mi/beads)
 const grainMedia = () => idx(state.g[G.GMED], 4);
@@ -4887,7 +4959,11 @@ const V591_DEFAULT = [0];
 // A and B 70 % deep with 30 % of feedback, B on generator 1 against A, in stereo, at 80 %, on; the DELAY on STD, x1,
 // its VCO still (0.55 Hz, a sine, no envelope), HOLD off
 const V68_DEFAULT = [mid(1, 4), 0.75, 0.8, 1, 0.35, 0, 0.45, 0, 0.7, 0.3, 0.7, 0.3, 0.25, 0.75, mid(0, 3), 0.8, 1, 0.25, 0.25, 0, 0.4, 0, 0.5, 0];
+// v89 (core/sk_engine.cpp init): WTF?! in LIVE, LOOMND's loop 16 steps (seed 0), the LFO a sine of a bar on the tempo,
+// running, its settings half apart
+const V88_DEFAULT = [mid(0, 3), mid(9, 13), 0, mid(0, 8), mid(7, 14), 0.25, mid(0, 3), 0.5];
 function gDefault(g) {
+  if (g >= G.WTFM) return V88_DEFAULT[g - G.WTFM];
   if (g >= G.CHMD) return V68_DEFAULT[g - G.CHMD];
   if (g >= G.QSRC) return V591_DEFAULT[g - G.QSRC];
   if (g >= G.XRES) return V12_DEFAULT[g - G.XRES];
@@ -4925,7 +5001,7 @@ function demoState() {
   const s = { v: SV, scale: scaleMask(SCALES[1][1], 0), qroot: 0,
               g: [124, 0.12, mid(7, 11), 0.42, 0.38, 0.7, 0.5, 0.45, 0.12, 0.8,
                   0.6, 0.3, 0.5, 0.2, 0.55, 0, 0, 0.6, ...MASTER_DEMO,
-                  mid(5, NREV), 0.32, 0.18, 0.22, 0.4, 0.62, mid(1, 5), 0.45, ...MIX_DEFAULT, ...LOOP_DEFAULT, ...DICE_DEFAULT, ...V6_DEFAULT, ...V7_DEFAULT, ...V11_DEFAULT, ...V12_DEFAULT, ...V591_DEFAULT, ...V68_DEFAULT], tracks: kit.map(newTrack) };
+                  mid(5, NREV), 0.32, 0.18, 0.22, 0.4, 0.62, mid(1, 5), 0.45, ...MIX_DEFAULT, ...LOOP_DEFAULT, ...DICE_DEFAULT, ...V6_DEFAULT, ...V7_DEFAULT, ...V11_DEFAULT, ...V12_DEFAULT, ...V591_DEFAULT, ...V68_DEFAULT, ...V88_DEFAULT], tracks: kit.map(newTrack) };
   const on = (t, list, locks) => list.forEach(i => { s.tracks[t].steps[i].on = 1; if (locks && locks[i]) s.tracks[t].steps[i].l = locks[i]; });
   const rat = (t, list) => list.forEach(([i, n]) => { s.tracks[t].steps[i].r = n; });
   const set = (t, vals) => Object.assign(s.tracks[t].p, vals);
@@ -4985,7 +5061,7 @@ function initState() {
               g: [124, 0, mid(7, 11), 0.42, 0.38, 0.7, 0.5, 0.45, 0, 0.8,
                   0.6, 0.3, 0.5, 0.2, 0.55, 0, 0, 0.6, ...MASTER_NEUTRAL,
                   mid(4, NREV), 0.45, 0, 0.5, 0.5, 0.6, mid(0, 5), 0.35,
-                  0, 0.5, 0, 0.5, 0.5, 0.5, 0.6, mid(0, 2), ...LOOP_DEFAULT, ...DICE_DEFAULT, ...V6_DEFAULT, ...V7_DEFAULT, ...V11_DEFAULT, ...V12_DEFAULT, ...V591_DEFAULT, ...V68_DEFAULT],
+                  0, 0.5, 0, 0.5, 0.5, 0.5, 0.6, mid(0, 2), ...LOOP_DEFAULT, ...DICE_DEFAULT, ...V6_DEFAULT, ...V7_DEFAULT, ...V11_DEFAULT, ...V12_DEFAULT, ...V591_DEFAULT, ...V68_DEFAULT, ...V88_DEFAULT],
               tracks: kit.map(m => {
                 const t = newTrack(m), st = startSound(m);
                 Object.assign(t.p, st.vals);
@@ -10032,24 +10108,48 @@ function renderFooter() {
   $('rndd').textContent = Math.round(tr.p[P.SPC] * 100) + '%';
   renderLive();
 }
-// LIVE (the temporary random): its arc, its value
+// WTF?! (v89; LIVE before it): the red key at the end of the random tools. Its knob is how much (LOOMND: to the left of
+// its centre the loop, to the right the draws, nothing at its centre); a tap on its name opens its settings in place of
+// the looper and the scale
+const wtfMode = () => idx(state.g[G.WTFM], 3);
+const wtfAmt = (m, v) => (m === 1 ? Math.abs(v - 0.5) * 2 : v);
+const wtfRest = m => (m === 1 ? 0.5 : 0);
 function renderLive() {
   const el = $('rlive'); if (!el) return;
-  const v = clamp(state.g[G.XRND], 0, 1), a = A0 + SWEEP * v;
-  el.classList.toggle('on', v > 0.004);
+  const m = wtfMode(), v = clamp(state.g[G.XRND], 0, 1), amt = wtfAmt(m, v), a = A0 + SWEEP * v, on = amt > 0.004;
+  el.classList.toggle('on', on);
+  el.classList.toggle('open', !!ui.wtf);
   el.querySelector('.trk').setAttribute('d', arcPath(25, A0, A0 + SWEEP));
-  el.querySelector('.val').setAttribute('d', v > 0.004 ? arcPath(25, A0, a) : '');
+  // (LOOMND: the arc from the top, either way)
+  const from = m === 1 ? A0 + SWEEP / 2 : A0;
+  el.querySelector('.val').setAttribute('d', on ? arcPath(25, Math.min(from, a), Math.max(from, a)) : '');
   const [x2, y2] = polar(11, a);
   const ind = el.querySelector('.ind'); ind.setAttribute('x2', x2.toFixed(2)); ind.setAttribute('y2', y2.toFixed(2));
   ind.setAttribute('x1', polar(3, a)[0].toFixed(2)); ind.setAttribute('y1', polar(3, a)[1].toFixed(2));
-  $('rlivev').textContent = Math.round(v * 100) + '%';
+  const pc = Math.round(amt * 100);
+  $('rlivev').textContent = m === 1 ? (on ? (v < 0.5 ? 'LOOP ' : 'RND ') + pc : 'MID') : m === 2 ? 'LFO ' + pc : pc + '%';
   el.setAttribute('aria-valuenow', String(Math.round(v * 100)));
+  el.setAttribute('aria-valuetext', WTF_MODES[m] + ' ' + $('rlivev').textContent);
+  el.setAttribute('aria-expanded', String(!!ui.wtf));
+  renderWtf();
+}
+function setWtfOpen(open) { ui.wtf = !!open; renderLive(); }
+// a new mode keeps how much (LOOMND takes it to the right: the draws, as LIVE has them)
+function setWtfMode(m) {
+  const pm = wtfMode(); if (m === pm) return;
+  const amt = wtfAmt(pm, state.g[G.XRND]);
+  setGlobal(G.WTFM, mid(m, 3));
+  setGlobal(G.XRND, m === 1 ? 0.5 + amt / 2 : amt);
+  renderLive();
 }
 function buildLive() {
   const el = $('rlive');
-  const set = v => { setGlobal(G.XRND, clamp(v, 0, 1)); renderLive(); };
+  const set = v => { const m = wtfMode(); v = clamp(v, 0, 1); if (m === 1 && Math.abs(v - 0.5) < 0.008) v = 0.5; setGlobal(G.XRND, v); renderLive(); };
   let d = null, lastUp = 0;
-  el.addEventListener('pointerdown', e => { e.preventDefault(); backend.ensureAudio(); try { el.setPointerCapture(e.pointerId); } catch (err) {} d = { y: e.clientY, x: e.clientX, base: state.g[G.XRND], moved: false }; });
+  el.addEventListener('pointerdown', e => {
+    e.preventDefault(); backend.ensureAudio(); try { el.setPointerCapture(e.pointerId); } catch (err) {}
+    d = { y: e.clientY, x: e.clientX, base: state.g[G.XRND], moved: false, name: !!e.target.closest('.lvl') };
+  });
   el.addEventListener('pointermove', e => {
     if (!d) return;
     const dy = d.y - e.clientY + (e.clientX - d.x) * 0.25;
@@ -10058,17 +10158,121 @@ function buildLive() {
   });
   const up = () => {
     if (!d) return;
-    const moved = d.moved; d = null;
+    const { moved, name } = d; d = null;
     if (moved) return;
+    if (name) { setWtfOpen(!ui.wtf); lastUp = 0; return; }        // a tap on its name: its settings
     const now = performance.now();
-    if (now - lastUp < 320) { set(0); lastUp = 0; } else lastUp = now;     // a double tap: back to the original sounds
+    if (now - lastUp < 320) { set(wtfRest(wtfMode())); lastUp = 0; } else lastUp = now;     // a double tap: back to the sounds as written
   };
   el.addEventListener('pointerup', up); el.addEventListener('pointercancel', () => { d = null; });
   el.addEventListener('keydown', e => {
     const k = e.key, s = k === 'ArrowUp' || k === 'ArrowRight' ? 0.01 : k === 'ArrowDown' || k === 'ArrowLeft' ? -0.01 : k === 'PageUp' ? 0.1 : k === 'PageDown' ? -0.1 : 0;
-    if (k === 'Home' || k === 'Delete' || k === 'Backspace') { e.preventDefault(); set(0); return; }
+    if (k === 'Enter' || k === ' ') { e.preventDefault(); setWtfOpen(!ui.wtf); return; }
+    if (k === 'Home' || k === 'Delete' || k === 'Backspace') { e.preventDefault(); set(wtfRest(wtfMode())); return; }
     if (s) { e.preventDefault(); set(state.g[G.XRND] + s); }
   });
+  buildWtf();
+}
+// the settings row: the mode; LOOMND's loop (its length, a new one, the draws it holds); the LFO's wave, rate, clock, how
+// it runs, its spread
+const WTF_WAVE_D = [
+  'M1 7 C3 0 5 0 7 7 S11 14 13 7', 'M1 7 L4 1 L10 13 L13 7', 'M1 13 L13 1 L13 13', 'M1 1 L13 13 L13 1',
+  'M1 13 L1 1 L7 1 L7 13 L13 13 L13 1', 'M1 9 L4 9 L4 3 L7 3 L7 11 L10 11 L10 5 L13 5', 'M1 10 C3 10 3 3 6 3 C9 3 9 11 13 11', 'M1 13 L1 1 C3 9 7 12 13 13'];
+function buildWtf() {
+  const bar = $('wtfbar'); if (!bar) return;
+  $('wclose').addEventListener('click', () => setWtfOpen(false));
+  $('wmodes').addEventListener('click', e => { const b = e.target.closest('[data-m]'); if (b) setWtfMode(+b.dataset.m); });
+  // LOOMND: its lengths, NEW
+  const lens = $('wlens');
+  WTF_LEN.forEach((n, i) => {
+    const b = document.createElement('button'); b.className = 'qf wl'; b.textContent = n; b.dataset.i = i;
+    b.setAttribute('role', 'radio'); b.setAttribute('aria-label', n + (n === 1 ? ' step' : ' steps')); lens.appendChild(b);
+  });
+  lens.addEventListener('click', e => { const b = e.target.closest('[data-i]'); if (b) { setGlobal(G.WTFL, mid(+b.dataset.i, WTF_LEN.length)); renderWtf(); } });
+  $('wnew').addEventListener('click', () => { setGlobal(G.WTFS, newSeed()); renderWtf(); });
+  // LFO: its waves, RATE, SYNC / FREE, RUN / HIT / ONE, SPRD
+  const waves = $('wwaves');
+  WTF_WAVES.forEach((n, i) => {
+    const b = document.createElement('button'); b.className = 'qf ww'; b.dataset.i = i; b.title = n;
+    b.setAttribute('role', 'radio'); b.setAttribute('aria-label', n);
+    b.innerHTML = `<svg viewBox="0 0 14 14" aria-hidden="true"><path d="${WTF_WAVE_D[i]}"/></svg>`; waves.appendChild(b);
+  });
+  waves.addEventListener('click', e => { const b = e.target.closest('[data-i]'); if (b) { setGlobal(G.WTFW, mid(+b.dataset.i, WTF_WAVES.length)); renderWtf(); } });
+  const rd = (el, g, per, def) => {
+    dragReadout(el, () => state.g[g], v => { setGlobal(g, clamp(v, 0, 1)); renderWtf(); }, per);
+    el.addEventListener('dblclick', () => { setGlobal(g, def()); renderWtf(); });
+  };
+  rd($('wrate'), G.WTFR, 1 / 260, () => state.g[G.WTFY] > 0.5 ? 0.5 : mid(7, WTF_SYNC.length));
+  rd($('wsprd'), G.WTFP, 1 / 200, () => 0.5);
+  $('wclk').addEventListener('click', () => {
+    // (FREE from SYNC: the rate of that length at this tempo, near enough; back, the nearest length)
+    const free = state.g[G.WTFY] > 0.5, bpm = ui.pos.host && ui.pos.bpm ? ui.pos.bpm : state.g[G.BPM];
+    if (!free) { const hz = bpm / 15 / WTF_SYNC[idx(state.g[G.WTFR], WTF_SYNC.length)]; setGlobal(G.WTFR, clamp(Math.log(hz / 0.05) / Math.log(400), 0, 1)); }
+    else { const n = bpm / 15 / wtfHz(state.g[G.WTFR]); let bi = 0; WTF_SYNC.forEach((x, i) => { if (Math.abs(Math.log(x / n)) < Math.abs(Math.log(WTF_SYNC[bi] / n))) bi = i; }); setGlobal(G.WTFR, mid(bi, WTF_SYNC.length)); }
+    setGlobal(G.WTFY, free ? 0.25 : 0.75); renderWtf();
+  });
+  $('wtrig').addEventListener('click', e => { const b = e.target.closest('[data-i]'); if (b) { setGlobal(G.WTFT, mid(+b.dataset.i, 3)); renderWtf(); } });
+}
+let wtfKey = '';
+function renderWtf() {
+  const bar = $('wtfbar'); if (!bar) return;
+  const g = state.g, m = wtfMode(), open = !!ui.wtf;
+  bar.hidden = !open;
+  bar.closest('.seqrow').classList.toggle('wtf', open);
+  if (!open) return;
+  const li = idx(g[G.WTFL], WTF_LEN.length), wi = idx(g[G.WTFW], WTF_WAVES.length), ti = idx(g[G.WTFT], 3), free = g[G.WTFY] > 0.5;
+  const v = g[G.XRND], key = [m, li, g[G.WTFS], wi, g[G.WTFR], free, ti, g[G.WTFP], m === 1 ? Math.sign(Math.round((v - 0.5) * 200)) : 0].join('|');
+  if (key === wtfKey) return; wtfKey = key;
+  [...$('wmodes').children].forEach((b, i) => { b.classList.toggle('on', i === m); b.setAttribute('aria-checked', String(i === m)); });
+  $('wlive').hidden = m !== 0; $('wloom').hidden = m !== 1; $('wlfo').hidden = m !== 2;
+  if (m === 1) {
+    [...$('wlens').children].forEach((b, i) => { b.classList.toggle('on', i === li); b.setAttribute('aria-checked', String(i === li)); });
+    // the loop's draws (DEC's, as the engine draws them: one a step), and which side of the knob plays
+    const n = WTF_LEN[li], W = 192, H = 30, bw = W / n, side = v < 0.495 ? 'loop' : v > 0.505 ? 'rnd' : '';
+    const ds = [];
+    for (let i = 0; i < n; i++) ds.push(loopDraw(g[G.WTFS], 16, i * 64));
+    const top = Math.max(1e-3, ...ds.map(Math.abs));
+    let bars = '';
+    for (let i = 0; i < n; i++) {
+      const r = ds[i] / top, h = Math.max(1, Math.abs(r) * (H / 2 - 1));
+      bars += `<rect x="${(i * bw + (bw > 3 ? 0.5 : 0)).toFixed(2)}" y="${(r > 0 ? H / 2 - h : H / 2).toFixed(2)}" width="${Math.max(0.6, bw - (bw > 3 ? 1 : 0.2)).toFixed(2)}" height="${h.toFixed(2)}"/>`;
+    }
+    const svg = $('wloop');
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    svg.innerHTML = `<line x1="0" y1="${H / 2}" x2="${W}" y2="${H / 2}"/>${bars}`;
+    svg.classList.toggle('idle', side !== 'loop');
+    $('wside').textContent = side === 'loop' ? 'LOOP' : side === 'rnd' ? 'RND' : 'MID';
+  }
+  if (m === 2) {
+    [...$('wwaves').children].forEach((b, i) => { b.classList.toggle('on', i === wi); b.setAttribute('aria-checked', String(i === wi)); });
+    $('wratev').textContent = gMeta(G.WTFR).f(g[G.WTFR]);
+    $('wclk').textContent = free ? 'FREE' : 'SYNC'; $('wclk').setAttribute('aria-pressed', String(free));
+    [...$('wtrig').children].forEach((b, i) => { b.classList.toggle('on', i === ti); b.setAttribute('aria-checked', String(i === ti)); });
+    $('wsprdv').textContent = fPct(g[G.WTFP]);
+    // the wave over two cycles: DEC's (bright) and A's (dim): how far apart SPRD sets them, and A turned over past 50 %
+    const W = 192, H = 30, path = k => { let d = ''; for (let i = 0; i <= 96; i++) { const y = H / 2 - wtfAt(i / 48, k, wi, g[G.WTFP], g[G.WTFS]) * (H / 2 - 2); d += (i ? 'L' : 'M') + (i * 2).toFixed(1) + ' ' + y.toFixed(2); } return d; };
+    const svg = $('wwave');
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    svg.innerHTML = `<line x1="0" y1="${H / 2}" x2="${W}" y2="${H / 2}"/><path class="b" d="${path(1)}"/><path d="${path(0)}"/>`;
+  }
+}
+// the LFO's value for setting k at phase ph (cycles): core/sk_engine.cpp Engine::wtfAt
+function wtfAt(ph, k, wave, sp, seed) {
+  const PH = [0, 0.5, 0.25, 0.75, 0.125, 0.625, 0.375, 0.875, 0.0625, 0.5625, 0.3125, 0.8125];
+  const x = ph + Math.min(sp * 2, 1) * PH[k], c = Math.floor(x), f = x - c, ci = ((c % 65536) + 65536) % 65536;
+  let w;
+  switch (wave) {
+    case 1: w = f < 0.25 ? 4 * f : f < 0.75 ? 2 - 4 * f : 4 * f - 4; break;
+    case 2: w = 2 * f - 1; break;
+    case 3: w = 1 - 2 * f; break;
+    case 4: w = f < 0.5 ? 1 : -1; break;
+    case 5: w = loopDraw(seed, 40 + k, ci); break;
+    case 6: { const a = loopDraw(seed, 40 + k, ci), b = loopDraw(seed, 40 + k, (ci + 1) & 65535), s = f * f * (3 - 2 * f); w = a + (b - a) * s; break; }
+    case 7: w = 2 * Math.exp(-4 * f) - 1; break;
+    default: w = Math.sin(2 * Math.PI * f);
+  }
+  const flip = clamp((sp - 0.5) * 2, 0, 1);
+  return k & 1 ? w * (1 - 2 * flip) : w;
 }
 function renderTransport() {
   $('play').classList.toggle('on', ui.playing || !!ui.pos.host);

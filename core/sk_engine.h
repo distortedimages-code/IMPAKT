@@ -296,8 +296,18 @@ enum Global {
     G_CHMD, G_CHIN, G_CHLV, G_CHON,
     G_PRT1, G_PSH1, G_PRT2, G_PSH2, G_PDPA, G_PFBA, G_PDPB, G_PFBB, G_PBSW, G_PSYN, G_PRTE, G_PLVL, G_PHON,
     G_DMDL, G_DBW, G_DVDP, G_DVRT, G_DVSH, G_DVEN, G_DHLD,
+    // v89: WTF?! (LIVE's key, renamed): its mode (LIVE: a draw at each hit, as it was; LOOMND: to the left of its centre
+    // a loop of draws, to the right a draw at each hit; LFO: an LFO on the synthesis settings), LOOMND's loop (its length
+    // in steps, its seed), the LFO's wave, rate (a length on the tempo, or Hz), SYNC / FREE, how it runs (RUN: on the
+    // tempo; HIT: from each hit; ONE: one cycle from each hit, then it rests) and its spread (the settings apart in
+    // phase, then half of them upside down). It moves the tracks marked r, as LIVE did (G_XMSK), by the knob G_XRND
+    G_WTFM, G_WTFL, G_WTFS, G_WTFW, G_WTFR, G_WTFY, G_WTFT, G_WTFP,
     NUM_GLOBALS
 };
+enum { WTF_LIVE = 0, WTF_LOOMND = 1, WTF_LFO = 2, WTF_MODES = 3, WTF_LENS = 13, WTF_WAVES = 8, WTF_SYNCS = 14, WTF_TRIGS = 3 };
+// LOOMND's loop lengths (steps), the LFO's lengths on the tempo (16ths a cycle)
+static const int WTF_LEN[WTF_LENS] = { 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 24, 32, 64 };
+static const int WTF_SYNC[WTF_SYNCS] = { 1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 128, 256 };
 
 enum { FT_LP = 0, FT_BP, FT_HP, FT_COMB, NUM_FTYPES };
 enum { DICE_OUTS = 7, NUM_DICE_DEST = 44 };     // (DICE's routes and destinations, until v66: the projects' migrations read them)
@@ -457,6 +467,7 @@ struct Voice
     float rnd[12]; int rndOn;   // RAND: this hit's offsets (-1..1) of the synthesis settings (Engine::RND_PS)
     float rdec;                 // RDEC: this hit's offset of DEC (0: none)
     float rtun;                 // RTUN (v88): this hit's offset of TUNE (0: none)
+    double wtfPh;               // WTF?! (v89): the LFO's phase from this hit (cycles; HIT, ONE)
     float mWet;             // the machine's own drive / fold / grit stage in the last chunk (it fades, never switches)
     float smFn, smRs, smDrv, smAmp, smD1, smA1, smF1, smR1;   // *1: after their per-sample (filter: per 4) smoothing
     // HOLD (DEC at its top): the voice holds (hold), held by a pad or a key until it is let go (padHeld), the decay once
@@ -690,6 +701,12 @@ struct Engine
     Glitch glitch;                                     // GLITCH, last of the chain (sk_glitch)
     Rng    xrng;                                       // RAND's draws (apart: the machines' noise stays the same)
     float  xrndS;                                      // RAND, glided (and 0 when GLITCH is off)
+    // v89: WTF?!'s LFO: its phase on the tempo or free (cycles), its rate this chunk (cycles a sample), each setting's
+    // value this chunk (RUN), and the mode, wave, spread and trigger read once a chunk
+    double wtfPh; double wtfRate; float wtfVal[12]; int wtfMode, wtfWave, wtfTrig; float wtfSpr;
+    void   wtfTick (int n);
+    float  wtfAt (double ph, int k) const;
+    void   wtfApply (Voice& v, float* P, int n);
     double glPos0, glNow0, glInc, glFree; int glRun;   // the song position at the block start, for the grid
     double glfoPh; float glfoVal;                      // GRAIN's LFO
     int    postWas;                                    // GRAIN / OTT were in the chain last chunk

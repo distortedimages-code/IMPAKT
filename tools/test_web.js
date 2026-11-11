@@ -477,6 +477,41 @@ function testWav(bpm, bars, variant) {
         ok('LIVE: drag up plays the temporary random, the tracks unchanged, double tap back to 0', lv.g > 0.15 && lv.txt === Math.round(lv.g * 100) + '%' && lv.on && lv.arc.length > 10
           && lv.p === JSON.stringify(p3) && lv0.g === 0 && lv0.txt === '0%' && !lv0.on, JSON.stringify({ g: lv.g, txt: lv.txt, on: lv.on, lv0 }));
       }
+      // v89: WTF?! (LIVE's key): a tap on its name opens its settings in place of the looper and the scale; a new mode keeps
+      // how much (LOOMND takes it to the right); LOOMND's length, NEW, its loop drawn; the LFO's wave, rate, clock, how it
+      // runs, its spread, its wave drawn; all of it sent; × brings the looper and the scale back
+      {
+        const lb = await page.locator('#rlive .lvl').boundingBox();
+        await page.mouse.click(lb.x + lb.width / 2, lb.y + lb.height / 2);
+        const vis = () => page.evaluate(() => ({ open: !document.getElementById('wtfbar').hidden, loop: getComputedStyle(document.getElementById('loopbar')).display, qz: getComputedStyle(document.getElementById('qz')).display,
+          exp: document.getElementById('rlive').getAttribute('aria-expanded'), lab: document.querySelector('#rlive .lvl small').textContent }));
+        const w0 = await vis();
+        await page.evaluate(() => { window.__ops = []; const I = window.__impakt; I.setGlobal(I.G.XRND, 0.4); I.renderAll(); });
+        await page.locator('#wmodes [data-m="1"]').click();
+        const w1 = await page.evaluate(() => { const I = window.__impakt, g = I.state.g, G = I.G; return { m: Math.floor(g[G.WTFM] * 3), x: g[G.XRND], txt: document.getElementById('rlivev').textContent,
+          loom: !document.getElementById('wloom').hidden, bars: document.querySelectorAll('#wloop rect').length }; });
+        await page.locator('#wlens [data-i="3"]').click();
+        const seed0 = await page.evaluate(() => window.__impakt.state.g[window.__impakt.G.WTFS]);
+        await page.locator('#wnew').click();
+        const w2 = await page.evaluate(() => { const I = window.__impakt, g = I.state.g, G = I.G; return { len: Math.floor(g[G.WTFL] * 13), seed: g[G.WTFS], bars: document.querySelectorAll('#wloop rect').length }; });
+        await page.locator('#wmodes [data-m="2"]').click();
+        await page.locator('#wwaves [data-i="1"]').click();
+        await page.locator('#wclk').click();
+        await page.locator('#wtrig [data-i="1"]').click();
+        const w3 = await page.evaluate(() => { const I = window.__impakt, g = I.state.g, G = I.G; return { m: Math.floor(g[G.WTFM] * 3), x: Math.round(g[G.XRND] * 100), txt: document.getElementById('rlivev').textContent,
+          wave: Math.floor(g[G.WTFW] * 8), free: g[G.WTFY] > 0.5, rate: document.getElementById('wratev').textContent, trig: Math.floor(g[G.WTFT] * 3), paths: document.querySelectorAll('#wwave path').length,
+          sent: true }; });
+        await page.locator('#wmodes [data-m="0"]').click();
+        await page.locator('#wclose').click();
+        const w4 = await vis();
+        await page.evaluate(() => { const I = window.__impakt; I.setGlobal(I.G.XRND, 0); I.renderAll(); });
+        ok('WTF?! (v89): its name opens its settings in place of LOOP + SCALE; LOOMND keeps the amount to the right (RND), LEN, NEW, its loop drawn; LFO: wave, FREE (Hz), HIT, its wave drawn; × back',
+          w0.open && w0.loop === 'none' && w0.qz === 'none' && w0.exp === 'true' && w0.lab === 'WTF?!'
+          && w1.m === 1 && Math.abs(w1.x - 0.7) < 1e-6 && w1.txt === 'RND 40' && w1.loom && w1.bars === 16
+          && w2.len === 3 && w2.seed !== seed0 && w2.bars === 4
+          && w3.m === 2 && w3.x === 40 && w3.txt === 'LFO 40' && w3.wave === 1 && w3.free && /Hz$/.test(w3.rate) && w3.trig === 1 && w3.paths === 2
+          && !w4.open && w4.loop !== 'none' && w4.qz !== 'none' && w4.exp === 'false', JSON.stringify({ w0, w1, w2, w3, w4 }));
+      }
       await proj('demo'); await proj('demo');
       const eng = await page.evaluate(() => window.__impakt.ui.engine);
       ok('engine is WebAssembly SIMD in Chromium', eng === 'wasm-simd', eng);
@@ -1884,7 +1919,7 @@ function testWav(bpm, bars, variant) {
       await seqPage();
       // v67: DICE gone: no module, no key; a project's DICE settings (kept in their places) play nothing
       const nd = await page.evaluate(() => ({ dice: !!document.getElementById('dicemod') || !!document.querySelector('#ptabs [data-tab="dc"]'), ng: window.__impakt.state.g.length }));
-      ok('v67: no DICE (no page, no module), the project keeps its globals (182 since v68)', !nd.dice && nd.ng === 182, JSON.stringify(nd));
+      ok('v67: no DICE (no page, no module), the project keeps its globals (190 since v89)', !nd.dice && nd.ng === 190, JSON.stringify(nd));
       await page.evaluate(() => window.__impakt.selectTrack(0));
       // logos in the picker
       const logos = await page.evaluate(() => { document.getElementById('mid').click(); return document.querySelectorAll('#mpick button svg').length; });
@@ -1907,7 +1942,7 @@ function testWav(bpm, bars, variant) {
       });
       await page.reload(); await page.waitForTimeout(300);
       const mig = await page.evaluate(() => { const s = window.__impakt.state; return { v: s.v, np: s.tracks[0].p.length, m: Math.floor(s.tracks[0].p[0] * 64), d: Math.floor(s.tracks[0].p[23] * 38), ng: s.g.length, alg: Math.floor(s.g[42] * 6) }; });
-      ok('version-1 project migrated', mig.v === 26 && mig.np === 242 && mig.m === 9 && mig.d === 3 && mig.ng === 182 && mig.alg === 1, JSON.stringify(mig));
+      ok('version-1 project migrated', mig.v === 26 && mig.np === 242 && mig.m === 9 && mig.d === 3 && mig.ng === 190 && mig.alg === 1, JSON.stringify(mig));
       await page.evaluate(() => localStorage.clear());
       // a project saved by version 2 (18 machines, µLOOP morphing 4 synth sources)
       await page.evaluate(() => {
@@ -1922,7 +1957,7 @@ function testWav(bpm, bars, variant) {
       });
       await page.reload(); await page.waitForTimeout(300);
       const mig2 = await page.evaluate(() => { const s = window.__impakt.state; return { v: s.v, m0: Math.floor(s.tracks[0].p[0] * 64), m3: Math.floor(s.tracks[3].p[0] * 64), src: Math.floor(s.tracks[3].p[3] * 40), lsrc: Math.floor(s.tracks[3].steps[15].l[3] * 40), ng: s.g.length }; });
-      ok('version-2 project migrated', mig2.v === 26 && mig2.ng === 182 && mig2.m0 === 15 && mig2.m3 === 11 && mig2.src === 2 && mig2.lsrc === 3, JSON.stringify(mig2));
+      ok('version-2 project migrated', mig2.v === 26 && mig2.ng === 190 && mig2.m0 === 15 && mig2.m3 === 11 && mig2.src === 2 && mig2.lsrc === 3, JSON.stringify(mig2));
       await page.evaluate(() => localStorage.clear());
       // a project saved by version 3 that only used the spectral send: it becomes the SPECTRAL algorithm
       await page.evaluate(() => {
@@ -1937,7 +1972,7 @@ function testWav(bpm, bars, variant) {
       await page.reload(); await page.waitForTimeout(300);
       const mig3 = await page.evaluate(() => { const s = window.__impakt.state; return { v: s.v, ng: s.g.length, alg: Math.floor(s.g[42] * 6), tim: s.g[43], mode: Math.floor(s.g[44] * 4), lvl: s.g[47],
         rev3: s.tracks[3].p[20], rnd3: s.tracks[3].p[33], lk: s.tracks[6].steps[3].l, m4: Math.floor(s.tracks[4].p[0] * 64), scale: s.scale, q: s.tracks[0].q }; });
-      ok('version-3 project migrated (spectral send -> SPECTRAL algorithm)', mig3.v === 26 && mig3.ng === 182 && mig3.alg === 3 && mig3.tim === 0.7 && mig3.mode === 1 && mig3.lvl === 0.55
+      ok('version-3 project migrated (spectral send -> SPECTRAL algorithm)', mig3.v === 26 && mig3.ng === 190 && mig3.alg === 3 && mig3.tim === 0.7 && mig3.mode === 1 && mig3.lvl === 0.55
         && mig3.rev3 === 0.4 && mig3.rnd3 === 0.5 && mig3.lk[20] === 0.8 && !(33 in mig3.lk) && mig3.m4 === 15 && mig3.scale === 0 && mig3.q === 1, JSON.stringify(mig3));
       await page.evaluate(() => localStorage.clear());
       // a project saved by version 4: 24 LFO destinations -> 27 (+ RTRG, RCNT, RVEL), no DICE yet
@@ -1951,7 +1986,7 @@ function testWav(bpm, bars, variant) {
       await page.reload(); await page.waitForTimeout(300);
       const mig4 = await page.evaluate(() => { const s = window.__impakt.state, t = s.tracks[2]; return { v: s.v, ng: s.g.length, d1: Math.floor(t.p[23] * 38), d2: Math.floor(t.p[39] * 38), lk: Math.floor(t.steps[4].l[23] * 38),
         dice: s.g[61], r0: Math.floor(s.g[78] * 9), dst: Math.floor(s.g[79] * 44), stp: s.g[72], alg: Math.floor(s.g[42] * 6), dv: s.g[67] }; });
-      ok('version-4 project migrated (LFO destinations, DICE off)', mig4.v === 26 && mig4.ng === 182 && mig4.d1 === 17 && mig4.d2 === 23 && mig4.lk === 9 && mig4.dice === 0 && mig4.r0 === 0 && mig4.dst === 0 && Math.abs(mig4.stp - 0.6) < 1e-6 && mig4.alg === 5 && mig4.dv === 0.5, JSON.stringify(mig4));
+      ok('version-4 project migrated (LFO destinations, DICE off)', mig4.v === 26 && mig4.ng === 190 && mig4.d1 === 17 && mig4.d2 === 23 && mig4.lk === 9 && mig4.dice === 0 && mig4.r0 === 0 && mig4.dst === 0 && Math.abs(mig4.stp - 0.6) < 1e-6 && mig4.alg === 5 && mig4.dv === 0.5, JSON.stringify(mig4));
       await page.evaluate(() => localStorage.clear());
       // a project saved by version 5: 6 reverb algorithms (ALGO keeps its algorithm), DEJA VU at LOCK unless a lock was on
       await page.evaluate(() => {
@@ -1962,7 +1997,7 @@ function testWav(bpm, bars, variant) {
       });
       await page.reload(); await page.waitForTimeout(300);
       const mig5 = await page.evaluate(() => { const s = window.__impakt.state; return { v: s.v, ng: s.g.length, alg: Math.floor(s.g[42] * 6), dv: s.g[67], pw: s.g[99], gtim: s.g[100] }; });
-      ok('version-5 project migrated (DICE lock)', mig5.v === 26 && mig5.ng === 182 && mig5.alg === 3 && mig5.dv === 0.5 && mig5.pw === 0.5 && mig5.gtim === 0.08, JSON.stringify(mig5));
+      ok('version-5 project migrated (DICE lock)', mig5.v === 26 && mig5.ng === 190 && mig5.alg === 3 && mig5.dv === 0.5 && mig5.pw === 0.5 && mig5.gtim === 0.08, JSON.stringify(mig5));
       await page.evaluate(() => localStorage.clear());
       // version 6: GRAIN was a 7th reverb algorithm; it moves to the master chain, the reverb goes back to HALL
       for (const [alg, want] of [[6, 'grain'], [2, 'spring']]) {
@@ -1973,7 +2008,7 @@ function testWav(bpm, bars, variant) {
         }, alg);
         await page.reload(); await page.waitForTimeout(300);
         const mig6 = await page.evaluate(() => { const s = window.__impakt.state; return { v: s.v, ng: s.g.length, alg: Math.floor(s.g[42] * 6), gon: s.g[111], gmix: s.g[112], ott: s.g[127], eq: s.g[124] }; });
-        ok(`version-6 project migrated (${want})`, mig6.v === 26 && mig6.ng === 182 && mig6.ott === 0 && mig6.eq === 1
+        ok(`version-6 project migrated (${want})`, mig6.v === 26 && mig6.ng === 190 && mig6.ott === 0 && mig6.eq === 1
           && (want === 'grain' ? mig6.alg === 4 && mig6.gon === 1 && mig6.gmix === 0.35 : mig6.alg === 2 && mig6.gon === 0), JSON.stringify(mig6));
         await page.evaluate(() => localStorage.clear());
       }
@@ -2037,7 +2072,7 @@ function testWav(bpm, bars, variant) {
       await page.reload(); await page.waitForTimeout(300);
       const mig10 = await page.evaluate(() => { const s = window.__impakt.state, G = window.__impakt.G;
         return { v: s.v, ng: s.g.length, on: s.g[G.XON], rnd: s.g[G.XRND], mix: s.g[G.XMIX], msk: Math.round(s.g[G.XMSK] * 255) }; });
-      ok('version-10 project migrated (GLITCH off, RAND on the r tracks)', mig10.v === 26 && mig10.ng === 182 && mig10.on === 0 && mig10.rnd === 0 && mig10.mix === 1
+      ok('version-10 project migrated (GLITCH off, RAND on the r tracks)', mig10.v === 26 && mig10.ng === 190 && mig10.on === 0 && mig10.rnd === 0 && mig10.mix === 1
         && mig10.msk === (255 & ~(1 << 3) & ~(1 << 6)), JSON.stringify(mig10));
       // v11 -> v12: RAND (now LIVE) only played with GLITCH on; RESO 35 %, DIG, CASS
       for (const on of [0, 1]) {
@@ -2049,7 +2084,7 @@ function testWav(bpm, bars, variant) {
         await page.reload(); await page.waitForTimeout(300);
         const m11 = await page.evaluate(() => { const s = window.__impakt.state, G = window.__impakt.G;
           return { v: s.v, ng: s.g.length, rnd: s.g[G.XRND], res: s.g[G.XRES], ana: s.g[G.XANA], amd: Math.floor(s.g[G.XAMD] * 5), live: document.getElementById('rlivev').textContent }; });
-        ok(`version-11 project migrated (GLITCH ${on ? 'on: LIVE keeps' : 'off: LIVE at 0'})`, m11.v === 26 && m11.ng === 182 && m11.rnd === (on ? 0.4 : 0) && m11.res === 0.35 && m11.ana === 0 && m11.amd === 0
+        ok(`version-11 project migrated (GLITCH ${on ? 'on: LIVE keeps' : 'off: LIVE at 0'})`, m11.v === 26 && m11.ng === 190 && m11.rnd === (on ? 0.4 : 0) && m11.res === 0.35 && m11.ana === 0 && m11.amd === 0
           && m11.live === (on ? '40%' : '0%'), JSON.stringify(m11));
       }
       await page.evaluate(() => {
@@ -2399,6 +2434,22 @@ function testWav(bpm, bars, variant) {
     ok('plugin: the machine picker holds all 47 machines on the panel, in two columns', pl.pick.n === 47 && pl.pick.out === 0 && pl.pick.reach === 47 && pl.pick.cols === 2, JSON.stringify(pl.pick));
     ok('plugin: a pad only selects while the sequence runs, auditions when stopped (and lets go when released: HOLD); track cells on the track\'s screen', pl.run.t === 2 && !pl.run.aud && pl.stop.t === 3 && pl.stop.aud && pl.stop.rel && pl.cell === 5,
       JSON.stringify({ run: pl.run, stop: pl.stop, cell: pl.cell }));
+    // v89: WTF?! in the plugin: its row on the panel, in place of LOOP + SCALE, in one line; its settings sent to the engine
+    {
+      await pg.evaluate(() => { window.__impakt.setPTab('ms'); window.__impakt.renderAll(); window.__ops.length = 0; });
+      const lb = await pg.locator('#rlive .lvl').boundingBox();
+      await pg.mouse.click(lb.x + lb.width / 2, lb.y + lb.height / 2);
+      const fit = async () => pg.evaluate(() => { const b = document.getElementById('wtfbar').getBoundingClientRect(), a = document.querySelector('.app').getBoundingClientRect(), r = document.querySelector('.seqrow').getBoundingClientRect();
+        const kids = [...document.querySelectorAll('#wtfbar *')].filter(e => e.getClientRects().length).map(e => e.getBoundingClientRect());
+        return { open: b.height > 0, h: Math.round(b.height / (a.width / 1280)), qz: 48, inPanel: b.left >= a.left && b.right <= a.right + 0.5 && b.bottom <= a.bottom + 0.5, out: kids.filter(k => k.right > b.right + 0.5 || k.left < b.left - 0.5 || k.bottom > b.bottom + 0.5).length, row: Math.round(r.height) }; });
+      const f0 = await fit();
+      await pg.locator('#wmodes [data-m="1"]').click(); const f1 = await fit();
+      await pg.locator('#wmodes [data-m="2"]').click(); const f2 = await fit();
+      await pg.locator('#wrate').dispatchEvent('dblclick');
+      const sent = await pg.evaluate(() => { const G = window.__impakt.G; return [G.WTFM, G.WTFR, G.XRND].every(gi => window.__ops.some(o => o[0] === 'g' && o[1] === gi)); });
+      await pg.locator('#wmodes [data-m="0"]').click(); await pg.locator('#wclose').click();
+      ok('v89 plugin: WTF?! opens its row on the panel in one line (LIVE, LOOMND, LFO), its settings sent', [f0, f1, f2].every(f => f.open && f.inPanel && f.out === 0 && f.h <= 50) && sent, JSON.stringify({ f0, f1, f2, sent }));
+    }
     // KEY: the trig keys as a keyboard: on T1 (on the scale, C minor) 16 notes of the scale; on T3 (off the scale) a
     // piano octave; a key plays the note; with REC while running, the note goes on the playing step (trig + NOTE p-lock)
     const keyTap = async s => { const b = pg.locator('#steps .step').nth(s); await b.dispatchEvent('pointerdown', { pointerId: 4, isPrimary: true }); await b.dispatchEvent('pointerup', { pointerId: 4, isPrimary: true }); };

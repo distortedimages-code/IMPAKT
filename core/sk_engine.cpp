@@ -122,12 +122,76 @@ static const unsigned char STEPPED_AF[NUM_MACHINES] = {
     0, 1, 0, 1, 0, 1, 7, 0, 1, 0, 31, 1, 32, 33, 0, 33, 3, 32, 35, 4, 17, 1, 0, 0, 0, 32, 1, 60, 35, 47,
     33, 35, 35, 33, 33, 51, 32, 33, 51, 33, 32, 56, 41, 39, 35, 33, 39 };  // (v78, WEFT: SRC, CARR, SIDE; v81, HOWL: CHRD, VOIC, DROP, SIDE; v83, STENCIL: SRC, ZONE, SIDE; v84, MANTRA: TCH, PAGE; v87, RADIO: RX, MODE, LEN, SIDE)
 // RAND on a voice's settings: its offsets, scaled by the knob (a curve: gentle at first, wild at the top)
-static inline void applyRnd (const Voice& v, float amt, float* P)
+// WTF?! (v89; LIVE before it): the hit's draws (LIVE, LOOMND) or the LFO (LFO) on the synthesis settings, by the
+// knob (its curve, the square root of its cube: gentle at first); n: the samples this chunk (0: the hit itself)
+void Engine::wtfApply (Voice& v, float* P, int n)
 {
-    if (! v.rndOn || amt <= 0.0f) return;
-    const float a = amt * sqrtf_ (amt);
-    for (int k = 0; k < 12; ++k) if (v.rnd[k] != 0.0f) P[RND_PS[k]] = clampf (P[RND_PS[k]] + v.rnd[k] * RND_SC[k] * a, 0.0f, 1.0f);
+    if (! v.rndOn) return;
+    // (HIT, ONE: the voice's phase runs on, whatever the knob says)
+    const double ph0 = v.wtfPh;
+    if (n > 0 && wtfMode == WTF_LFO && wtfTrig != 0) v.wtfPh += wtfRate * (double) n;
+    if (xrndS <= 0.0f) return;
+    const float amt = xrndS, a = amt * sqrtf_ (amt);
+    if (wtfMode != WTF_LFO)
+    {
+        for (int k = 0; k < 12; ++k) if (v.rnd[k] != 0.0f) P[RND_PS[k]] = clampf (P[RND_PS[k]] + v.rnd[k] * RND_SC[k] * a, 0.0f, 1.0f);
+        return;
+    }
+    // the LFO: RUN, the panel's value this chunk; HIT, ONE: the voice's own phase from its hit (ONE: one cycle, then
+    // where it ends)
+    const bool own = wtfTrig != 0;
+    const double ph = (wtfTrig == 2 && ph0 > 0.9999) ? 0.9999 : ph0;
+    for (int k = 0; k < 12; ++k)
+        if (v.rnd[k] != 0.0f)
+            P[RND_PS[k]] = clampf (P[RND_PS[k]] + (own ? wtfAt (ph, k) : wtfVal[k]) * RND_SC[k] * a, 0.0f, 1.0f);
 }
+// the LFO's value for setting k at phase ph (cycles): each setting a share of a cycle later as SPRD opens (at 50 %
+// half a cycle apart at most), then half of them turned upside down (at 100 % the odd ones mirror the even ones)
+float Engine::wtfAt (double ph, int k) const
+{
+    static const float PH[12] = { 0.0f, 0.5f, 0.25f, 0.75f, 0.125f, 0.625f, 0.375f, 0.875f, 0.0625f, 0.5625f, 0.3125f, 0.8125f };
+    const float sp = wtfSpr;
+    const double x = ph + (double) (minf (sp * 2.0f, 1.0f) * PH[k]);
+    const double c = __builtin_floor (x);
+    const float f = (float) (x - c);
+    // (the cycle's number for the draws of S&H and SLEW, on 16 bits: no 64-bit integers, which the plain-JS build lacks)
+    const unsigned ci = (unsigned) (int) (c - 65536.0 * __builtin_floor (c * (1.0 / 65536.0)));
+    float w;
+    switch (wtfWave)
+    {
+        default:
+        case 0: w = sin2pi (f); break;                                        // SIN
+        case 1: w = f < 0.25f ? 4.0f * f : f < 0.75f ? 2.0f - 4.0f * f : 4.0f * f - 4.0f; break;   // TRI
+        case 2: w = 2.0f * f - 1.0f; break;                                   // SAW up
+        case 3: w = 1.0f - 2.0f * f; break;                                   // SAW down
+        case 4: w = f < 0.5f ? 1.0f : -1.0f; break;                           // SQR
+        case 5: w = loopDraw (g[G_WTFS], 40u + (unsigned) k, ci); break;   // S&H: a draw a cycle
+        case 6:                                                               // SLEW: from one draw to the next
+        {
+            const float a = loopDraw (g[G_WTFS], 40u + (unsigned) k, ci);
+            const float b = loopDraw (g[G_WTFS], 40u + (unsigned) k, (ci + 1u) & 65535u);
+            const float s = f * f * (3.0f - 2.0f * f);
+            w = a + (b - a) * s; break;
+        }
+        case 7: w = 2.0f * expf_ (-4.0f * f) - 1.0f; break;                  // EXP: up at once, falling away
+    }
+    const float flip = clampf ((sp - 0.5f) * 2.0f, 0.0f, 1.0f);
+    return (k & 1) ? w * (1.0f - 2.0f * flip) : w;
+}
+// once a chunk: the mode and the LFO's settings, its rate, and its phase (on the tempo: from the song position while
+// the transport runs; free, or stopped: counted on), each setting's value for RUN
+void Engine::wtfTick (int n)
+{
+    wtfMode = idxOf (g[G_WTFM], WTF_MODES); wtfWave = idxOf (g[G_WTFW], WTF_WAVES); wtfTrig = idxOf (g[G_WTFT], WTF_TRIGS); wtfSpr = g[G_WTFP];
+    const bool sync = g[G_WTFY] < 0.5f;
+    const double spsx = (double) sr * 60.0 / (double) bpm / 4.0;          // samples a 16th
+    wtfRate = sync ? 1.0 / ((double) WTF_SYNC[idxOf (g[G_WTFR], WTF_SYNCS)] * spsx)
+                   : 0.05 * (double) exp2f_ (8.643856f * g[G_WTFR]) / (double) sr;     // 0.05 .. 20 Hz
+    if (sync && running) wtfPh = (posAnchor + (now - clockAnchor) / spsx) / (double) WTF_SYNC[idxOf (g[G_WTFR], WTF_SYNCS)];
+    else wtfPh += wtfRate * (double) n;
+    if (wtfMode == WTF_LFO && wtfTrig == 0) for (int k = 0; k < 12; ++k) wtfVal[k] = wtfAt (wtfPh, k);
+}
+
 // RDEC (v65): the machines whose DEC is a decay (or a release: HALO, CHOIR), every one but the FX machines; at its ends
 // a hit's DEC moves by up to a quarter of the knob's travel (a decay up to four times shorter or longer), never past
 // the top where a machine holds or runs free (a decay is not drawn into HOLD, nor a held one out of it)
@@ -349,6 +413,11 @@ void Engine::init (float sampleRate, int liteMode)
     g[G_XRES] = 0.35f; g[G_XANA] = 0.0f; g[G_XAMD] = 0.5f / (float) GL_AMODES;
     g[G_QSRC] = 0.0f;
     glitch.init (sr); xrng.seed (0x51C0A7u); xrndS = 0.0f;
+    // v89: WTF?! in LIVE (as it was), LOOMND's loop 16 steps, its seed 0; the LFO a sine of a bar, on the tempo, running,
+    // its settings half apart
+    g[G_WTFM] = 0.5f / WTF_MODES; g[G_WTFL] = 9.5f / WTF_LENS; g[G_WTFS] = 0.0f; g[G_WTFW] = 0.5f / WTF_WAVES;
+    g[G_WTFR] = 7.5f / WTF_SYNCS; g[G_WTFY] = 0.25f; g[G_WTFT] = 0.5f / WTF_TRIGS; g[G_WTFP] = 0.5f;
+    wtfPh = 0.0; wtfRate = 0.0; for (float& w : wtfVal) w = 0.0f; wtfMode = 0; wtfWave = 0; wtfTrig = 0; wtfSpr = 0.5f;
     g[G_OOUT] = 0.5f; g[G_OMIX] = 1.0f;
     g[G_RVON] = g[G_DLON] = g[G_DCON] = g[G_MXON] = 1.0f;
     // v68: the CHORUS on mode 2, its input in stereo, its level at 80 %, on; the PHASER's generators 0.6 and 1 Hz sines,
@@ -438,7 +507,7 @@ void Engine::panic()
 
 void Engine::fxInit()
 {
-    glitch.reset(); xrndS = 0.0f;
+    glitch.reset(); xrndS = 0.0f; wtfPh = 0.0;
     for (int i = 0; i < DLY_SIZE; ++i) dl[i] = dr[i] = 0.0f;
     dw = 0; dLpL = dLpR = dHpL = dHpR = 0.0f;
     dlyOnF = 1.0f; dlyOff = 0; dlyClr = DLY_SIZE;
@@ -1105,14 +1174,30 @@ void Engine::startVoice (Track& t, int ti, const float* lk, int step, float vel,
         }
         else t.rpanT = 0.0f;
     }
-    // RAND: a new draw for this hit on the tracks marked r (never RAM, never the machine's choices)
+    // (the hit's place in a roll, for the loops: RDEC's, RTUN's, LOOMND's)
+    if (step >= 0) { t.rdSub = (step == t.rdStep && retrigHit) ? t.rdSub + 1 : 0; t.rdStep = step; }
+    else t.rdSub = (t.rdSub + 1) & 15;
+    // RAND (v89: WTF?!): a new draw for this hit on the tracks marked r (never RAM, never the machine's choices). LIVE:
+    // a draw at each hit (as it always was); LOOMND, to the left of its centre: the draw of the hit's place in a loop
+    // of LEN steps (the track's steps counted from the start, each hit of a roll its own), the same each time round;
+    // LFO: no draw, the LFO moves them (the settings it may move marked 1)
     {
         const int mask = (int) (g[G_XMSK] * 255.0f + 0.5f), mach = machineOf (P[P_MACH]);
+        const int wm = idxOf (g[G_WTFM], WTF_MODES);
         v.rndOn = ((mask >> ti) & 1) && mach != M_RAM;
+        v.wtfPh = 0.0;
         if (v.rndOn)
+        {
+            const bool loop = wm == WTF_LOOMND && g[G_XRND] < 0.495f;
+            const unsigned len = (unsigned) WTF_LEN[idxOf (g[G_WTFL], WTF_LENS)];
+            const unsigned li = step >= 0 ? (unsigned) (((t.bAbs < 0 ? 0 : t.bAbs) % (int) len) * 64) + (unsigned) minf ((float) t.rdSub, 63.0f) : 8192u + (unsigned) t.rdSub;
             for (int k = 0; k < 12; ++k)
-                v.rnd[k] = (k >= 1 && k <= 6 && ((STEPPED_AF[mach] >> (k - 1)) & 1)) ? 0.0f : xrng.bi();
-        applyRnd (v, xrndS, P);
+            {
+                const bool stepped = k >= 1 && k <= 6 && ((STEPPED_AF[mach] >> (k - 1)) & 1);
+                v.rnd[k] = stepped ? 0.0f : wm == WTF_LFO ? 1.0f : loop ? loopDraw (g[G_WTFS], 16u + (unsigned) k, li) : xrng.bi();
+            }
+        }
+        wtfApply (v, P, 0);
     }
     // RDEC: this hit's decay around the track's (see rdecApply): to the right a draw at each hit, to the left the draw
     // of its step (each hit of a roll its own), the same each time the pattern comes round (no draw at its centre)
@@ -1121,8 +1206,6 @@ void Engine::startVoice (Track& t, int ti, const float* lk, int step, float vel,
     {
         const float rd = P[P_RDEC] - 0.5f, rt = P[P_RTUN] - 0.5f;
         v.rdec = 0.0f; v.rtun = 0.0f;
-        if (step >= 0) { t.rdSub = (step == t.rdStep && retrigHit) ? t.rdSub + 1 : 0; t.rdStep = step; }
-        else t.rdSub = (t.rdSub + 1) & 15;
         // (a hit off the steps — MIDI, the pads — draws by its count: 16, then round again)
         const unsigned li = step >= 0 ? (unsigned) step * 64u + (unsigned) minf ((float) t.rdSub, 63.0f) : 4096u + (unsigned) t.rdSub;
         const int mach = machineOf (P[P_MACH]);
@@ -2817,7 +2900,7 @@ void Engine::renderVoice (Track& t, Voice& v, int n)
 {
     float P[NUM_PARAMS];
     effParams (t, v.lk, P);
-    applyRnd (v, xrndS, P);
+    wtfApply (v, P, n);
     rdecApply (v, P);
     rtunApply (v, P);
     v.ecrv = P[P_ECRV];             // (v78: the amplitude envelope's curve, ampTick)
@@ -3803,6 +3886,7 @@ void Engine::renderChunk (int n, float* L, float* R)
     for (int i = 0; i < n; ++i) mL[i] = mR[i] = sDL[i] = sDR[i] = sRv[i] = 0.0f;
     for (int i = 0; i < n; ++i) sChL[i] = sChR[i] = sPhL[i] = sPhR[i] = 0.0f;
     const float steps = (float) ((double) bpm / 60.0 * 4.0 / (double) sr * n);
+    wtfTick (n);
     // the host input under this chunk, in mono (RAM: IN source, monitor)
     {
         const int off = (int) (now - inStart);
@@ -3909,9 +3993,10 @@ void Engine::renderChunk (int n, float* L, float* R)
     if (ottOn && ! (postWas & 2)) ott.reset();
     postWas = (grainOn ? 1 : 0) | (ottOn ? 2 : 0) | (glOn ? 4 : 0);
     if (! glRun) glFree += n * glInc;
-    // LIVE (the temporary random of the SEQ page): glided, so that turning it never steps the sounds
+    // LIVE (the temporary random of the SEQ page; v89 WTF?!): glided, so that turning it never steps the sounds (LOOMND:
+    // its distance from the centre, either way)
     {
-        const float tgt = g[G_XRND];
+        const float tgt = idxOf (g[G_WTFM], WTF_MODES) == WTF_LOOMND ? absf (g[G_XRND] - 0.5f) * 2.0f : g[G_XRND];
         xrndS += (tgt - xrndS) * (1.0f - expf_ (-(float) n / (0.02f * sr)));
         if (absf (tgt - xrndS) < 1e-5f) xrndS = tgt;
     }

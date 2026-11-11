@@ -391,8 +391,46 @@ def lfo():
     f.save()
 
 
+# ------------------------------------------------------------------ WTF?! (v89)
+def wtf():
+    f = Fig('wtf', 252, "WTF?! sur seize coups : LIVE tire un nouvel écart à chaque coup ; LOOMND à gauche rejoue une boucle de LEN tirages, à droite tire comme LIVE ; LFO fait suivre aux coups une onde, ici un sinus d'une mesure")
+    x0, x1, n = 124, 462, 16
+    cw = (x1 - x0) / n
+    rnd = random.Random(7)
+    live = [rnd.uniform(-1, 1) for _ in range(n)]
+    right = [rnd.uniform(-1, 1) for _ in range(n)]
+    loop4 = [.7, -.4, .25, -.85]
+    f.text(16, 18, '16 COUPS', DIM)
+    for c in range(n + 1):
+        f.line(x0 + c * cw + .5, 24, x0 + c * cw + .5, 230, LO)
+    rows = (('LIVE', '', live), ('LOOMND', '◀ LEN 4', [loop4[c % 4] for c in range(n)]), ('LOOMND', 'RND ▶', right), ('LFO', 'SIN 1 BAR', None))
+    for r, (lab, sub, vals) in enumerate(rows):
+        yc, amp = (48, 94, 156, 204)[r], 15
+        f.text(16, yc - 2, lab, INK)
+        if sub:
+            f.text(16, yc + 11, sub, DIM, 9)
+        f.line(x0, yc + .5, x1, yc + .5, LO, dash='1 2')
+        if vals is None:
+            pts = ['M%g %g' % (x0, yc)]
+            for k in range(1, 97):
+                t = k / 96
+                pts.append('L%g %g' % (x0 + t * (x1 - x0), yc - math.sin(2 * math.pi * t) * amp))
+            f.path(' '.join(pts), DIM, 1, join='round')
+            vals = [math.sin(2 * math.pi * c / n) for c in range(n)]
+        for c, v in enumerate(vals):
+            x = x0 + c * cw + 4
+            h = max(1, abs(v) * amp)
+            f.rect(x, yc - h if v > 0 else yc + 1, cw - 8, h, RED if r != 1 or c < 4 else INK)
+        if r == 1:
+            f.path('M%g %gv-4H%gv4' % (x0 + 1, yc + amp + 9, x0 + 4 * cw - 2), AMB, 1)
+            f.path('M%g %gv-4H%gv4' % (x0 + 4 * cw + 1, yc + amp + 9, x1 - 2), AMB, 1)
+            f.text(x0 + 2 * cw, yc + amp + 19, 'LEN 4', AMB, 8, 'middle')
+            f.text(x0 + 10 * cw, yc + amp + 19, 'LES MÊMES, TOUS LES 4 PAS', AMB, 8, 'middle')
+    f.save()
+
+
 if __name__ == '__main__':
     os.makedirs(OUT, exist_ok=True)
-    for fn in (plock, rolls, jump, poly, patterns, looper, ram, fx, path, lfo):
+    for fn in (plock, rolls, jump, poly, patterns, looper, ram, fx, path, lfo, wtf):
         fn()
     print('figures:', ', '.join(sorted(os.listdir(OUT))))

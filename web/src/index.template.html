@@ -834,6 +834,40 @@ canvas { min-width: 0; min-height: 0; }
 .live.on { box-shadow: inset 0 1px 0 rgba(255,255,255,.28), inset 0 -1px 0 rgba(0,0,0,.18), 0 0 0 3px rgba(233,71,43,.28), 0 0 14px rgba(233,71,43,.45); }
 .live.on small, .live.on b { opacity: 1; }
 .live:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+/* v89 WTF?!: its name a key of its own on the red key (a tap opens its settings; open, the name inverted) */
+.live .lvl { cursor: pointer; border-radius: 5px; padding: 3px 5px; margin: -3px -5px; }
+.live.open .lvl { background: #fff; }
+.live.open .lvl small, .live.open .lvl b { color: var(--led-r); opacity: 1; }
+/* its settings, in place of the looper and the scale: one LCD, the mode, then the mode's own */
+.seqrow.wtf > .loopbar, .seqrow.wtf > .qz { display: none; }
+.wtfbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; min-width: 0; margin: 4px; padding: 7px 10px; border-radius: 4px; box-shadow: 0 0 0 4px var(--bezel); }
+.whd { width: 64px; flex: none; }
+.wname { font-family: var(--f-px); font-size: 16px; line-height: 1; color: var(--lcd-ink); white-space: nowrap; }
+.wseg { display: flex; gap: 4px; min-width: 0; }
+.wtfbar .qf { flex: 0 0 auto; height: 30px; padding: 0 7px; font-size: 11px; }
+.wtfbar .qf:focus-visible { outline: 2px solid var(--lcd-ink); outline-offset: 2px; }
+.wopt { display: flex; align-items: center; gap: 8px 10px; flex: 1 1 auto; min-width: 0; flex-wrap: wrap; margin: 0; }
+.wtxt { font-family: var(--f-px); font-size: 8px; line-height: 1.5; color: var(--lcd-dim); }
+.wl0 { font-family: var(--f-px); font-size: 8px; line-height: 1; color: var(--lcd-dim); }
+.wlens { flex-wrap: wrap; }
+.wlens .qf { min-width: 26px; padding: 0 3px; }
+.wloop { flex: 1 1 120px; min-width: 80px; height: 30px; display: block; }
+.wloop rect { fill: var(--lcd-ink); }
+.wloop line { stroke: var(--lcd-dim); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.wloop.idle rect { fill: var(--lcd-dim); }
+.wwave path { fill: none; stroke: var(--lcd-ink); stroke-width: 1.6; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.wwave path.b { stroke: var(--lcd-dim); }
+.wside { width: 28px; color: var(--lcd-ink); }
+.wwaves .qf { width: 30px; padding: 0; display: grid; place-items: center; }
+.ww svg { width: 16px; height: 16px; display: block; overflow: visible; }
+.ww path { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.wrd { display: flex; flex-direction: column; justify-content: center; gap: 4px; min-width: 58px; height: 30px; padding: 0 6px; border: 1px solid var(--lcd-dim); border-radius: 2px;
+  box-sizing: border-box; cursor: ns-resize; touch-action: none; }
+.wrd b { font-family: var(--f-px); font-weight: 400; font-size: 12px; line-height: 1; white-space: nowrap; }
+.wrd small { font-family: var(--f-px); font-size: 8px; line-height: 1; color: var(--lcd-dim); }
+.wrd:focus-visible { outline: 2px solid var(--lcd-ink); outline-offset: 2px; }
+.wclk { min-width: 46px; }
+.wclose { flex: none; margin-left: auto; }
 .grp { display: flex; align-items: center; gap: 4px; }
 .grp .gl { font-size: 12px; letter-spacing: .14em; color: var(--ink-2); margin-right: 2px; font-weight: 500; }
 .grp .gv { font-family: var(--f-data); font-size: 13px; font-weight: 600; min-width: 40px; text-align: center; font-variant-numeric: tabular-nums; }
@@ -1015,6 +1049,7 @@ canvas { min-width: 0; min-height: 0; }
   .kmod .knob { --kw: 74px; }
   .seqrow { flex-direction: row; align-items: center; gap: 22px; }
   .seqrow .loopbar { flex: 1 1 auto; }
+  .seqrow .wtfbar { flex: 1 1 auto; }
   .seqrow .qz { flex: 0 1 620px; grid-template-columns: auto minmax(0, 1fr) auto auto; grid-template-areas: "name kb fol nav"; padding: 7px 10px; gap: 14px; }
   .seqrow .qhd { width: 84px; }
   .seqrow .kb svg { height: 40px; }
@@ -1230,6 +1265,8 @@ canvas { min-width: 0; min-height: 0; }
 .plug .lockbar.ptn .prow { flex-wrap: nowrap; }
 .plug .lenbar { flex: none; width: 280px; }
 .plug .seqrow .loopbar { flex: 1 1 auto; }
+.plug .seqrow .wtfbar { flex: 1 1 auto; flex-wrap: nowrap; padding: 9px 10px; }
+.plug .wtfbar .wopt, .plug .wlens { flex-wrap: nowrap; }
 .plug .seqrow .qz { flex: 0 1 660px; grid-template-columns: auto minmax(0, 1fr) auto auto; grid-template-areas: "name kb fol nav"; padding: 6px 10px; gap: 14px; }
 .plug .seqrow .qhd { width: 84px; }
 .plug .seqrow .kb svg { height: 36px; }
@@ -1446,6 +1483,25 @@ canvas { min-width: 0; min-height: 0; }
           <div class="qfol" id="qfol" role="group" aria-label="The quantizer follows the chords of a HALO or STRUM track"></div>
           <div class="qnav"><button class="lb" id="qdn" aria-label="Transpose down">&lt;</button><button class="lb" id="qup" aria-label="Transpose up">&gt;</button><button class="lb" id="qclr" aria-label="Quantizer off">×</button></div>
         </div>
+        <div class="wtfbar lcdw" id="wtfbar" role="group" aria-label="WTF?! settings" hidden>
+          <div class="whd"><b class="wname">WTF?!</b></div>
+          <div class="wseg" id="wmodes" role="radiogroup" aria-label="Mode"><button class="qf wm" data-m="0" role="radio" title="LIVE: a new draw on every hit">LIVE</button><button class="qf wm" data-m="1" role="radio" title="LOOMND: to the left of the knob's centre a loop of draws that comes round every LEN steps, to the right a new draw on every hit">LOOMND</button><button class="qf wm" data-m="2" role="radio" title="LFO: a wave moves the sounds, on the tempo or free">LFO</button></div>
+          <p class="wopt wtxt" id="wlive">EVERY HIT OF THE R TRACKS DRAWS ITS SOUND ANEW. DOUBLE-TAP THE KNOB: AS WRITTEN</p>
+          <div class="wopt" id="wloom" hidden>
+            <span class="wl0">LEN</span><div class="wseg wlens" id="wlens" role="radiogroup" aria-label="Loop length, steps"></div>
+            <svg class="wloop" id="wloop" aria-label="The loop's draws" role="img" preserveAspectRatio="none"></svg><span class="wl0 wside" id="wside">MID</span>
+            <button class="qf wnew" id="wnew" title="NEW: another loop">NEW</button>
+          </div>
+          <div class="wopt" id="wlfo" hidden>
+            <div class="wseg wwaves" id="wwaves" role="radiogroup" aria-label="Wave"></div>
+            <div class="wrd" id="wrate" tabindex="0" role="slider" aria-label="LFO rate" title="Rate: drag up or down, double-tap for the default"><b id="wratev">1 BAR</b><small>RATE</small></div>
+            <button class="qf wclk" id="wclk" aria-pressed="false" title="SYNC: on the tempo; FREE: in Hz">SYNC</button>
+            <div class="wseg" id="wtrig" role="radiogroup" aria-label="How the LFO runs"><button class="qf" data-i="0" role="radio" title="RUN: on its own, the same for every hit">RUN</button><button class="qf" data-i="1" role="radio" title="HIT: from the start of its cycle at every hit">HIT</button><button class="qf" data-i="2" role="radio" title="ONE: one cycle from every hit, then it holds">ONE</button></div>
+            <svg class="wloop wwave" id="wwave" aria-label="The wave: two cycles, two of the sounds it moves" role="img" preserveAspectRatio="none"></svg>
+            <div class="wrd" id="wsprd" tabindex="0" role="slider" aria-label="LFO spread" title="Spread: the sounds apart in phase, then half of them turned over. Drag up or down, double-tap for 50%"><b id="wsprdv">50%</b><small>SPRD</small></div>
+          </div>
+          <button class="lb wclose" id="wclose" aria-label="Back to the looper and the scale">×</button>
+        </div>
       </div>
       <div class="lockbar" id="lockbar"></div>
       <div class="steps" id="steps" aria-label="Sequence: 16 steps a page"></div>
@@ -1454,7 +1510,7 @@ canvas { min-width: 0; min-height: 0; }
         <div class="pages" id="pages" role="group" aria-label="Pages"></div>
         <div class="lenbar lcdw" id="lenbar" tabindex="0" role="slider" aria-label="Track length" aria-valuemin="1" aria-valuemax="64" title="Track length: touch or drag along the cells of the page shown"><small>LEN</small><span class="cells" id="lencells"></span><b id="lenv">16</b></div>
         <div class="readout spd" id="spd" tabindex="0" role="slider" aria-label="Track speed" title="Track speed: drag up or down, double-tap for 1×"><b id="spdv">1×</b><small>SPD</small></div>
-        <div class="grp rnd"><span class="gl">RND</span><span class="gv rdep" id="rndd" tabindex="0" role="slider" aria-label="Random depth" title="Random depth: drag up or down">50%</span><button class="btn" id="rndt">Track</button><button class="btn" id="rnda">All</button><button class="btn sq" id="rndu" aria-label="Undo random" disabled>↶</button><div class="live" id="rlive" tabindex="0" role="slider" aria-label="Live random" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" title="LIVE: a new random deviation on every hit of the r tracks, nothing is written. Back to 0 (double-tap) and the sounds are the original ones"><svg viewBox="4 4 56 56" aria-hidden="true"><path class="trk"/><path class="val"/><circle class="cap" cx="32" cy="32" r="16"/><line class="ind" x1="32" y1="32" x2="32" y2="20"/></svg><span class="lvl"><small>LIVE</small><b id="rlivev">0%</b></span></div></div>
+        <div class="grp rnd"><span class="gl">RND</span><span class="gv rdep" id="rndd" tabindex="0" role="slider" aria-label="Random depth" title="Random depth: drag up or down">50%</span><button class="btn" id="rndt">Track</button><button class="btn" id="rnda">All</button><button class="btn sq" id="rndu" aria-label="Undo random" disabled>↶</button><div class="live" id="rlive" tabindex="0" role="slider" aria-label="WTF?! amount (Enter: its settings)" aria-controls="wtfbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" title="WTF?!: moves the sounds of the r tracks as they play, nothing is written. Turn it; double-tap: the sounds as written. Tap its name for its modes: LIVE (a new draw on every hit), LOOMND (left: a loop of draws, right: new draws), LFO (a wave on the sounds)"><svg viewBox="4 4 56 56" aria-hidden="true"><path class="trk"/><path class="val"/><circle class="cap" cx="32" cy="32" r="16"/><line class="ind" x1="32" y1="32" x2="32" y2="20"/></svg><span class="lvl"><small>WTF?!</small><b id="rlivev">0%</b></span></div></div>
       </div>
     </section>
   </div>

@@ -1,5 +1,17 @@
 # Versions d'IMPAKT
 
+## 0.89.0
+
+- **WTF?!** : LIVE change de nom et gagne des modes. Touchez son nom sur la touche rouge : sa ligne de réglages
+  s'ouvre en bas du séquenceur, à la place du looper et de la gamme (**×** les ramène).
+  - **LIVE** : comme avant, un nouvel écart à chaque coup.
+  - **LOOMND** : à gauche du centre, une boucle de hasard qui revient tous les **LEN** pas (de 1 à 64) ; à droite, du
+    hasard à chaque coup. **NEW** tire une autre boucle.
+  - **LFO** : une onde (sinus, triangle, rampes, carré, S&H, SLEW, EXP) promène tous les réglages de synthèse des
+    pistes **r** ; en mesure (SYNC) ou en Hz (FREE) ; qui tourne seule (RUN), repart à chaque coup (HIT) ou fait un
+    seul cycle par coup (ONE) ; **SPRD** décale les réglages entre eux.
+- Les projets existants sonnent comme avant.
+
 ## 0.88.0
 
 - **RTUN** (rangée TRIG, page MORE, à côté de RDEC) : la hauteur de chaque coup tirée au hasard (RND) ou en boucle, la

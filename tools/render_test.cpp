@@ -9,6 +9,9 @@
 #include "../core/sk_mantra.h"
 #include "../core/sk_radio_dec.h"
 #include <memory>
+#include <vector>
+#include <array>
+#include <functional>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -3805,6 +3808,120 @@ static int rtuntest()
     return fails ? 1 : 0;
 }
 
+// v89: WTF?! (LIVE's key, its modes). LIVE as it was (bit for bit: see the hashes of livehash); LOOMND to the left: each
+// step's draw comes back every LEN steps (to the right a new draw at each hit); LFO: the settings moved by a wave, on the
+// tempo (its phase from the song position), free, or from each hit (HIT, ONE)
+static int wtftest()
+{
+    Engine* e = new Engine(); e->init (48000.f);
+    if (! REF) { REF = new Engine(); REF->init (48000.f); }
+    int fails = 0;
+    auto check = [&] (bool ok, const char* what, double v) { printf ("%s %-96s %.4f\n", ok ? "PASS" : "FAIL", what, v); if (! ok) ++fails; };
+    std::vector<std::array<float, 12>> draws;
+    std::vector<float> out;
+    auto run = [&] (int mode, float knob, int len, float seed, double secs, std::function<void()> more) {
+        softReset (e, 48000.f); e->xrndS = 0.0f;
+        for (int t = 1; t < NUM_TRACKS; ++t) e->setParam (t, P_VOL, 0.0f);
+        e->setGlobal (G_BPM, 120.0f); e->g[G_MXON] = 0.0f; e->g[G_XMSK] = 1.0f;
+        e->setParam (0, P_MACH, machineVal (M_BD_FM)); e->setParam (0, P_DEC, 0.3f); e->setParam (0, P_VOL, 0.6f);
+        e->setParam (0, P_REV, 0.0f); e->setParam (0, P_DLY, 0.0f);
+        e->g[G_WTFM] = (mode + 0.5f) / WTF_MODES; e->g[G_XRND] = knob; e->g[G_WTFS] = seed;
+        for (int i = 0; i < WTF_LENS; ++i) if (WTF_LEN[i] == len) e->g[G_WTFL] = (i + 0.5f) / WTF_LENS;
+        for (int st = 0; st < 16; ++st) e->setTrig (0, st, 1);
+        if (more) more();
+        // (the knob's glide settled before the first hit)
+        std::vector<float> L (128), R (128);
+        for (int i = 0; i < 9600; i += 128) e->process (L.data(), R.data(), 128, nullptr);
+        e->setPlay (1);
+        draws.clear(); out.clear(); int hc = e->tr[0].hitCount;
+        for (int i = 0; i < (int) (48000 * secs); i += 128)
+        {
+            e->process (L.data(), R.data(), 128, nullptr); for (int k = 0; k < 128; ++k) out.push_back (L[k] + R[k]);
+            if (e->tr[0].hitCount != hc) { hc = e->tr[0].hitCount; std::array<float, 12> d; for (int k = 0; k < 12; ++k) d[k] = e->tr[0].voice[e->tr[0].cur].rnd[k]; draws.push_back (d); }
+        }
+        e->setPlay (0);
+    };
+    auto same = [&] (int a, int b) { double m = 0; for (int k = 0; k < 12; ++k) m = std::max (m, (double) fabsf (draws[a][k] - draws[b][k])); return m; };
+    // LOOMND, to the left: a loop of 4 steps, the same draws every 4 steps for two bars; 16: not every 4, but every bar
+    run (WTF_LOOMND, 0.0f, 4, 0.3f, 4.2, nullptr);
+    double rep = 0, any = 0;
+    for (int k = 4; k < 32 && k < (int) draws.size(); ++k) rep = std::max (rep, same (k, k - 4));
+    for (int k = 0; k < 12; ++k) any = std::max (any, (double) fabsf (draws[1][k]));
+    check (draws.size() >= 32 && rep == 0.0 && any > 0.1, "LOOMND left, LEN 4: each step's draw again 4 steps on (largest change over two bars)", rep);
+    const auto d4 = draws;
+    run (WTF_LOOMND, 0.0f, 16, 0.3f, 4.2, nullptr);
+    double r16 = 0, d16 = 0;
+    for (int k = 16; k < 32 && k < (int) draws.size(); ++k) r16 = std::max (r16, same (k, k - 16));
+    for (int k = 4; k < 16; ++k) d16 = std::max (d16, same (k, k - 4));
+    check (draws.size() >= 32 && r16 == 0.0 && d16 > 0.1, "LOOMND left, LEN 16: bar 2 the draws of bar 1, steps 5-16 not steps 1-12 again (largest change, steps)", d16);
+    check (fabsf (draws[2][0] - loopDraw (0.3f, 16u, 2u * 64u)) < 1e-6f, "LOOMND: step 3's draw of DEC is loopDraw's (the seed, its own salt)", draws[2][0]);
+    run (WTF_LOOMND, 0.0f, 16, 0.7f, 2.1, nullptr);
+    double sd = 0; for (int k = 0; k < 12; ++k) sd = std::max (sd, (double) fabsf (draws[2][k] - loopDraw (0.3f, 16u + k, 2u * 64u)));
+    check (sd > 0.1, "LOOMND: a new seed, new draws (NEW)", sd);
+    // to the right: a new draw at each hit, bar 2 not bar 1 again
+    run (WTF_LOOMND, 1.0f, 4, 0.3f, 4.2, nullptr);
+    int diff = 0; for (int k = 16; k < 32 && k < (int) draws.size(); ++k) if (same (k, k - 16) > 0.01) ++diff;
+    check (diff >= 14, "LOOMND right: each hit its own draw (hits of bar 2 unlike bar 1)", diff);
+    // at its centre: nothing moves (the output that of LIVE at 0)
+    run (WTF_LOOMND, 0.5f, 4, 0.3f, 2.1, nullptr); const auto mid = out;
+    run (WTF_LIVE, 0.0f, 4, 0.3f, 2.1, nullptr);
+    double dm = 0; for (size_t i = 0; i < out.size() && i < mid.size(); ++i) dm = std::max (dm, (double) fabsf (out[i] - mid[i]));
+    check (dm == 0.0, "LOOMND at its centre: the hits untouched, bit for bit (against LIVE at 0)", dm);
+    // a roll: each of its hits its own draw, the same each time round
+    run (WTF_LOOMND, 0.0f, 4, 0.3f, 4.2, [&] { e->setRatchet (0, 1, 3); });
+    check (draws.size() >= 36 && same (1, 2) > 0.01 && same (1, 7) == 0.0 && same (2, 20) == 0.0, "LOOMND: a roll's hits each their own draw; its first again 4 steps on, its second in bar 2", same (1, 2));
+    // LFO: the voices marked (no draw); on the tempo its phase from the song position: a bar a cycle, 2 bars, 2 cycles
+    run (WTF_LFO, 1.0f, 4, 0.0f, 4.0, [&] { e->g[G_WTFR] = 7.5f / WTF_SYNCS; e->g[G_WTFY] = 0.25f; e->g[G_WTFT] = 0.5f / WTF_TRIGS; });
+    double mk = 0; for (auto& d : draws) for (int k = 0; k < 12; ++k) mk = std::max (mk, (double) fabsf (d[k] - (k >= 1 && k <= 6 ? d[k] : 1.0f)));
+    check (draws.size() >= 30 && mk == 0.0, "LFO: no draw, each setting it may move marked 1", mk);
+    check (fabs (e->wtfPh - e->pos16 / 16.0) < 0.01, "LFO on the tempo, a bar: its phase the song position in bars (gap, cycles)", fabs (e->wtfPh - e->pos16 / 16.0));
+    check (fabsf (e->wtfVal[0] - sin2pi ((float) (e->wtfPh - floor (e->wtfPh)))) < 1e-4f, "LFO SIN: DEC's value the sine at its phase", e->wtfVal[0]);
+    const auto lfoOut = out;
+    run (WTF_LFO, 0.0f, 4, 0.0f, 4.0, nullptr);
+    double dl = 0, dz = 0; for (size_t i = 0; i < out.size() && i < lfoOut.size(); ++i) dl = std::max (dl, (double) fabsf (out[i] - lfoOut[i]));
+    run (WTF_LIVE, 0.0f, 4, 0.0f, 4.0, nullptr); const auto z = out;
+    run (WTF_LFO, 0.0f, 4, 0.0f, 4.0, nullptr);
+    for (size_t i = 0; i < out.size() && i < z.size(); ++i) dz = std::max (dz, (double) fabsf (out[i] - z[i]));
+    check (dl > 0.05 && dz == 0.0, "LFO: at 100 % the hits move (max diff); at 0 the hits of LIVE at 0, bit for bit", dl);
+    // the spread: at 0 the settings together, at 50 % apart in phase, at 100 % the odd ones the other way up
+    {
+        const auto at = [&] (float spr, int k, double ph) { e->g[G_WTFP] = spr; e->wtfTick (0); return e->wtfAt (ph, k); };
+        e->g[G_WTFM] = (WTF_LFO + 0.5f) / WTF_MODES; e->g[G_WTFW] = 0.5f / WTF_WAVES;
+        const float a0 = at (0.0f, 0, 0.1), a1 = at (0.0f, 1, 0.1), b1 = at (0.5f, 1, 0.1), c0 = at (1.0f, 0, 0.1), c2 = at (1.0f, 2, 0.1), c1 = at (1.0f, 1, 0.1);
+        check (fabsf (a0 - a1) < 1e-6f && fabsf (b1 + a0) < 1e-4f && fabsf (c1 + sin2pi (0.6f)) < 1e-4f && fabsf (c2 - sin2pi (0.35f)) < 1e-4f && c0 == a0,
+               "SPRD: 0 together; 50 % half a cycle apart (DEC, A); 100 % the odd ones turned over", b1);
+    }
+    // the waves: each one within -1..1, the square two values, the S&H one draw a cycle
+    {
+        double lo = 0, hi = 0; int sq = 0, shd = 0;
+        e->g[G_WTFP] = 0.0f;
+        for (int w = 0; w < WTF_WAVES; ++w)
+        {
+            e->g[G_WTFW] = (w + 0.5f) / WTF_WAVES; e->wtfTick (0);
+            float prev = 2.0f;
+            for (int i = 0; i < 400; ++i)
+            {
+                const float v = e->wtfAt (i / 100.0, 0); lo = std::min (lo, (double) v); hi = std::max (hi, (double) v);
+                if (w == 4 && fabsf (fabsf (v) - 1.0f) > 1e-6f) ++sq;
+                if (w == 5 && i % 100 && v != prev) ++shd;
+                prev = v;
+            }
+        }
+        check (lo >= -1.0001 && hi <= 1.0001 && sq == 0 && shd == 0, "LFO waves: within -1..1, SQR at ±1, S&H held through each cycle", hi);
+    }
+    // HIT: each voice its own phase from its hit (0 at the hit); FREE: its rate in Hz, ONE: one cycle then held
+    run (WTF_LFO, 1.0f, 4, 0.0f, 0.6, [&] { e->g[G_WTFT] = 1.5f / WTF_TRIGS; e->g[G_WTFY] = 0.75f; e->g[G_WTFR] = 0.5f; });
+    {
+        const double hz = 0.05 * pow (400.0, 0.5);
+        const Voice& v = e->tr[0].voice[e->tr[0].cur];
+        // (the last hit: step 5 at 120, 0.5 s in; 0.6 s rendered after the 9600 samples of settling)
+        check (fabs (e->wtfRate * 48000.0 - hz) < 1e-3 && v.wtfPh > 0.0 && v.wtfPh < hz * 0.13, "LFO FREE, HIT: the rate in Hz (1 Hz at half way), the voice's phase from its own hit", e->wtfRate * 48000.0);
+    }
+    delete e;
+    printf ("%d failure(s)\n%s\n", fails, fails ? "WTF FAILED" : "WTF OK");
+    return fails ? 1 : 0;
+}
+
 // v65: RDEC (each hit's decay drawn: to the right at each hit, to the left a draw per step that comes back with the
 // pattern) and the LFO's SLEW (a random line, SLW of each cycle to reach its draw) and LOOP (LEN draws, round again)
 static int rdectest()
@@ -7156,6 +7273,7 @@ int main (int argc, char** argv)
     if (argc >= 2 && ! strcmp (argv[1], "spread")) return spreadtest();
     if (argc >= 2 && ! strcmp (argv[1], "rdec")) return rdectest();
     if (argc >= 2 && ! strcmp (argv[1], "rtun")) return rtuntest();
+    if (argc >= 2 && ! strcmp (argv[1], "wtf")) return wtftest();
     if (argc >= 2 && ! strcmp (argv[1], "chimera")) return chimtest();
     if (argc >= 2 && ! strcmp (argv[1], "v68")) return v68test();
     if (argc >= 2 && ! strcmp (argv[1], "v71")) return v71test();
