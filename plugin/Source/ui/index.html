@@ -1501,7 +1501,7 @@ canvas { min-width: 0; min-height: 0; }
   </div>
 </div>
 <script>
-const IMPAKT_VERSION = "0.87.2";
+const IMPAKT_VERSION = "0.88.0";
 const MAC_CMD = "rm -rf ~/Library/Audio/Plug-Ins/VST3/IMPAKT.vst3 ~/Library/Audio/Plug-Ins/Components/IMPAKT.component; sudo sh -c 'cd /Library/Audio/Plug-Ins; for f in VST3/IMPAKT.vst3 Components/IMPAKT.component /Applications/IMPAKT.app \"/Library/Application Support/IMPAKT\"; do [ -e \"$f\" ] && xattr -cr \"$f\"; done; for f in VST3/IMPAKT.vst3 Components/IMPAKT.component /Applications/IMPAKT.app; do [ -e \"$f\" ] && codesign --force --deep --sign - \"$f\" 2>/dev/null; done; killall -9 AudioComponentRegistrar 2>/dev/null; true'; auval -v aumu Imp8 Impk > /tmp/impakt-auval.txt 2>&1 && echo \"IMPAKT est pr\u00eat.\" || echo \"L'Audio Unit ne passe pas : le d\u00e9tail est dans /tmp/impakt-auval.txt\"";
 const WASM_B64 = "";
 const WASM_SIMD_B64 = "";

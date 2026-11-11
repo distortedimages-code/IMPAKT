@@ -1,5 +1,19 @@
 # Versions d'IMPAKT
 
+## 0.88.0
+
+- **RTUN** (rangée TRIG, page MORE, à côté de RDEC) : la hauteur de chaque coup tirée au hasard (RND) ou en boucle, la
+  même suite à chaque tour du pattern (LOOP). De quelques cents près du milieu à une octave en butée ; sur une piste
+  qui suit la gamme, les notes tombent dans la gamme. RVEL reste sur la page TRIG.
+- **Les potards à la même taille** : une seule échelle sur toutes les pages. Les effets (FX et master) ont tous la même
+  grande taille, la machine et la rangée TRIG la taille normale, TONE et MOD une taille plus petite, les réglages fins
+  de WEST la plus petite.
+- **Nettoyage** : les commutateurs ne recouvrent plus leur nom (BAND, TYPE, MODE…), les inscriptions des potards ne
+  débordent plus sur leurs voisins, les quatre modules de TONE ont la même largeur, l'écran de MOD est plus grand, WEST
+  répartit ses réglages sur toute la largeur.
+- **Mises à jour** : le panneau s'ouvre au milieu d'IMPAKT, en rouge, et le bandeau aussi. Sur Mac, une fois l'image
+  disque téléchargée, un bouton copie la commande du Terminal.
+
 ## 0.87.2
 
 - **Installation sur Mac** : glissez chaque élément sur le raccourci de son dossier, puis collez une commande dans le
