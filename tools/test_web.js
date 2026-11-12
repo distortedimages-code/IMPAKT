@@ -1028,15 +1028,19 @@ function testWav(bpm, bars, variant) {
         const wxh = new WebAssembly.Instance(new WebAssembly.Module(fs.readFileSync(path.resolve(__dirname, '../web/impakt.wasm'))), {}).exports;
         hw.defs = pgd.d.every((v, i) => Math.abs(wxh.sk_af_def(43, i) - v) < 1e-4) && pgd.sd.length === 35 && pgd.sd.every((v, i) => Math.abs(wxh.sk_side_def(43, i) - v) < 1e-4) && wxh.sk_side_def(43, 35) === 0;
         // a pad held (stopped): six strings on the screen, its root as TUNE and DROP say (the track quantised: on the scale)
-        const tH = await page.evaluate(() => window.__impakt.ui.t);
+        // (the transport stopped for it: running, a step of the track with a TUNE lock re-voices the chord under the
+        // held pad, and the root on the screen is that step's)
+        const tH = await page.evaluate(() => window.__impakt.ui.t), howlRun = await page.evaluate(() => !!window.__impakt.ui.pos.run);
+        if (howlRun) { await page.click('#play'); await page.waitForTimeout(300); }
         await page.locator('.pad').nth(tH).dispatchEvent('pointerdown', { pointerId: 9, isPrimary: true }); await page.waitForTimeout(900);
         hw.scr = await page.evaluate(() => { const hi = window.__impakt.ui.halo, cv = document.getElementById('ovw'); let lit = 0;
           if (cv) { const d = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data; for (let i = 3; i < d.length; i += 4) if (d[i]) lit++; }
           const I = window.__impakt, tp = I.state.tracks[I.ui.t].p;
-          return { kind: hi ? hi[0] : -1, n: hi ? hi[1] : 0, root: hi ? Math.round(hi[8]) : 0, lit, why: { play: I.ui.playing, run: I.ui.pos.run, rt: [0, 1, 2, 3].map(m => I.modRoutes(I.ui.t, m).map(r => r.p + ':' + r.d.toFixed(2)).join()).join('|'), tune: tp[I.P.TUNE], note: tp[I.P.NOTE], jump: tp[I.P.JUMP], lock: I.ui.lock, hi: hi ? Array.from(hi).slice(2, 11).map(x => Math.round(x * 10) / 10) : null } }; });
+          return { kind: hi ? hi[0] : -1, n: hi ? hi[1] : 0, root: hi ? Math.round(hi[8]) : 0, lit, why: { play: I.ui.playing, run: I.ui.pos.run, rt: [0, 1, 2, 3].map(m => I.modRoutes(I.ui.t, m).map(r => r.p + ':' + r.d.toFixed(2)).join()).join('|'), tune: tp[I.P.TUNE], note: tp[I.P.NOTE], jump: tp[I.P.JUMP], lock: I.ui.lock, qsrc: Math.floor((I.state.g[I.G.QSRC] || 0) * 9) - 1, mach: I.state.tracks.map(t => Math.floor(t.p[I.P.MACH] * 64)).join(), q: I.state.tracks[I.ui.t].q, hi: hi ? Array.from(hi).slice(2, 11).map(x => Math.round(x * 10) / 10) : null } }; });
         await page.screenshot({ path: `${shotDir}/impakt-${label}-howl.png`, fullPage: true });
         { const m = /^([A-G]#?)(-?\d)$/.exec(hw.root); hw.rootN = m ? ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'].indexOf(m[1]) + 12 * (+m[2] + 1) : -1; }
         await page.locator('.pad').nth(tH).dispatchEvent('pointerup', { pointerId: 9, isPrimary: true }); await page.waitForTimeout(60);
+        if (howlRun) { await page.click('#play'); await page.waitForTimeout(200); }
         // DRONE: AMP's last switch; on, the pad shows ∞ (and says so); on CP·NZ it has nothing to hold: —
         await openMod('AMP');
         hw.drn = await swOf(7, '#k-AMP');
