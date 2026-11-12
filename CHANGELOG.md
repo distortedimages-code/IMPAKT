@@ -1,5 +1,11 @@
 # Versions d'IMPAKT
 
+## 0.90.1
+
+- **Une piste MANTRA ne bourdonne plus après le stop quand WTF?! est engagé.** Les tirages de WTF?! pouvaient monter
+  ses HOLD (HLD1, HLD2) : au stop, la piste continuait de sonner sans fin tant que le potard restait tourné. Ce que
+  WTF?! ajoute aux HOLD tient maintenant pendant la lecture, et un stop (ou un mute) le relâche.
+
 ## 0.90.0
 
 - **Les modulateurs** : la page MOD passe de deux LFO et deux suiveurs à quatre modulateurs, **M1** à **M4** (▲ ■ ⬢ ●,

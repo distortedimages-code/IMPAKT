@@ -4026,6 +4026,31 @@ static int wtftest()
         // (the last hit: step 5 at 120, 0.5 s in; 0.6 s rendered after the 9600 samples of settling)
         check (fabs (e->wtfRate * 48000.0 - hz) < 1e-3 && v.wtfPh > 0.0 && v.wtfPh < hz * 0.13, "LFO FREE, HIT: the rate in Hz (1 Hz at half way), the voice's phase from its own hit", e->wtfRate * 48000.0);
     }
+    // MANTRA (v90.1): what WTF?! adds to HLD1 and HLD2 (the Lyra's HOLD) holds its voices while the transport runs; a
+    // stop lets go of it (before: raised by a draw, the track droned on after the stop for as long as the knob was turned)
+    run (WTF_LIVE, 0.9f, 4, 0.3f, 2.0, [&] {
+        e->setParam (0, P_MACH, machineVal (M_MANTRA));
+        float af[6]; const int na = machineAFDefaults (M_MANTRA, af); for (int q = 0; q < na; ++q) e->setParam (0, P_A + q, af[q]);
+        float sd[NUM_SIDES]; const int ns = machineSideDefaults (M_MANTRA, sd); for (int q = 0; q < ns; ++q) e->setParam (0, sideParam (q), sd[q]); });
+    {
+        Voice& v = e->tr[0].voice[e->tr[0].cur];
+        float P[NUM_PARAMS], Q[NUM_PARAMS];
+        for (int p = 0; p < NUM_PARAMS; ++p) P[p] = Q[p] = e->tr[0].p[p];
+        P[P_B] = Q[P_B] = P[P_C] = Q[P_C] = 0.5f;      // (half way: a draw either way moves them)
+        const int was = e->running;
+        e->running = 1; e->wtfApply (v, P, 0); e->running = 0; e->wtfApply (v, Q, 0); e->running = was;
+        const double up = std::max (fabs (P[P_B] - 0.5), fabs (P[P_C] - 0.5)), st = std::max (fabs (Q[P_B] - 0.5), fabs (Q[P_C] - 0.5));
+        check (v.machine == M_MANTRA && up > 0.05 && st == 0.0 && P[P_D] == Q[P_D] && P[P_D] != e->tr[0].p[P_D],
+               "MANTRA, WTF?!: running, its draws move HLD1 / HLD2 (largest move); stopped, not them (the rest still)", up);
+        std::vector<float> L (128), R (128); double s = 0; long n = 0;
+        for (int i = 0; i < 48000 * 10; i += 128)
+        {
+            e->process (L.data(), R.data(), 128, nullptr);
+            if (i >= 48000 * 9) for (int k = 0; k < 128; ++k) { s += (double) L[k] * L[k] + (double) R[k] * R[k]; n += 2; }
+        }
+        const double db = 10.0 * log10 (s / (double) (n ? n : 1) + 1e-30);
+        check (db < -80.0, "MANTRA, WTF?! at 90 % (LIVE): 10 s after a stop, silent (the HOLD it raised let go; dB of the 10th second)", db);
+    }
     delete e;
     printf ("%d failure(s)\n%s\n", fails, fails ? "WTF FAILED" : "WTF OK");
     return fails ? 1 : 0;

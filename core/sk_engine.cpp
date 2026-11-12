@@ -157,9 +157,14 @@ void Engine::wtfApply (Voice& v, float* P, int n)
     if (n > 0 && wtfMode == WTF_LFO && wtfTrig != 0) v.wtfPh += wtfRate * (double) n;
     if (xrndS <= 0.0f) return;
     const float amt = xrndS, a = amt * sqrtf_ (amt);
+    // MANTRA's HLD1 and HLD2 (the Lyra's HOLD: its voices sound on by themselves): what WTF?! adds to them holds the
+    // voices while the transport runs and the track plays, as a note held until its next trig; a stop or a mute lets
+    // go of it (v90.1: raised by a draw, the track droned on after a stop for as long as the knob stayed turned)
+    const bool letGo = machineOf (P[P_MACH]) == M_MANTRA && (! running || tr[v.ti].mute);
+    auto moved = [&] (int k) { return v.rnd[k] != 0.0f && ! (letGo && (RND_PS[k] == P_B || RND_PS[k] == P_C)); };
     if (wtfMode != WTF_LFO)
     {
-        for (int k = 0; k < 12; ++k) if (v.rnd[k] != 0.0f) P[RND_PS[k]] = clampf (P[RND_PS[k]] + v.rnd[k] * RND_SC[k] * a, 0.0f, 1.0f);
+        for (int k = 0; k < 12; ++k) if (moved (k)) P[RND_PS[k]] = clampf (P[RND_PS[k]] + v.rnd[k] * RND_SC[k] * a, 0.0f, 1.0f);
         return;
     }
     // the LFO: RUN, the panel's value this chunk; HIT, ONE: the voice's own phase from its hit (ONE: one cycle, then
@@ -167,7 +172,7 @@ void Engine::wtfApply (Voice& v, float* P, int n)
     const bool own = wtfTrig != 0;
     const double ph = (wtfTrig == 2 && ph0 > 0.9999) ? 0.9999 : ph0;
     for (int k = 0; k < 12; ++k)
-        if (v.rnd[k] != 0.0f)
+        if (moved (k))
             P[RND_PS[k]] = clampf (P[RND_PS[k]] + (own ? wtfAt (ph, k) : wtfVal[k]) * RND_SC[k] * a, 0.0f, 1.0f);
 }
 // the LFO's value for setting k at phase ph (cycles): each setting a share of a cycle later as SPRD opens (at 50 %
