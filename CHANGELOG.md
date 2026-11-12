@@ -1,5 +1,13 @@
 # Versions d'IMPAKT
 
+## 0.90.2
+
+- **Une piste HALO ne tourne plus sans fin après le stop.** Au stop, HALO laisse finir la montée (SWEL) de l'accord
+  avant de le relâcher. Mais un modulateur aléatoire (S&H, RANDOM) sur TUNE ou CHRD, plus rapide qu'une longue montée,
+  changeait l'accord à chaque tirage : chaque nouvel accord relançait la montée, et la nappe continuait de tourner pour
+  toujours. Une fois le transport arrêté (ou la piste coupée), l'accord ne change plus : il finit sa montée et relâche.
+  Un pad tenu à l'arrêt suit toujours les potards.
+
 ## 0.90.1
 
 - **Une piste MANTRA ne bourdonne plus après le stop quand WTF?! est engagé.** Les tirages de WTF?! pouvaient monter

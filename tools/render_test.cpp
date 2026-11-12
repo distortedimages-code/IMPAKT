@@ -943,6 +943,34 @@ static int halotest()
         const double mono = rmsDb (L, 48000, 90000) + 0.0, m0 = rmsDb (L0, 48000, 90000);
         check (fabs (mono - m0) < 2.0, "WIDE 100 %: the level stays (dB against WIDE 0)", mono - m0);
     }
+    // 9. a stop under a chord that a random modulator keeps changing (v90.1): M1 RANDOM free on CHRD, quicker than a long
+    // SWELL; the chord is no longer re-voiced once stopped, its swell comes in and it lets go (before: each new chord
+    // swelled again, the stop waited for it for ever, the chords changing on)
+    for (int dst = 0; dst < 2; ++dst)
+    {
+        setup (6, 0); e->setParam (0, P_HSWL, 0.8f); e->setParam (0, P_DEC, 0.55f);
+        int slot = 0; for (int i = 0; i < NUM_MOD_DEST; ++i) if (MOD_DEST[i] == (dst ? P_TUNE : P_A)) slot = i;
+        e->setParam (0, P_M1TY, (MT_RAND + 0.5f) / MOD_TYPES); e->setParam (0, P_LSPD, 0.6f); e->setParam (0, P_M1X3, 0.75f);
+        e->setParam (0, P_LDST, (slot + 0.5f) / MOD_DEST_SLOTS); e->setParam (0, P_LDEP, 0.8f);
+        for (int s = 0; s < 16; s += 4) e->setTrig (0, s, 1);
+        std::vector<float> L, R, L0, R0;
+        e->setPlay (1); render (4.0, L0, R0, nullptr);
+        e->setPlay (0); render (12.0, L, R, nullptr);
+        int held = 0; for (auto& v : e->tr[0].voice) if (v.active && v.hs.held) ++held;
+        const double tail = rmsDb (L, 11 * 48000, 12 * 48000);
+        check (held == 0 && tail < -90.0, dst ? "a stop, M1 RANDOM on TUNE quicker than a long SWELL: let go, silent 11 s on (dB)"
+                                              : "a stop, M1 RANDOM on CHRD quicker than a long SWELL: let go, silent 11 s on (dB)", tail);
+    }
+    // ... and a pad held while stopped still follows a knob that changes its chord
+    {
+        setup (6, 0);
+        e->audition (0, 1.0f, 0.0f);
+        std::vector<float> L, R; render (0.5, L, R, nullptr);
+        const float k0 = (float) voice().hs.key[1];
+        e->setParam (0, P_A, (2 + 0.5f) * SH); render (0.3, L, R, nullptr);
+        check (voice().hs.held && (float) voice().hs.key[1] != k0, "stopped, a pad held: CHRD turned re-voices its chord (the shape now)", voice().hs.key[1]);
+        e->release (0, 0.0f);
+    }
     // 8. what it costs: a six-note chord, SAW > PULSE, BLOOM, AIR, DRFT, SPRD at the top, WIDE (native, % of real time)
     {
         setup (7, 1); e->setParam (0, P_D, 0.5f); e->setParam (0, P_E, 1.0f); e->setParam (0, P_HAIR, 1.0f); e->setParam (0, P_HDRF, 1.0f);

@@ -463,8 +463,12 @@ void Engine::haloRender (Voice& v, const float* P, float tuneRaw, u32 qm, int n,
 {
     HaloState& h = v.hs;
     const Track& t = tr[v.ti];
-    // a knob, a lock or an LFO that changes the chord re-voices it while it is held
-    if (h.held)
+    // a knob, a lock or an LFO that changes the chord re-voices it while it is held; not a chord held until its next
+    // trig once the transport stopped or the track is muted: it waits for its swell to be in to let go (below), and a
+    // modulator re-voicing it over and over (v90.1: a random one on TUNE or CHRD, quicker than a long SWELL) kept it
+    // swelling, never let go, its chords changing on for ever after the stop
+    const bool ending = h.holdLeft < 0.0f && (! running || t.mute);
+    if (h.held && ! ending)
     {
         float notes[HALO_MAXN]; int key[HALO_KEY];
         const int m = haloChord (v, P, tuneRaw, qm, notes, key, h.key);
